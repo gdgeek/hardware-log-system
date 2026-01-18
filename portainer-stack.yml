@@ -8,13 +8,21 @@
 # 可选环境变量：
 #   - APP_PORT: 应用端口（默认 3000）
 #   - LOG_LEVEL: 日志级别（默认 info）
+#
+# 镜像地址（选择一个）：
+#   - GitHub: ghcr.io/gdgeek/hardware-log-system:latest
+#   - 腾讯云: ccr.ccs.tencentyun.com/<namespace>/hardware-log-system:latest
 
 version: '3.8'
 
 services:
-  # 应用服务 - 使用 GitHub Container Registry 镜像
+  # 应用服务
+  # 如果使用腾讯云镜像，修改 image 为你的腾讯云镜像地址
   app:
-    image: ghcr.io/gdgeek/hardware-log-system:latest
+    # GitHub Container Registry（国外服务器推荐）
+    # image: ghcr.io/gdgeek/hardware-log-system:latest
+    # 腾讯云容器镜像服务（国内服务器推荐，速度更快）
+    image: ${APP_IMAGE:-ghcr.io/gdgeek/hardware-log-system:latest}
     container_name: hardware-log-system
     ports:
       - "${APP_PORT:-3000}:3000"

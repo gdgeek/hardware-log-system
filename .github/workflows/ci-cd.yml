@@ -90,11 +90,21 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       
+      - name: 登录腾讯云容器镜像服务
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ secrets.TCR_REGISTRY }}
+          username: ${{ secrets.TCR_USERNAME }}
+          password: ${{ secrets.TCR_PASSWORD }}
+        if: ${{ secrets.TCR_REGISTRY != '' }}
+      
       - name: 提取 Docker 元数据
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: ghcr.io/${{ github.repository }}
+          images: |
+            ghcr.io/${{ github.repository }}
+            ${{ secrets.TCR_REGISTRY }}/${{ secrets.TCR_NAMESPACE }}/hardware-log-system
           tags: |
             type=raw,value=latest
             type=sha,prefix=
