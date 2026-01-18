@@ -19,18 +19,30 @@ describe('LogService - Property-Based Tests', () => {
   let mockRepository: jest.Mocked<LogRepository>;
 
   // Arbitraries for generating test data
-  const uuidArbitrary = fc.uuid();
+  // Generate valid UUID v4 (version 4, variant 1)
+  const uuidArbitrary = fc.uuid().filter(uuid => 
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(uuid)
+  );
   const dataTypeArbitrary = fc.constantFrom('record' as const, 'warning' as const, 'error' as const);
-  const keyArbitrary = fc.string({ minLength: 1, maxLength: 255 });
+  // Generate keys that are not empty and not just whitespace
+  const keyArbitrary = fc.string({ minLength: 1, maxLength: 255 }).filter(s => s.trim().length > 0);
+  // Generate non-empty JSON objects with non-whitespace keys
+  // Filter out keys that contain only whitespace or have trailing/leading whitespace
+  const jsonKeyArbitrary = fc.string({ minLength: 1, maxLength: 50 })
+    .filter(s => {
+      const trimmed = s.trim();
+      return trimmed.length > 0 && trimmed === s; // No leading/trailing whitespace
+    });
   const jsonValueArbitrary = fc.dictionary(
-    fc.string({ minLength: 1, maxLength: 50 }),
+    jsonKeyArbitrary,
     fc.oneof(
       fc.string(),
       fc.integer(),
       fc.double(),
       fc.boolean(),
       fc.constant(null)
-    )
+    ),
+    { minKeys: 1, maxKeys: 10 } // Ensure at least one key
   );
 
   const logInputArbitrary = fc.record({
@@ -227,7 +239,7 @@ describe('LogService - Property-Based Tests', () => {
       await fc.assert(
         fc.asyncProperty(
           fc.array(logInputArbitrary, { minLength: 5, maxLength: 20 }),
-          fc.uuid(),
+          uuidArbitrary,
           async (logInputs: LogInput[], filterUuid: string) => {
             // Create mock logs
             const mockLogs = logInputs.map((input, index) => ({
@@ -340,7 +352,7 @@ describe('LogService - Property-Based Tests', () => {
       await fc.assert(
         fc.asyncProperty(
           fc.array(logInputArbitrary, { minLength: 10, maxLength: 30 }),
-          fc.uuid(),
+          uuidArbitrary,
           dataTypeArbitrary,
           async (logInputs: LogInput[], filterUuid, filterDataType) => {
             const mockLogs = logInputs.map((input, index) => ({

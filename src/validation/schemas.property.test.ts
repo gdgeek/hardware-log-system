@@ -20,6 +20,18 @@ import { validate } from './validator';
 import { logInputSchema } from './schemas';
 import { ValidationError } from '../types';
 
+// Helper function to extract error fields
+function getErrorFields(error: ValidationError | undefined): string[] {
+  if (!error?.details?.errors) return [];
+  const errors = error.details.errors as Array<{ field: string; message: string }>;
+  return errors.map((e) => e.field);
+}
+
+// Helper: Generate valid UUID v4
+const validUuidV4 = fc.uuid().filter(uuid => 
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(uuid)
+);
+
 describe('Property-Based Tests: Input Validation', () => {
   describe('Property 3: Input validation rejects invalid data', () => {
     
@@ -29,8 +41,8 @@ describe('Property-Based Tests: Input Validation', () => {
         fc.property(
           fc.record({
             dataType: fc.constantFrom('record', 'warning', 'error'),
-            key: fc.string({ minLength: 1, maxLength: 255 }),
-            value: fc.object()
+            key: fc.string({ minLength: 1, maxLength: 255 }).filter(s => s.trim().length > 0),
+            value: fc.dictionary(fc.string({ minLength: 1 }), fc.anything(), { minKeys: 1 })
           }),
           (invalidInput) => {
             const result = validate(logInputSchema, invalidInput);
@@ -41,7 +53,7 @@ describe('Property-Based Tests: Input Validation', () => {
             expect(result.value).toBeUndefined();
             
             // Should mention deviceUuid in error details
-            const errorFields = result.error?.details?.errors.map((e: any) => e.field);
+            const errorFields = getErrorFields(result.error);
             expect(errorFields).toContain('deviceUuid');
           }
         ),
@@ -53,9 +65,9 @@ describe('Property-Based Tests: Input Validation', () => {
       fc.assert(
         fc.property(
           fc.record({
-            deviceUuid: fc.uuid(),
-            key: fc.string({ minLength: 1, maxLength: 255 }),
-            value: fc.object()
+            deviceUuid: validUuidV4,
+            key: fc.string({ minLength: 1, maxLength: 255 }).filter(s => s.trim().length > 0),
+            value: fc.dictionary(fc.string({ minLength: 1 }), fc.anything(), { minKeys: 1 })
           }),
           (invalidInput) => {
             const result = validate(logInputSchema, invalidInput);
@@ -66,7 +78,7 @@ describe('Property-Based Tests: Input Validation', () => {
             expect(result.value).toBeUndefined();
             
             // Should mention dataType in error details
-            const errorFields = result.error?.details?.errors.map((e: any) => e.field);
+            const errorFields = getErrorFields(result.error);
             expect(errorFields).toContain('dataType');
           }
         ),
@@ -78,9 +90,9 @@ describe('Property-Based Tests: Input Validation', () => {
       fc.assert(
         fc.property(
           fc.record({
-            deviceUuid: fc.uuid(),
+            deviceUuid: validUuidV4,
             dataType: fc.constantFrom('record', 'warning', 'error'),
-            value: fc.object()
+            value: fc.dictionary(fc.string({ minLength: 1 }), fc.anything(), { minKeys: 1 })
           }),
           (invalidInput) => {
             const result = validate(logInputSchema, invalidInput);
@@ -91,7 +103,7 @@ describe('Property-Based Tests: Input Validation', () => {
             expect(result.value).toBeUndefined();
             
             // Should mention key in error details
-            const errorFields = result.error?.details?.errors.map((e: any) => e.field);
+            const errorFields = getErrorFields(result.error);
             expect(errorFields).toContain('key');
           }
         ),
@@ -103,9 +115,9 @@ describe('Property-Based Tests: Input Validation', () => {
       fc.assert(
         fc.property(
           fc.record({
-            deviceUuid: fc.uuid(),
+            deviceUuid: validUuidV4,
             dataType: fc.constantFrom('record', 'warning', 'error'),
-            key: fc.string({ minLength: 1, maxLength: 255 })
+            key: fc.string({ minLength: 1, maxLength: 255 }).filter(s => s.trim().length > 0)
           }),
           (invalidInput) => {
             const result = validate(logInputSchema, invalidInput);
@@ -116,7 +128,7 @@ describe('Property-Based Tests: Input Validation', () => {
             expect(result.value).toBeUndefined();
             
             // Should mention value in error details
-            const errorFields = result.error?.details?.errors.map((e: any) => e.field);
+            const errorFields = getErrorFields(result.error);
             expect(errorFields).toContain('value');
           }
         ),
@@ -142,8 +154,8 @@ describe('Property-Based Tests: Input Validation', () => {
           fc.record({
             deviceUuid: invalidUuidGen,
             dataType: fc.constantFrom('record', 'warning', 'error'),
-            key: fc.string({ minLength: 1, maxLength: 255 }),
-            value: fc.object()
+            key: fc.string({ minLength: 1, maxLength: 255 }).filter(s => s.trim().length > 0),
+            value: fc.dictionary(fc.string({ minLength: 1 }), fc.anything(), { minKeys: 1 })
           }),
           (invalidInput) => {
             const result = validate(logInputSchema, invalidInput);
@@ -154,7 +166,7 @@ describe('Property-Based Tests: Input Validation', () => {
             expect(result.value).toBeUndefined();
             
             // Should mention deviceUuid in error details
-            const errorFields = result.error?.details?.errors.map((e: any) => e.field);
+            const errorFields = getErrorFields(result.error);
             expect(errorFields).toContain('deviceUuid');
           }
         ),
@@ -180,10 +192,10 @@ describe('Property-Based Tests: Input Validation', () => {
       fc.assert(
         fc.property(
           fc.record({
-            deviceUuid: fc.uuid(),
+            deviceUuid: validUuidV4,
             dataType: invalidDataTypeGen,
-            key: fc.string({ minLength: 1, maxLength: 255 }),
-            value: fc.object()
+            key: fc.string({ minLength: 1, maxLength: 255 }).filter(s => s.trim().length > 0),
+            value: fc.dictionary(fc.string({ minLength: 1 }), fc.anything(), { minKeys: 1 })
           }),
           (invalidInput) => {
             const result = validate(logInputSchema, invalidInput);
@@ -194,7 +206,7 @@ describe('Property-Based Tests: Input Validation', () => {
             expect(result.value).toBeUndefined();
             
             // Should mention dataType in error details
-            const errorFields = result.error?.details?.errors.map((e: any) => e.field);
+            const errorFields = getErrorFields(result.error);
             expect(errorFields).toContain('dataType');
           }
         ),
@@ -217,9 +229,9 @@ describe('Property-Based Tests: Input Validation', () => {
       fc.assert(
         fc.property(
           fc.record({
-            deviceUuid: fc.uuid(),
+            deviceUuid: validUuidV4,
             dataType: fc.constantFrom('record', 'warning', 'error'),
-            key: fc.string({ minLength: 1, maxLength: 255 }),
+            key: fc.string({ minLength: 1, maxLength: 255 }).filter(s => s.trim().length > 0),
             value: nonObjectGen
           }),
           (invalidInput) => {
@@ -231,7 +243,7 @@ describe('Property-Based Tests: Input Validation', () => {
             expect(result.value).toBeUndefined();
             
             // Should mention value in error details
-            const errorFields = result.error?.details?.errors.map((e: any) => e.field);
+            const errorFields = getErrorFields(result.error);
             expect(errorFields).toContain('value');
           }
         ),
@@ -244,10 +256,10 @@ describe('Property-Based Tests: Input Validation', () => {
       fc.assert(
         fc.property(
           fc.record({
-            deviceUuid: fc.uuid(),
+            deviceUuid: validUuidV4,
             dataType: fc.constantFrom('record', 'warning', 'error'),
             key: fc.constant(''),
-            value: fc.object()
+            value: fc.dictionary(fc.string({ minLength: 1 }), fc.anything(), { minKeys: 1 })
           }),
           (invalidInput) => {
             const result = validate(logInputSchema, invalidInput);
@@ -258,7 +270,7 @@ describe('Property-Based Tests: Input Validation', () => {
             expect(result.value).toBeUndefined();
             
             // Should mention key in error details
-            const errorFields = result.error?.details?.errors.map((e: any) => e.field);
+            const errorFields = getErrorFields(result.error);
             expect(errorFields).toContain('key');
           }
         ),
@@ -270,10 +282,10 @@ describe('Property-Based Tests: Input Validation', () => {
       fc.assert(
         fc.property(
           fc.record({
-            deviceUuid: fc.uuid(),
+            deviceUuid: validUuidV4,
             dataType: fc.constantFrom('record', 'warning', 'error'),
             key: fc.string({ minLength: 256, maxLength: 500 }),
-            value: fc.object()
+            value: fc.dictionary(fc.string({ minLength: 1 }), fc.anything(), { minKeys: 1 })
           }),
           (invalidInput) => {
             const result = validate(logInputSchema, invalidInput);
@@ -284,7 +296,7 @@ describe('Property-Based Tests: Input Validation', () => {
             expect(result.value).toBeUndefined();
             
             // Should mention key in error details
-            const errorFields = result.error?.details?.errors.map((e: any) => e.field);
+            const errorFields = getErrorFields(result.error);
             expect(errorFields).toContain('key');
           }
         ),
@@ -314,10 +326,12 @@ describe('Property-Based Tests: Input Validation', () => {
             expect(result.value).toBeUndefined();
             
             // Should have multiple errors (at least 3: deviceUuid, dataType, key, value)
-            expect(result.error?.details?.errors.length).toBeGreaterThanOrEqual(3);
+            const errorCount = result.error?.details?.errors ? 
+              (result.error.details.errors as any[]).length : 0;
+            expect(errorCount).toBeGreaterThanOrEqual(3);
             
             // Should include all invalid fields
-            const errorFields = result.error?.details?.errors.map((e: any) => e.field);
+            const errorFields = getErrorFields(result.error);
             expect(errorFields).toContain('deviceUuid');
             expect(errorFields).toContain('dataType');
             // Either key or value should be in errors (or both)
@@ -335,10 +349,10 @@ describe('Property-Based Tests: Input Validation', () => {
       fc.assert(
         fc.property(
           fc.record({
-            deviceUuid: fc.uuid(),
+            deviceUuid: validUuidV4,
             dataType: fc.constantFrom('record', 'warning', 'error'),
-            key: fc.string({ minLength: 1, maxLength: 255 }),
-            value: fc.object()
+            key: fc.string({ minLength: 1, maxLength: 255 }).filter(s => s.trim().length > 0),
+            value: fc.dictionary(fc.string({ minLength: 1 }), fc.anything(), { minKeys: 1 })
           }),
           (validInput) => {
             const result = validate(logInputSchema, validInput);
@@ -348,10 +362,13 @@ describe('Property-Based Tests: Input Validation', () => {
             expect(result.value).toBeDefined();
             
             // Should return the validated value
-            expect(result.value?.deviceUuid).toBe(validInput.deviceUuid);
-            expect(result.value?.dataType).toBe(validInput.dataType);
-            expect(result.value?.key).toBe(validInput.key);
-            expect(result.value?.value).toEqual(validInput.value);
+            if (result.value) {
+              const value = result.value as any;
+              expect(value.deviceUuid).toBe(validInput.deviceUuid);
+              expect(value.dataType).toBe(validInput.dataType);
+              expect(value.key).toBe(validInput.key);
+              expect(value.value).toEqual(validInput.value);
+            }
           }
         ),
         { numRuns: 100 }

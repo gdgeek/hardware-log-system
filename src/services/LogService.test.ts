@@ -5,7 +5,6 @@
 import { LogService } from './LogService';
 import { LogRepository } from '../repositories/LogRepository';
 import { LogInput, ValidationError } from '../types';
-import { Log } from '../models/Log';
 
 // Mock the repository
 jest.mock('../repositories/LogRepository');

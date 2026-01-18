@@ -18,6 +18,11 @@ describe('ReportService - Property-Based Tests', () => {
   let reportService: ReportService;
   let mockRepository: jest.Mocked<LogRepository>;
 
+  // Helper: Generate valid UUID v4
+  const validUuidV4 = fc.uuid().filter(uuid => 
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(uuid)
+  );
+
   beforeEach(() => {
     mockRepository = {
       create: jest.fn(),
@@ -41,7 +46,7 @@ describe('ReportService - Property-Based Tests', () => {
     it('should ensure device report counts sum to total', async () => {
       await fc.assert(
         fc.asyncProperty(
-          fc.uuid(),
+          validUuidV4,
           fc.integer({ min: 0, max: 1000 }),
           fc.integer({ min: 0, max: 1000 }),
           fc.integer({ min: 0, max: 1000 }),
@@ -53,8 +58,8 @@ describe('ReportService - Property-Based Tests', () => {
               recordCount,
               warningCount,
               errorCount,
-              firstLogTime: new Date().toISOString(),
-              lastLogTime: new Date().toISOString(),
+              firstLogTime: totalLogs > 0 ? new Date().toISOString() : '',
+              lastLogTime: totalLogs > 0 ? new Date().toISOString() : '',
             };
 
             mockRepository.aggregateByDevice.mockResolvedValue(mockReport);
@@ -109,10 +114,10 @@ describe('ReportService - Property-Based Tests', () => {
         fc.asyncProperty(
           fc.array(
             fc.record({
-              deviceUuid: fc.uuid(),
+              deviceUuid: validUuidV4,
               key: fc.string({ minLength: 1, maxLength: 50 }),
               count: fc.integer({ min: 1, max: 100 }),
-              lastOccurrence: fc.date().map((d) => d.toISOString()),
+              lastOccurrence: fc.date({ min: new Date("2020-01-01"), max: new Date("2030-12-31") }).map((d) => d.toISOString()),
             }),
             { minLength: 0, maxLength: 50 }
           ),
@@ -140,7 +145,7 @@ describe('ReportService - Property-Based Tests', () => {
     it('should ensure all counts are non-negative in device report', async () => {
       await fc.assert(
         fc.asyncProperty(
-          fc.uuid(),
+          validUuidV4,
           fc.integer({ min: 0, max: 1000 }),
           fc.integer({ min: 0, max: 1000 }),
           fc.integer({ min: 0, max: 1000 }),
@@ -152,8 +157,8 @@ describe('ReportService - Property-Based Tests', () => {
               recordCount,
               warningCount,
               errorCount,
-              firstLogTime: new Date().toISOString(),
-              lastLogTime: new Date().toISOString(),
+              firstLogTime: totalLogs > 0 ? new Date().toISOString() : '',
+              lastLogTime: totalLogs > 0 ? new Date().toISOString() : '',
             };
 
             mockRepository.aggregateByDevice.mockResolvedValue(mockReport);
@@ -215,7 +220,7 @@ describe('ReportService - Property-Based Tests', () => {
     it('should return valid JSON structure for device report', async () => {
       await fc.assert(
         fc.asyncProperty(
-          fc.uuid(),
+          validUuidV4,
           fc.integer({ min: 0, max: 1000 }),
           fc.integer({ min: 0, max: 1000 }),
           fc.integer({ min: 0, max: 1000 }),
@@ -325,10 +330,10 @@ describe('ReportService - Property-Based Tests', () => {
         fc.asyncProperty(
           fc.array(
             fc.record({
-              deviceUuid: fc.uuid(),
+              deviceUuid: validUuidV4,
               key: fc.string({ minLength: 1, maxLength: 50 }),
               count: fc.integer({ min: 1, max: 100 }),
-              lastOccurrence: fc.date().map((d) => d.toISOString()),
+              lastOccurrence: fc.date({ min: new Date("2020-01-01"), max: new Date("2030-12-31") }).map((d) => d.toISOString()),
             }),
             { minLength: 0, maxLength: 50 }
           ),
@@ -379,7 +384,7 @@ describe('ReportService - Property-Based Tests', () => {
 
     it('should handle empty reports with valid JSON structure', async () => {
       await fc.assert(
-        fc.asyncProperty(fc.uuid(), async (uuid) => {
+        fc.asyncProperty(validUuidV4, async (uuid) => {
           const emptyDeviceReport: DeviceReport = {
             deviceUuid: uuid,
             totalLogs: 0,
@@ -405,7 +410,7 @@ describe('ReportService - Property-Based Tests', () => {
 
     it('should produce consistent JSON output for same input', async () => {
       await fc.assert(
-        fc.asyncProperty(fc.uuid(), async (uuid) => {
+        fc.asyncProperty(validUuidV4, async (uuid) => {
           const mockReport: DeviceReport = {
             deviceUuid: uuid,
             totalLogs: 100,

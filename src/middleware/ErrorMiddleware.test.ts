@@ -188,8 +188,13 @@ describe('ErrorMiddleware', () => {
     });
 
     it('应该在错误消息中包含请求路径和方法', () => {
-      mockRequest.path = '/api/test';
-      mockRequest.method = 'GET';
+      mockRequest = {
+        path: '/api/test',
+        method: 'GET',
+        query: {},
+        body: {},
+        params: {},
+      };
 
       notFoundHandler(mockRequest as Request, mockResponse as Response, mockNext);
 

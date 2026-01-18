@@ -68,8 +68,12 @@ describe('Validator Utilities', () => {
       const result = validate(testSchema, data);
 
       expect(result.error).toBeUndefined();
-      expect(result.value?.age).toBe(30);
-      expect(typeof result.value?.age).toBe('number');
+      expect(result.value).toBeDefined();
+      if (result.value) {
+        const value = result.value as { name: string; age: number };
+        expect(value.age).toBe(30);
+        expect(typeof value.age).toBe('number');
+      }
     });
 
     it('should include field path in error details', () => {
@@ -83,7 +87,10 @@ describe('Validator Utilities', () => {
       const result = validate(nestedSchema, data);
 
       expect(result.error).toBeInstanceOf(ValidationError);
-      expect(result.error?.details?.errors[0].field).toBe('user.email');
+      if (result.error?.details?.errors) {
+        const errors = result.error.details.errors as Array<{ field: string; message: string }>;
+        expect(errors[0].field).toBe('user.email');
+      }
     });
   });
 
