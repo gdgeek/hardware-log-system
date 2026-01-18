@@ -1,0 +1,79 @@
+# Portainer Stack 配置（简化版）
+# 
+# 直接复制此内容到 Portainer Stack Web Editor
+# 
+# 必须配置的环境变量：
+#   - DB_PASSWORD: 数据库密码
+#
+# 可选环境变量：
+#   - APP_PORT: 应用端口（默认 3000）
+#   - LOG_LEVEL: 日志级别（默认 info）
+
+version: '3.8'
+
+services:
+  # 应用服务 - 使用 GitHub Container Registry 镜像
+  app:
+    image: ghcr.io/gdgeek/hardware-log-system:latest
+    container_name: hardware-log-system
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=hardware_logs
+      - DB_USER=root
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_POOL_MIN=2
+      - DB_POOL_MAX=10
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_FILE=/app/logs/app.log
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - app_logs:/app/logs
+    networks:
+      - app-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  # MySQL 数据库
+  mysql:
+    image: mysql:8.0
+    container_name: hardware-log-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - MYSQL_DATABASE=hardware_logs
+      - MYSQL_CHARACTER_SET_SERVER=utf8mb4
+      - MYSQL_COLLATION_SERVER=utf8mb4_unicode_ci
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --max_connections=200
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  app_logs:
