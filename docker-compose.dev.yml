@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  # 开发工具服务 - 用于生成 package-lock.json 和其他开发任务
+  dev-tools:
+    image: node:18-alpine
+    container_name: hardware-log-dev-tools
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: npm install
+    profiles:
+      - dev
+
+  # 测试服务 - 用于运行测试
+  test:
+    image: node:18-alpine
+    container_name: hardware-log-test
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=test
+      - DB_HOST=mysql-test
+      - DB_PORT=3306
+      - DB_NAME=hardware_logs_test
+      - DB_USER=root
+      - DB_PASSWORD=test_password
+    depends_on:
+      mysql-test:
+        condition: service_healthy
+    command: npm test
+    networks:
+      - test-network
+    profiles:
+      - test
+
+  # 测试数据库
+  mysql-test:
+    image: mysql:8.0
+    container_name: hardware-log-mysql-test
+    environment:
+      - MYSQL_ROOT_PASSWORD=test_password
+      - MYSQL_DATABASE=hardware_logs_test
+      - MYSQL_CHARACTER_SET_SERVER=utf8mb4
+      - MYSQL_COLLATION_SERVER=utf8mb4_unicode_ci
+    tmpfs:
+      - /var/lib/mysql
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ptest_password"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    profiles:
+      - test
+
+networks:
+  test-network:
+    driver: bridge

@@ -29,19 +29,25 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v3
       
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10
+      
       - name: 设置 Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
+          cache: 'pnpm'
       
       - name: 安装依赖
-        run: npm install
+        run: pnpm install --frozen-lockfile
       
       - name: 运行代码检查
-        run: npm run lint
+        run: pnpm run lint
       
       - name: 运行单元测试
-        run: npm run test:unit
+        run: pnpm run test:unit
         env:
           NODE_ENV: test
           DB_HOST: 127.0.0.1
@@ -51,7 +57,7 @@ jobs:
           DB_PASSWORD: test_password
       
       - name: 生成覆盖率报告
-        run: npm run test:coverage
+        run: pnpm run test:coverage
         env:
           NODE_ENV: test
           DB_HOST: 127.0.0.1

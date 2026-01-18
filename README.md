@@ -69,7 +69,7 @@ hardware-log-system/
 
 - Node.js 18 或更高版本
 - MySQL 8.0
-- npm 或 yarn
+- pnpm 10 或更高版本
 
 ### 安装步骤
 
@@ -81,7 +81,7 @@ cd hardware-log-system
 
 2. 安装依赖：
 ```bash
-npm install
+pnpm install
 ```
 
 3. 配置环境变量：
@@ -97,53 +97,53 @@ mysql -u root -p
 CREATE DATABASE hardware_logs CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 # 运行迁移脚本
-npm run migrate
+pnpm run migrate
 ```
 
 ### 开发模式
 
 开发模式运行：
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 构建项目：
 ```bash
-npm run build
+pnpm run build
 ```
 
 生产模式运行：
 ```bash
-npm start
+pnpm start
 ```
 
 ### 测试
 
 运行所有测试：
 ```bash
-npm test
+pnpm test
 ```
 
 仅运行单元测试：
 ```bash
-npm run test:unit
+pnpm run test:unit
 ```
 
 运行集成测试：
 ```bash
-npm run test:integration
+pnpm run test:integration
 ```
 
 生成覆盖率报告：
 ```bash
-npm run test:coverage
+pnpm run test:coverage
 ```
 
 ### 代码检查
 
 运行 ESLint：
 ```bash
-npm run lint
+pnpm run lint
 ```
 
 ## API 端点
