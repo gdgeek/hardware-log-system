@@ -133,7 +133,7 @@ export class LogRepository {
   async aggregateByDevice(uuid: string): Promise<DeviceReport> {
     try {
       // Get total counts by data type
-      const stats = await Log.findAll({
+      const stats = (await Log.findAll({
         where: { deviceUuid: uuid },
         attributes: [
           'dataType',
@@ -143,7 +143,7 @@ export class LogRepository {
         ],
         group: ['dataType'],
         raw: true,
-      }) as Array<{ dataType: string; count: string; firstLogTime: Date; lastLogTime: Date }>;
+      })) as unknown as Array<{ dataType: string; count: string; firstLogTime: Date; lastLogTime: Date }>;
 
       // If no logs found, return empty report
       if (stats.length === 0) {
@@ -227,7 +227,7 @@ export class LogRepository {
   async aggregateByTimeRange(start: Date, end: Date): Promise<TimeRangeReport> {
     try {
       // Get counts by data type
-      const stats = await Log.findAll({
+      const stats = (await Log.findAll({
         where: {
           createdAt: {
             [Op.gte]: start,
@@ -240,10 +240,10 @@ export class LogRepository {
         ],
         group: ['dataType'],
         raw: true,
-      }) as Array<{ dataType: string; count: string }>;
+      })) as unknown as Array<{ dataType: string; count: string }>;
 
       // Get unique device count
-      const deviceCountResult = await Log.findAll({
+      const deviceCountResult = (await Log.findAll({
         where: {
           createdAt: {
             [Op.gte]: start,
@@ -252,7 +252,7 @@ export class LogRepository {
         },
         attributes: [[fn('COUNT', fn('DISTINCT', col('deviceUuid'))), 'deviceCount']],
         raw: true,
-      }) as Array<{ deviceCount: string }>;
+      })) as unknown as Array<{ deviceCount: string }>;
 
       const deviceCount = deviceCountResult.length > 0 ? parseInt(deviceCountResult[0].deviceCount, 10) : 0;
 
@@ -314,7 +314,7 @@ export class LogRepository {
   async aggregateErrors(): Promise<ErrorReport> {
     try {
       // Get error logs grouped by device and key
-      const errorStats = await Log.findAll({
+      const errorStats = (await Log.findAll({
         where: { dataType: 'error' },
         attributes: [
           'deviceUuid',
@@ -325,7 +325,7 @@ export class LogRepository {
         group: ['deviceUuid', 'logKey'],
         order: [[literal('count'), 'DESC']], // Most frequent errors first
         raw: true,
-      }) as Array<{ deviceUuid: string; logKey: string; count: string; lastOccurrence: Date }>;
+      })) as unknown as Array<{ deviceUuid: string; logKey: string; count: string; lastOccurrence: Date }>;
 
       const errors = errorStats.map((stat) => ({
         deviceUuid: stat.deviceUuid,
@@ -374,15 +374,17 @@ export class LogRepository {
     }
 
     if (filters.startTime || filters.endTime) {
-      where.createdAt = {};
+      const createdAt: Record<symbol, Date> = {};
 
       if (filters.startTime) {
-        where.createdAt[Op.gte] = filters.startTime;
+        createdAt[Op.gte] = filters.startTime;
       }
 
       if (filters.endTime) {
-        where.createdAt[Op.lte] = filters.endTime;
+        createdAt[Op.lte] = filters.endTime;
       }
+
+      where.createdAt = createdAt;
     }
 
     return where;

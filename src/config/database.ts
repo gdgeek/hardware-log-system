@@ -107,7 +107,7 @@ export function getPoolStatus(): {
   using: number;
   waiting: number;
 } {
-  const pool = sequelize.connectionManager.pool;
+  const pool = (sequelize.connectionManager as any).pool;
   
   return {
     size: pool?.size || 0,

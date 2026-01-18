@@ -128,27 +128,22 @@ Log.init(
       {
         name: 'idx_device_uuid',
         fields: ['device_uuid'],
-        comment: 'Index for querying logs by device UUID',
       },
       {
         name: 'idx_data_type',
         fields: ['data_type'],
-        comment: 'Index for querying logs by data type',
       },
       {
         name: 'idx_created_at',
         fields: ['created_at'],
-        comment: 'Index for querying logs by creation time',
       },
       {
         name: 'idx_device_type',
         fields: ['device_uuid', 'data_type'],
-        comment: 'Composite index for querying logs by device and type',
       },
       {
         name: 'idx_device_time',
         fields: ['device_uuid', 'created_at'],
-        comment: 'Composite index for querying logs by device and time',
       },
     ],
     comment: 'Table storing hardware device logs',

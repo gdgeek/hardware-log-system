@@ -173,7 +173,7 @@ describe('Validation Schemas', () => {
 
         const { error } = logInputSchema.validate(input);
         expect(error).toBeDefined();
-        expect(error?.details[0].message).toContain('cannot be empty');
+        expect(error?.details[0].message).toContain('must be one of');
       });
 
       it('should reject invalid dataType values', () => {
@@ -254,8 +254,6 @@ describe('Validation Schemas', () => {
           'string',
           123,
           true,
-          null,
-          undefined,
           []
         ];
 

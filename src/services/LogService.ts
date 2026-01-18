@@ -11,6 +11,7 @@
 
 import { LogInput, LogOutput, LogFilters, Pagination, PaginatedResult } from '../types';
 import { logRepository, LogRepository } from '../repositories/LogRepository';
+import { Log } from '../models/Log';
 import { validateOrThrow } from '../validation/validator';
 import { logInputSchema, logFiltersSchema, paginationSchema } from '../validation/schemas';
 import { logger } from '../config/logger';

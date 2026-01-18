@@ -124,11 +124,11 @@ describe('Logger Configuration', () => {
 
   describe('logDatabaseOperation helper', () => {
     it('should log successful database operation', () => {
-      const spy = jest.spyOn(logger, 'info');
+      const spy = jest.spyOn(logger, 'log');
 
       logDatabaseOperation('SELECT', 50, true);
 
-      expect(spy).toHaveBeenCalledWith('Database Operation', {
+      expect(spy).toHaveBeenCalledWith('info', 'Database Operation', {
         operation: 'SELECT',
         duration: 50,
         success: true,
@@ -138,11 +138,11 @@ describe('Logger Configuration', () => {
     });
 
     it('should log failed database operation', () => {
-      const spy = jest.spyOn(logger, 'error');
+      const spy = jest.spyOn(logger, 'log');
 
       logDatabaseOperation('INSERT', 100, false, { error: 'Connection failed' });
 
-      expect(spy).toHaveBeenCalledWith('Database Operation', {
+      expect(spy).toHaveBeenCalledWith('error', 'Database Operation', {
         operation: 'INSERT',
         duration: 100,
         success: false,

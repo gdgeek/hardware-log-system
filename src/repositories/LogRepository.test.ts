@@ -525,8 +525,6 @@ describe('LogRepository', () => {
     });
 
     it('should correctly identify first and last log times', async () => {
-      const firstTime = new Date();
-      
       const firstLog = await repository.create({
         deviceUuid: 'time-test-device',
         dataType: 'record' as DataType,
