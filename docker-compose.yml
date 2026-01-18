@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  # 应用服务
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hardware-log-system
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=3000
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=${DB_NAME:-hardware_logs}
+      - DB_USER=${DB_USER:-root}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_POOL_MIN=${DB_POOL_MIN:-2}
+      - DB_POOL_MAX=${DB_POOL_MAX:-10}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_FILE=/app/logs/app.log
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+
+  # MySQL 数据库服务
+  mysql:
+    image: mysql:8.0
+    container_name: hardware-log-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD:-password}
+      - MYSQL_DATABASE=${DB_NAME:-hardware_logs}
+      - MYSQL_CHARACTER_SET_SERVER=utf8mb4
+      - MYSQL_COLLATION_SERVER=utf8mb4_unicode_ci
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./src/models/migrations/001_create_logs_table.sql:/docker-entrypoint-initdb.d/001_create_logs_table.sql
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-password}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
