@@ -82,7 +82,7 @@ router.get(
  */
 router.get(
   '/errors',
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (_req: Request, res: Response) => {
     logger.info('收到错误报表请求');
 
     const report = await reportService.generateErrorReport();

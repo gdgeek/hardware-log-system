@@ -9,7 +9,7 @@
 import dotenv from 'dotenv';
 import { createApp, setupGracefulShutdown } from './app';
 import { sequelize } from './config/database';
-import { validateEnv } from './config/env';
+import { config } from './config/env';
 import { logger } from './config/logger';
 
 // 加载环境变量
@@ -20,30 +20,28 @@ dotenv.config();
  */
 async function startServer(): Promise<void> {
   try {
-    // 验证环境变量配置
-    logger.info('验证环境变量配置...');
-    validateEnv();
+    // 环境变量已在 config 模块加载时验证
     logger.info('环境变量验证通过');
 
     // 测试数据库连接（需求 5.1, 5.4）
     logger.info('测试数据库连接...');
     await sequelize.authenticate();
     logger.info('数据库连接成功', {
-      host: process.env.DB_HOST,
-      database: process.env.DB_NAME,
+      host: config.dbHost,
+      database: config.dbName,
     });
 
     // 创建 Express 应用
     const app = createApp();
 
     // 获取端口配置
-    const port = parseInt(process.env.PORT || '3000', 10);
+    const port = config.port;
 
     // 启动 HTTP 服务器
     const server = app.listen(port, () => {
       logger.info('服务器启动成功', {
         port,
-        env: process.env.NODE_ENV || 'development',
+        env: config.nodeEnv,
         pid: process.pid,
       });
       logger.info(`服务器地址: http://localhost:${port}`);

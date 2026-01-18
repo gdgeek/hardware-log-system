@@ -27,7 +27,7 @@ export function createApp(): Application {
   app.use(loggingMiddleware);
 
   // 健康检查端点
-  app.get('/health', (req, res) => {
+  app.get('/health', (_req, res) => {
     res.status(200).json({
       status: 'ok',
       timestamp: new Date().toISOString(),
