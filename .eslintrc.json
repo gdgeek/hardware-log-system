@@ -15,6 +15,13 @@
     "es6": true,
     "jest": true
   },
+  "ignorePatterns": [
+    "dist",
+    "node_modules",
+    "**/*.test.ts",
+    "**/*.integration.ts",
+    "**/*.property.test.ts"
+  ],
   "rules": {
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/no-explicit-any": "warn",

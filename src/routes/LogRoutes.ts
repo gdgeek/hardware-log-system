@@ -11,7 +11,7 @@
 
 import { Router, Request, Response } from 'express';
 import { logService } from '../services/LogService';
-import { validateBody, validateQuery, validateParams, asyncHandler } from '../middleware';
+import { validateBody, validateParams, asyncHandler } from '../middleware';
 import { logInputSchema, logFiltersSchema, paginationSchema, logIdParamSchema } from '../validation/schemas';
 import { logger } from '../config/logger';
 

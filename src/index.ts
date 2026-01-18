@@ -71,9 +71,9 @@ process.on('uncaughtException', (error: Error) => {
 });
 
 // 处理未处理的 Promise 拒绝
-process.on('unhandledRejection', (reason: any) => {
+process.on('unhandledRejection', (reason: unknown) => {
   logger.error('未处理的 Promise 拒绝', {
-    reason: reason instanceof Error ? reason.message : reason,
+    reason: reason instanceof Error ? reason.message : String(reason),
     stack: reason instanceof Error ? reason.stack : undefined,
   });
   process.exit(1);

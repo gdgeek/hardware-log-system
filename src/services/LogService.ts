@@ -9,7 +9,7 @@
  * Requirements: 1.1, 1.2, 2.1, 2.2, 2.3, 2.4, 2.5
  */
 
-import { LogInput, LogOutput, LogFilters, Pagination, PaginatedResult, NotFoundError } from '../types';
+import { LogInput, LogOutput, LogFilters, Pagination, PaginatedResult } from '../types';
 import { logRepository, LogRepository } from '../repositories/LogRepository';
 import { validateOrThrow } from '../validation/validator';
 import { logInputSchema, logFiltersSchema, paginationSchema } from '../validation/schemas';
@@ -127,7 +127,7 @@ export class LogService {
    * Converts a Log model instance to LogOutput format
    * @private
    */
-  private toLogOutput(log: any): LogOutput {
+  private toLogOutput(log: Log): LogOutput {
     return {
       id: log.id,
       deviceUuid: log.deviceUuid,

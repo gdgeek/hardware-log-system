@@ -143,7 +143,7 @@ export class LogRepository {
         ],
         group: ['dataType'],
         raw: true,
-      }) as any[];
+      }) as Array<{ dataType: string; count: string; firstLogTime: Date; lastLogTime: Date }>;
 
       // If no logs found, return empty report
       if (stats.length === 0) {
@@ -240,7 +240,7 @@ export class LogRepository {
         ],
         group: ['dataType'],
         raw: true,
-      }) as any[];
+      }) as Array<{ dataType: string; count: string }>;
 
       // Get unique device count
       const deviceCountResult = await Log.findAll({
@@ -252,7 +252,7 @@ export class LogRepository {
         },
         attributes: [[fn('COUNT', fn('DISTINCT', col('deviceUuid'))), 'deviceCount']],
         raw: true,
-      }) as any[];
+      }) as Array<{ deviceCount: string }>;
 
       const deviceCount = deviceCountResult.length > 0 ? parseInt(deviceCountResult[0].deviceCount, 10) : 0;
 
@@ -325,7 +325,7 @@ export class LogRepository {
         group: ['deviceUuid', 'logKey'],
         order: [[literal('count'), 'DESC']], // Most frequent errors first
         raw: true,
-      }) as any[];
+      }) as Array<{ deviceUuid: string; logKey: string; count: string; lastOccurrence: Date }>;
 
       const errors = errorStats.map((stat) => ({
         deviceUuid: stat.deviceUuid,
@@ -362,8 +362,8 @@ export class LogRepository {
    * @returns Sequelize where clause object
    * @private
    */
-  private buildWhereClause(filters: LogFilters): any {
-    const where: any = {};
+  private buildWhereClause(filters: LogFilters): Record<string, unknown> {
+    const where: Record<string, unknown> = {};
 
     if (filters.deviceUuid) {
       where.deviceUuid = filters.deviceUuid;

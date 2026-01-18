@@ -83,7 +83,7 @@ export const logStream = {
 /**
  * Log an error with context
  */
-export function logError(message: string, error: Error, context?: Record<string, any>): void {
+export function logError(message: string, error: Error, context?: Record<string, unknown>): void {
   logger.error(message, {
     error: {
       message: error.message,
@@ -102,7 +102,7 @@ export function logRequest(
   path: string,
   statusCode: number,
   duration: number,
-  context?: Record<string, any>
+  context?: Record<string, unknown>
 ): void {
   logger.info('API Request', {
     method,
@@ -120,7 +120,7 @@ export function logDatabaseOperation(
   operation: string,
   duration: number,
   success: boolean,
-  context?: Record<string, any>
+  context?: Record<string, unknown>
 ): void {
   const level = success ? 'info' : 'error';
   logger.log(level, 'Database Operation', {

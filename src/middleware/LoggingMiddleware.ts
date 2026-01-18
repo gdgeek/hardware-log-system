@@ -21,7 +21,7 @@ export function loggingMiddleware(req: Request, res: Response, next: NextFunctio
   const originalJson = res.json.bind(res);
 
   // 重写 res.json 方法以捕获响应
-  res.json = function (body: any): Response {
+  res.json = function (body: unknown): Response {
     const duration = Date.now() - startTime;
 
     // 记录请求日志（需求 8.3）

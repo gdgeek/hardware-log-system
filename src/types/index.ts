@@ -106,7 +106,7 @@ export interface ErrorResponse {
   error: {
     code: string;
     message: string;
-    details?: Record<string, any>;
+    details?: Record<string, unknown>;
   };
 }
 
@@ -128,7 +128,7 @@ export class ValidationError extends Error {
   constructor(
     message: string,
     public code: string = 'VALIDATION_ERROR',
-    public details?: Record<string, any>
+    public details?: Record<string, unknown>
   ) {
     super(message);
     this.name = 'ValidationError';

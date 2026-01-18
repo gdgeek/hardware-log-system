@@ -52,7 +52,7 @@ export function createApp(): Application {
 /**
  * 优雅关闭处理
  */
-export function setupGracefulShutdown(server: any): void {
+export function setupGracefulShutdown(server: { close: (callback: () => void) => void }): void {
   const shutdown = async (signal: string) => {
     logger.info(`收到 ${signal} 信号，开始优雅关闭...`);
 

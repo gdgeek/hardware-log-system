@@ -11,15 +11,6 @@ import { ValidationError, NotFoundError, DatabaseError } from '../types';
 import { logger, logError } from '../config/logger';
 
 /**
- * 错误类型到 HTTP 状态码的映射
- */
-const ERROR_STATUS_MAP: Record<string, number> = {
-  ValidationError: 400,
-  NotFoundError: 404,
-  DatabaseError: 500,
-};
-
-/**
  * 全局错误处理中间件
  * 
  * @param err - 错误对象
@@ -31,11 +22,11 @@ export function errorHandler(
   err: Error,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ): void {
   // 如果响应已经发送，传递给默认错误处理器
   if (res.headersSent) {
-    next(err);
+    _next(err);
     return;
   }
 
@@ -43,7 +34,7 @@ export function errorHandler(
   let statusCode = 500;
   let errorCode = 'INTERNAL_ERROR';
   let errorMessage = '服务器内部错误';
-  let errorDetails: any = undefined;
+  let errorDetails: Record<string, unknown> | undefined = undefined;
 
   // 处理已知的错误类型
   if (err instanceof ValidationError) {
@@ -93,7 +84,7 @@ export function errorHandler(
  * 
  * 应该在所有路由之后注册
  */
-export function notFoundHandler(req: Request, res: Response, next: NextFunction): void {
+export function notFoundHandler(req: Request, res: Response, _next: NextFunction): void {
   const error = new NotFoundError(`路由未找到: ${req.method} ${req.path}`);
   
   logger.warn('404 - 路由未找到', {
@@ -118,7 +109,7 @@ export function notFoundHandler(req: Request, res: Response, next: NextFunction)
  * @returns 包装后的处理函数
  */
 export function asyncHandler(
-  fn: (req: Request, res: Response, next: NextFunction) => Promise<any>
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<unknown>
 ) {
   return (req: Request, res: Response, next: NextFunction): void => {
     Promise.resolve(fn(req, res, next)).catch(next);

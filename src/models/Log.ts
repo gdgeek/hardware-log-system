@@ -105,7 +105,7 @@ Log.init(
       field: 'log_value',
       comment: 'JSON value containing log data',
       validate: {
-        isValidJSON(value: any) {
+        isValidJSON(value: unknown) {
           if (typeof value !== 'object' || value === null) {
             throw new Error('Log value must be a valid JSON object');
           }
