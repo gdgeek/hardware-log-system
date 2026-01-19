@@ -120,9 +120,11 @@ jobs:
           cache-to: type=gha,mode=max
       
       - name: 触发 Portainer Webhook 部署
+        if: ${{ env.WEBHOOK_URL != '' }}
+        env:
+          WEBHOOK_URL: ${{ secrets.PORTAINER_WEBHOOK_URL }}
         run: |
-          curl -X POST "${{ secrets.PORTAINER_WEBHOOK_URL }}"
-        if: secrets.PORTAINER_WEBHOOK_URL != ''
+          curl -X POST "$WEBHOOK_URL"
 
   deploy:
     name: 部署到服务器
