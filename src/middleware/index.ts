@@ -17,3 +17,7 @@ export {
 } from './ErrorMiddleware';
 
 export { loggingMiddleware } from './LoggingMiddleware';
+
+export { apiLimiter, strictLimiter } from './RateLimitMiddleware';
+
+export { requestIdMiddleware } from './RequestIdMiddleware';
