@@ -122,7 +122,7 @@ jobs:
       - name: 触发 Portainer Webhook 部署
         run: |
           curl -X POST "${{ secrets.PORTAINER_WEBHOOK_URL }}"
-        if: ${{ secrets.PORTAINER_WEBHOOK_URL != '' }}
+        if: secrets.PORTAINER_WEBHOOK_URL != ''
 
   deploy:
     name: 部署到服务器
