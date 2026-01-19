@@ -6,9 +6,14 @@
 
 - RESTful API 接口用于日志数据接收和查询
 - 支持多种日志类型（记录、警告、错误）
+- 支持项目名称和版本号字段，便于多项目管理
 - 高级过滤和分页功能
 - 统计报表生成
+- API 版本控制（v1）
+- 请求限流保护
+- 请求 ID 追踪
 - OpenAPI 3.0 文档和 Swagger UI
+- Redis 缓存支持（可选）
 - Docker 容器化部署
 - GitHub Actions CI/CD 自动化
 
@@ -18,6 +23,7 @@
 - **Web 框架**: Express.js
 - **数据库**: MySQL 8.0（腾讯云）
 - **ORM**: Sequelize
+- **缓存**: Redis（可选）
 - **验证**: Joi
 - **日志**: Winston
 - **API 文档**: Swagger/OpenAPI 3.0
@@ -32,11 +38,15 @@ hardware-log-system/
 │   ├── config/          # 配置模块
 │   │   ├── database.ts  # 数据库连接配置
 │   │   ├── env.ts       # 环境变量验证
-│   │   └── logger.ts    # Winston 日志配置
+│   │   ├── logger.ts    # Winston 日志配置
+│   │   ├── redis.ts     # Redis 缓存配置
+│   │   └── swagger.ts   # Swagger 文档配置
 │   ├── middleware/      # Express 中间件
-│   │   ├── ValidationMiddleware.ts  # 请求验证
-│   │   ├── ErrorMiddleware.ts       # 错误处理
-│   │   └── LoggingMiddleware.ts     # 访问日志
+│   │   ├── ValidationMiddleware.ts   # 请求验证
+│   │   ├── ErrorMiddleware.ts        # 错误处理
+│   │   ├── LoggingMiddleware.ts      # 访问日志
+│   │   ├── RateLimitMiddleware.ts    # 请求限流
+│   │   └── RequestIdMiddleware.ts    # 请求 ID 追踪
 │   ├── models/          # Sequelize 数据库模型
 │   │   ├── Log.ts       # 日志模型
 │   │   └── migrations/  # 数据库迁移脚本
@@ -55,6 +65,7 @@ hardware-log-system/
 │   ├── app.ts           # Express 应用配置
 │   └── index.ts         # 应用入口
 ├── logs/                # 应用日志目录
+├── docs/                # 项目文档
 ├── .env.example         # 环境变量模板
 ├── Dockerfile           # Docker 镜像构建文件
 ├── docker-compose.yml   # Docker Compose 配置
@@ -70,6 +81,7 @@ hardware-log-system/
 - Node.js 18 或更高版本
 - MySQL 8.0
 - pnpm 10 或更高版本
+- Redis（可选，用于缓存）
 
 ### 安装步骤
 
@@ -148,21 +160,57 @@ pnpm run lint
 
 ## API 端点
 
+所有 API 端点支持版本控制，推荐使用 `/api/v1` 前缀。
+
 ### 日志管理
 
-- `POST /api/logs` - 创建日志记录
-- `GET /api/logs` - 查询日志（支持过滤和分页）
-- `GET /api/logs/:id` - 获取单条日志
+- `POST /api/v1/logs` - 创建日志记录
+- `GET /api/v1/logs` - 查询日志（支持过滤和分页）
+- `GET /api/v1/logs/:id` - 获取单条日志
 
 ### 报表生成
 
-- `GET /api/reports/device/:uuid` - 设备统计报表
-- `GET /api/reports/timerange` - 时间段统计报表
-- `GET /api/reports/errors` - 错误统计报表
+- `GET /api/v1/reports/device/:uuid` - 设备统计报表
+- `GET /api/v1/reports/timerange` - 时间段统计报表
+- `GET /api/v1/reports/errors` - 错误统计报表
 
 ### 系统
 
 - `GET /health` - 健康检查
+- `GET /api-docs` - Swagger UI 文档
+- `GET /api-docs.json` - OpenAPI JSON 规范
+
+### 兼容旧版本
+
+为了向后兼容，不带版本号的路由仍然可用：
+- `/api/logs` → 重定向到 `/api/v1/logs`
+- `/api/reports` → 重定向到 `/api/v1/reports`
+
+## 日志数据结构
+
+### 创建日志请求体
+
+```json
+{
+  "deviceUuid": "550e8400-e29b-41d4-a716-446655440000",
+  "dataType": "record",
+  "key": "temperature",
+  "value": { "celsius": 25.5, "humidity": 60 },
+  "projectName": "smart-home",
+  "version": "1.0.0"
+}
+```
+
+### 字段说明
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| deviceUuid | string | 是 | 设备唯一标识（UUID 格式） |
+| dataType | string | 是 | 日志类型：record、warning、error |
+| key | string | 是 | 日志键名（最大 255 字符） |
+| value | object | 是 | 日志数据（JSON 对象） |
+| projectName | string | 否 | 项目名称（最大 100 字符） |
+| version | string | 否 | 版本号（语义化版本格式，如 1.0.0） |
 
 ## 环境变量
 
@@ -182,6 +230,17 @@ pnpm run lint
 - `DB_POOL_MAX` - 连接池最大连接数（默认：10）
 - `LOG_LEVEL` - 日志级别（默认：info）
 - `LOG_FILE` - 日志文件路径（默认：logs/app.log）
+
+### Redis 配置（可选）：
+- `REDIS_ENABLED` - 是否启用 Redis 缓存（true/false）
+- `REDIS_HOST` - Redis 主机地址（默认：localhost）
+- `REDIS_PORT` - Redis 端口（默认：6379）
+- `REDIS_PASSWORD` - Redis 密码
+- `REDIS_DB` - Redis 数据库编号（默认：0）
+
+### 限流配置：
+- `RATE_LIMIT_WINDOW_MS` - 限流时间窗口（毫秒，默认：60000）
+- `RATE_LIMIT_MAX` - 时间窗口内最大请求数（默认：100）
 
 ## API 文档
 
@@ -241,6 +300,10 @@ docker run -d \
 ```
 客户端请求
     ↓
+请求 ID 中间件（添加追踪 ID）
+    ↓
+限流中间件（保护 API）
+    ↓
 API 路由（验证中间件）
     ↓
 业务逻辑服务
@@ -258,6 +321,8 @@ MySQL 数据库
 2. **基于属性的测试**：使用 fast-check 验证通用属性在所有输入下都成立
 
 每个属性测试运行至少 100 次迭代，确保代码的正确性。
+
+当前测试覆盖率：~80%
 
 ## 文档
 
