@@ -20,10 +20,3 @@ export function requestIdMiddleware(req: Request, res: Response, next: NextFunct
   
   next();
 }
-
-// 扩展 Express Request 类型（使用模块扩展而非 namespace）
-declare module 'express-serve-static-core' {
-  interface Request {
-    requestId: string;
-  }
-}

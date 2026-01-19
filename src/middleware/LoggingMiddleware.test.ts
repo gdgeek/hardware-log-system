@@ -11,8 +11,13 @@ jest.mock('../config/logger', () => ({
   logRequest: jest.fn(),
 }));
 
+// 扩展类型用于测试
+interface MockRequest extends Partial<Request> {
+  requestId?: string;
+}
+
 describe('LoggingMiddleware', () => {
-  let mockRequest: Partial<Request>;
+  let mockRequest: MockRequest;
   let mockResponse: Partial<Response>;
   let mockNext: NextFunction;
   let jsonMock: jest.Mock;
@@ -22,7 +27,7 @@ describe('LoggingMiddleware', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    jsonMock = jest.fn().mockImplementation(function (this: any) {
+    jsonMock = jest.fn().mockImplementation(function (this: unknown) {
       return this;
     });
 
@@ -35,9 +40,10 @@ describe('LoggingMiddleware', () => {
       query: {},
       get: getMock,
       ip: '127.0.0.1',
+      requestId: 'test-request-id',
       socket: {
         remoteAddress: '127.0.0.1',
-      } as any,
+      } as never,
     };
 
     mockResponse = {
@@ -80,9 +86,10 @@ describe('LoggingMiddleware', () => {
       query: {},
       get: getMock,
       ip: '127.0.0.1',
+      requestId: 'test-request-id',
       socket: {
         remoteAddress: '127.0.0.1',
-      } as any,
+      } as never,
     };
 
     loggingMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
@@ -176,9 +183,10 @@ describe('LoggingMiddleware', () => {
       query: {},
       get: getMock,
       ip: '192.168.1.100',
+      requestId: 'test-request-id',
       socket: {
         remoteAddress: '192.168.1.100',
-      } as any,
+      } as never,
     };
 
     loggingMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
@@ -202,7 +210,8 @@ describe('LoggingMiddleware', () => {
       query: {},
       get: getMock,
       ip: undefined,
-      socket: { remoteAddress: '10.0.0.1' } as any,
+      requestId: 'test-request-id',
+      socket: { remoteAddress: '10.0.0.1' } as never,
     };
 
     loggingMiddleware(mockRequest as Request, mockResponse as Response, mockNext);

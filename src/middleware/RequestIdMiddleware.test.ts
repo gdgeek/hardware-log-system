@@ -10,8 +10,13 @@ jest.mock('uuid', () => ({
   v4: jest.fn(() => 'mocked-uuid-1234-5678-9abc-def012345678'),
 }));
 
+// 扩展类型用于测试
+interface MockRequest extends Partial<Request> {
+  requestId?: string;
+}
+
 describe('RequestIdMiddleware', () => {
-  let mockReq: Partial<Request>;
+  let mockReq: MockRequest;
   let mockRes: Partial<Response>;
   let nextFn: jest.Mock;
 
