@@ -7,6 +7,7 @@
 - RESTful API 接口用于日志数据接收和查询
 - 支持多种日志类型（记录、警告、错误）
 - 支持项目名称和版本号字段，便于多项目管理
+- 自动记录客户端 IP 地址
 - 高级过滤和分页功能
 - 统计报表生成
 - API 版本控制（v1）
@@ -211,6 +212,7 @@ pnpm run lint
 | value | object | 是 | 日志数据（JSON 对象） |
 | projectName | string | 否 | 项目名称（最大 100 字符） |
 | version | string | 否 | 版本号（语义化版本格式，如 1.0.0） |
+| clientIp | string | 否 | 客户端 IP（自动从请求中获取，支持 IPv4/IPv6） |
 
 ## 环境变量
 

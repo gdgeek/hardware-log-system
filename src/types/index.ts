@@ -14,6 +14,7 @@ export interface LogInput {
   deviceUuid: string;
   projectName?: string;
   projectVersion?: string;
+  clientIp?: string;
   dataType: DataType;
   key: string;
   value: object;
@@ -27,6 +28,7 @@ export interface LogOutput {
   deviceUuid: string;
   projectName: string | null;
   projectVersion: string | null;
+  clientIp: string | null;
   dataType: DataType;
   key: string;
   value: object;

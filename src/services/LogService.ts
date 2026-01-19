@@ -37,6 +37,7 @@ export class LogService {
       deviceUuid: validatedData.deviceUuid,
       dataType: validatedData.dataType,
       key: validatedData.key,
+      clientIp: validatedData.clientIp,
     });
 
     // Create log with auto-generated timestamp (Requirement 1.2)
@@ -44,6 +45,7 @@ export class LogService {
       deviceUuid: validatedData.deviceUuid,
       projectName: validatedData.projectName || null,
       projectVersion: validatedData.projectVersion || null,
+      clientIp: validatedData.clientIp || null,
       dataType: validatedData.dataType,
       logKey: validatedData.key,
       logValue: validatedData.value,
@@ -136,6 +138,7 @@ export class LogService {
       deviceUuid: log.deviceUuid,
       projectName: log.projectName,
       projectVersion: log.projectVersion,
+      clientIp: log.clientIp,
       dataType: log.dataType,
       key: log.logKey,
       value: log.logValue,

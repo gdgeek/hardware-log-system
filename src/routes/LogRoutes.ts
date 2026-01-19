@@ -47,12 +47,19 @@ router.post(
   '/',
   validateBody(logInputSchema),
   asyncHandler(async (req: Request, res: Response) => {
+    // 获取客户端 IP（支持代理）
+    const clientIp = req.ip || req.socket.remoteAddress || null;
+
     logger.info('收到创建日志请求', {
       deviceUuid: req.body.deviceUuid,
       dataType: req.body.dataType,
+      clientIp,
     });
 
-    const log = await logService.createLog(req.body);
+    const log = await logService.createLog({
+      ...req.body,
+      clientIp,
+    });
 
     logger.info('日志创建成功', { id: log.id });
 

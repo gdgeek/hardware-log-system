@@ -51,6 +51,7 @@ services:
       - mysql_data:/var/lib/mysql
       - ./src/models/migrations/001_create_logs_table.sql:/docker-entrypoint-initdb.d/001_create_logs_table.sql
       - ./src/models/migrations/002_add_project_fields.sql:/docker-entrypoint-initdb.d/002_add_project_fields.sql
+      - ./src/models/migrations/003_add_client_ip.sql:/docker-entrypoint-initdb.d/003_add_client_ip.sql
     networks:
       - app-network
     restart: unless-stopped

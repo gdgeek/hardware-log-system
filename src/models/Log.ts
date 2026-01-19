@@ -10,6 +10,7 @@ export interface LogAttributes {
   deviceUuid: string;
   projectName: string | null;
   projectVersion: string | null;
+  clientIp: string | null;
   dataType: DataType;
   logKey: string;
   logValue: object;
@@ -19,7 +20,7 @@ export interface LogAttributes {
 /**
  * Optional attributes for Log creation (id and createdAt are auto-generated)
  */
-export interface LogCreationAttributes extends Optional<LogAttributes, 'id' | 'createdAt' | 'projectName' | 'projectVersion'> {}
+export interface LogCreationAttributes extends Optional<LogAttributes, 'id' | 'createdAt' | 'projectName' | 'projectVersion' | 'clientIp'> {}
 
 /**
  * Log model class
@@ -30,6 +31,7 @@ export class Log extends Model<LogAttributes, LogCreationAttributes> implements 
   declare deviceUuid: string;
   declare projectName: string | null;
   declare projectVersion: string | null;
+  declare clientIp: string | null;
   declare dataType: DataType;
   declare logKey: string;
   declare logValue: object;
@@ -44,6 +46,7 @@ export class Log extends Model<LogAttributes, LogCreationAttributes> implements 
       deviceUuid: this.deviceUuid,
       projectName: this.projectName,
       projectVersion: this.projectVersion,
+      clientIp: this.clientIp,
       dataType: this.dataType,
       logKey: this.logKey,
       logValue: this.logValue,
@@ -89,6 +92,12 @@ Log.init(
       allowNull: true,
       field: 'project_version',
       comment: 'Project version that generated the log',
+    },
+    clientIp: {
+      type: DataTypes.STRING(45),
+      allowNull: true,
+      field: 'client_ip',
+      comment: 'Client IP address (supports IPv4 and IPv6)',
     },
     dataType: {
       type: DataTypes.ENUM('record', 'warning', 'error'),
@@ -166,6 +175,10 @@ Log.init(
       {
         name: 'idx_project',
         fields: ['project_name', 'project_version'],
+      },
+      {
+        name: 'idx_client_ip',
+        fields: ['client_ip'],
       },
     ],
     comment: 'Table storing hardware device logs',
