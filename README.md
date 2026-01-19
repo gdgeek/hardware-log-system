@@ -259,6 +259,18 @@ MySQL 数据库
 
 每个属性测试运行至少 100 次迭代，确保代码的正确性。
 
+## 文档
+
+详细文档请查看 [docs/](docs/README.md) 目录：
+
+- **部署文档**
+  - [腾讯云部署指南](docs/deployment/TENCENT_CLOUD_DEPLOYMENT.md)
+  - [Portainer 部署指南](docs/deployment/PORTAINER_DEPLOYMENT.md)
+
+- **开发文档**
+  - [本地开发环境搭建](docs/development/SETUP.md)
+  - [测试配置说明](docs/development/TEST_SETUP_SUMMARY.md)
+
 ## 许可证
 
 MIT
