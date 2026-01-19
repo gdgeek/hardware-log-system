@@ -9,13 +9,13 @@
  * 需求：1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 2.5
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, IRouter } from 'express';
 import { logService } from '../services/LogService';
 import { validateBody, validateParams, asyncHandler } from '../middleware';
 import { logInputSchema, logFiltersSchema, paginationSchema, logIdParamSchema } from '../validation/schemas';
 import { logger } from '../config/logger';
 
-const router = Router();
+const router: IRouter = Router();
 
 /**
  * POST /api/logs

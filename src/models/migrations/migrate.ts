@@ -58,17 +58,6 @@ async function recordMigration(name: string): Promise<void> {
 }
 
 /**
- * Removes a migration record (for rollback - not currently used)
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function _removeMigrationRecord(name: string): Promise<void> {
-  await sequelize.query(
-    'DELETE FROM migrations WHERE name = ?',
-    { replacements: [name] }
-  );
-}
-
-/**
  * Gets all migration files from the migrations directory
  */
 function getMigrationFiles(): string[] {

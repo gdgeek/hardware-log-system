@@ -9,13 +9,13 @@
  * 需求：3.1, 3.2, 3.3, 3.4
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, IRouter } from 'express';
 import { reportService } from '../services/ReportService';
 import { validateParams, validateQuery, asyncHandler } from '../middleware';
 import { deviceUuidParamSchema, timeRangeQuerySchema } from '../validation/schemas';
 import { logger } from '../config/logger';
 
-const router = Router();
+const router: IRouter = Router();
 
 /**
  * GET /api/reports/device/:uuid
