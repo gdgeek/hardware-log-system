@@ -15,6 +15,13 @@ jest.mock('../config/logger', () => ({
   logError: jest.fn(),
 }));
 
+// Mock metrics
+jest.mock('../config/metrics', () => ({
+  errorsTotal: {
+    inc: jest.fn(),
+  },
+}));
+
 describe('ErrorMiddleware', () => {
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
@@ -32,6 +39,7 @@ describe('ErrorMiddleware', () => {
       query: {},
       body: {},
       params: {},
+      headers: {},
     };
 
     mockResponse = {
@@ -41,6 +49,9 @@ describe('ErrorMiddleware', () => {
     };
 
     mockNext = jest.fn();
+
+    // 设置为生产环境以简化测试
+    process.env.NODE_ENV = 'production';
   });
 
   afterEach(() => {
@@ -56,14 +67,11 @@ describe('ErrorMiddleware', () => {
       errorHandler(error, mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(statusMock).toHaveBeenCalledWith(400);
-      expect(jsonMock).toHaveBeenCalledWith({
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: '验证失败',
-          details: {
-            errors: [{ field: 'name', message: '名称必填' }],
-          },
-        },
+      const response = jsonMock.mock.calls[0][0];
+      expect(response.error.code).toBe('VALIDATION_ERROR');
+      expect(response.error.message).toBe('验证失败');
+      expect(response.error.details).toEqual({
+        errors: [{ field: 'name', message: '名称必填' }],
       });
     });
 
@@ -73,12 +81,9 @@ describe('ErrorMiddleware', () => {
       errorHandler(error, mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(statusMock).toHaveBeenCalledWith(404);
-      expect(jsonMock).toHaveBeenCalledWith({
-        error: {
-          code: 'NOT_FOUND',
-          message: '资源未找到',
-        },
-      });
+      const response = jsonMock.mock.calls[0][0];
+      expect(response.error.code).toBe('NOT_FOUND');
+      expect(response.error.message).toBe('资源未找到');
     });
 
     it('应该处理 DatabaseError 并返回 500', () => {
@@ -87,12 +92,9 @@ describe('ErrorMiddleware', () => {
       errorHandler(error, mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(statusMock).toHaveBeenCalledWith(500);
-      expect(jsonMock).toHaveBeenCalledWith({
-        error: {
-          code: 'DATABASE_ERROR',
-          message: '数据库操作失败',
-        },
-      });
+      const response = jsonMock.mock.calls[0][0];
+      expect(response.error.code).toBe('DATABASE_ERROR');
+      expect(response.error.message).toBe('数据库操作失败');
     });
 
     it('应该处理未知错误并返回 500', () => {
@@ -101,12 +103,8 @@ describe('ErrorMiddleware', () => {
       errorHandler(error, mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(statusMock).toHaveBeenCalledWith(500);
-      expect(jsonMock).toHaveBeenCalledWith({
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: expect.any(String),
-        },
-      });
+      const response = jsonMock.mock.calls[0][0];
+      expect(response.error.code).toBe('INTERNAL_ERROR');
     });
 
     it('应该在响应已发送时调用 next', () => {
@@ -131,7 +129,6 @@ describe('ErrorMiddleware', () => {
     });
 
     it('应该在生产环境隐藏错误详情', () => {
-      const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'production';
 
       const error = new Error('敏感错误信息');
@@ -140,12 +137,9 @@ describe('ErrorMiddleware', () => {
 
       const errorResponse = jsonMock.mock.calls[0][0];
       expect(errorResponse.error.message).toBe('服务器内部错误');
-
-      process.env.NODE_ENV = originalEnv;
     });
 
     it('应该在开发环境显示错误详情', () => {
-      const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'development';
 
       const error = new Error('详细错误信息');
@@ -154,8 +148,8 @@ describe('ErrorMiddleware', () => {
 
       const errorResponse = jsonMock.mock.calls[0][0];
       expect(errorResponse.error.message).toBe('详细错误信息');
-
-      process.env.NODE_ENV = originalEnv;
+      // 开发环境应该有堆栈信息
+      expect(errorResponse).toHaveProperty('stack');
     });
 
     it('应该包含 ValidationError 的详细信息', () => {
@@ -179,12 +173,9 @@ describe('ErrorMiddleware', () => {
       notFoundHandler(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(statusMock).toHaveBeenCalledWith(404);
-      expect(jsonMock).toHaveBeenCalledWith({
-        error: {
-          code: 'NOT_FOUND',
-          message: expect.stringContaining('路由未找到'),
-        },
-      });
+      const response = jsonMock.mock.calls[0][0];
+      expect(response.error.code).toBe('NOT_FOUND');
+      expect(response.error.message).toContain('路由未找到');
     });
 
     it('应该在错误消息中包含请求路径和方法', () => {
@@ -194,6 +185,7 @@ describe('ErrorMiddleware', () => {
         query: {},
         body: {},
         params: {},
+        headers: {},
       };
 
       notFoundHandler(mockRequest as Request, mockResponse as Response, mockNext);
@@ -201,6 +193,16 @@ describe('ErrorMiddleware', () => {
       const errorResponse = jsonMock.mock.calls[0][0];
       expect(errorResponse.error.message).toContain('GET');
       expect(errorResponse.error.message).toContain('/api/test');
+    });
+
+    it('应该在开发环境显示可用路由', () => {
+      process.env.NODE_ENV = 'development';
+
+      notFoundHandler(mockRequest as Request, mockResponse as Response, mockNext);
+
+      const response = jsonMock.mock.calls[0][0];
+      expect(response).toHaveProperty('availableRoutes');
+      expect(Array.isArray(response.availableRoutes)).toBe(true);
     });
   });
 

@@ -17,8 +17,12 @@ import {
   apiLimiter,
   requestIdMiddleware,
 } from './middleware';
+import { metricsMiddleware } from './middleware/MetricsMiddleware';
 import { logger } from './config/logger';
 import { swaggerSpec } from './config/swagger';
+import { register, dbPoolConnections, redisConnectionStatus } from './config/metrics';
+import { sequelize } from './config/database';
+import { cacheService } from './config/redis';
 
 /**
  * 创建并配置 Express 应用
@@ -31,6 +35,9 @@ export function createApp(): Application {
 
   // 请求 ID 追踪（最先执行）
   app.use(requestIdMiddleware);
+
+  // 监控中间件
+  app.use(metricsMiddleware);
 
   // 基础中间件
   app.use(cors());
@@ -52,12 +59,94 @@ export function createApp(): Application {
     res.send(swaggerSpec);
   });
 
-  // 健康检查端点（不限流）
-  app.get('/health', (_req, res) => {
-    res.status(200).json({
+  // 健康检查端点（增强版）
+  app.get('/health', async (_req, res) => {
+    const health: {
+      status: string;
+      timestamp: string;
+      uptime: number;
+      version: string;
+      checks: {
+        database: { status: string; latency?: number; error?: string };
+        redis: { status: string; enabled: boolean };
+      };
+      memory: {
+        used: number;
+        total: number;
+        percentage: number;
+      };
+    } = {
       status: 'ok',
       timestamp: new Date().toISOString(),
-    });
+      uptime: process.uptime(),
+      version: process.env.npm_package_version || '1.0.0',
+      checks: {
+        database: { status: 'unknown' },
+        redis: { status: 'unknown', enabled: process.env.REDIS_ENABLED === 'true' },
+      },
+      memory: {
+        used: 0,
+        total: 0,
+        percentage: 0,
+      },
+    };
+
+    // 检查数据库连接
+    try {
+      const dbStart = Date.now();
+      await sequelize.authenticate();
+      const dbLatency = Date.now() - dbStart;
+      health.checks.database = { status: 'healthy', latency: dbLatency };
+      
+      // 更新数据库连接池指标
+      const pool = sequelize.connectionManager.pool;
+      if (pool) {
+        dbPoolConnections.set({ state: 'used' }, pool.using);
+        dbPoolConnections.set({ state: 'idle' }, pool.available);
+        dbPoolConnections.set({ state: 'waiting' }, pool.waiting);
+      }
+    } catch (error) {
+      health.status = 'degraded';
+      health.checks.database = {
+        status: 'unhealthy',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+
+    // 检查 Redis 连接
+    if (process.env.REDIS_ENABLED === 'true') {
+      if (cacheService.isAvailable()) {
+        health.checks.redis.status = 'healthy';
+        redisConnectionStatus.set(1);
+      } else {
+        health.checks.redis.status = 'unhealthy';
+        redisConnectionStatus.set(0);
+        // Redis 不可用不影响整体状态，只是降级
+      }
+    } else {
+      health.checks.redis.status = 'disabled';
+    }
+
+    // 内存使用情况
+    const memUsage = process.memoryUsage();
+    health.memory = {
+      used: Math.round(memUsage.heapUsed / 1024 / 1024),
+      total: Math.round(memUsage.heapTotal / 1024 / 1024),
+      percentage: Math.round((memUsage.heapUsed / memUsage.heapTotal) * 100),
+    };
+
+    const statusCode = health.status === 'ok' ? 200 : 503;
+    res.status(statusCode).json(health);
+  });
+
+  // Prometheus 指标端点
+  app.get('/metrics', async (_req, res) => {
+    try {
+      res.set('Content-Type', register.contentType);
+      res.end(await register.metrics());
+    } catch (error) {
+      res.status(500).end(error instanceof Error ? error.message : 'Unknown error');
+    }
   });
 
   // API 限流（应用于所有 /api 路由）

@@ -4,6 +4,7 @@
 
 import Redis from 'ioredis';
 import { logger } from './logger';
+import { cacheHits, cacheMisses, redisConnectionStatus } from './metrics';
 
 // Redis 配置
 const redisConfig = {
@@ -32,6 +33,7 @@ export function getRedisClient(): Redis | null {
 export async function initRedis(): Promise<boolean> {
   if (process.env.REDIS_ENABLED !== 'true') {
     logger.info('Redis 缓存已禁用');
+    redisConnectionStatus.set(0);
     return false;
   }
 
@@ -40,6 +42,7 @@ export async function initRedis(): Promise<boolean> {
 
     redis.on('error', (err) => {
       logger.error('Redis 连接错误', { error: err.message });
+      redisConnectionStatus.set(0);
     });
 
     redis.on('connect', () => {
@@ -47,6 +50,11 @@ export async function initRedis(): Promise<boolean> {
         host: redisConfig.host,
         port: redisConfig.port,
       });
+      redisConnectionStatus.set(1);
+    });
+
+    redis.on('close', () => {
+      redisConnectionStatus.set(0);
     });
 
     await redis.connect();
@@ -56,6 +64,7 @@ export async function initRedis(): Promise<boolean> {
       error: error instanceof Error ? error.message : '未知错误',
     });
     redis = null;
+    redisConnectionStatus.set(0);
     return false;
   }
 }
@@ -67,6 +76,7 @@ export async function closeRedis(): Promise<void> {
   if (redis) {
     await redis.quit();
     redis = null;
+    redisConnectionStatus.set(0);
     logger.info('Redis 连接已关闭');
   }
 }
@@ -85,11 +95,14 @@ export const cacheService = {
       const data = await redis.get(key);
       if (data) {
         logger.debug('缓存命中', { key });
+        cacheHits.inc();
         return JSON.parse(data) as T;
       }
+      cacheMisses.inc();
       return null;
     } catch (error) {
       logger.warn('缓存读取失败', { key, error: (error as Error).message });
+      cacheMisses.inc();
       return null;
     }
   },

@@ -9,6 +9,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ValidationError, NotFoundError, DatabaseError } from '../types';
 import { logger, logError } from '../config/logger';
+import { errorsTotal } from '../config/metrics';
 
 /**
  * 全局错误处理中间件
@@ -50,13 +51,21 @@ export function errorHandler(
     statusCode = 500;
     errorCode = err.code;
     errorMessage = '数据库操作失败';
-    // 不暴露数据库错误详情给客户端
+    // 开发环境显示原始错误
+    if (process.env.NODE_ENV !== 'production' && err.originalError) {
+      errorDetails = {
+        originalMessage: err.originalError.message,
+      };
+    }
   } else {
     // 未知错误类型
     errorMessage = process.env.NODE_ENV === 'production' 
       ? '服务器内部错误' 
       : err.message;
   }
+
+  // 记录错误指标
+  errorsTotal.inc({ type: err.name || 'UnknownError', code: errorCode });
 
   // 记录错误日志（需求 8.2, 8.4）
   logError('请求处理错误', err, {
@@ -69,14 +78,24 @@ export function errorHandler(
     params: req.params,
   });
 
-  // 返回标准化错误响应（需求 8.1）
-  res.status(statusCode).json({
+  // 构建响应
+  const response: Record<string, unknown> = {
     error: {
       code: errorCode,
       message: errorMessage,
       ...(errorDetails && { details: errorDetails }),
     },
-  });
+  };
+
+  // 开发环境添加堆栈信息
+  if (process.env.NODE_ENV !== 'production') {
+    response.stack = err.stack?.split('\n').slice(0, 10);
+    response.timestamp = new Date().toISOString();
+    response.requestId = req.headers['x-request-id'] || 'unknown';
+  }
+
+  // 返回标准化错误响应（需求 8.1）
+  res.status(statusCode).json(response);
 }
 
 /**
@@ -92,12 +111,32 @@ export function notFoundHandler(req: Request, res: Response, _next: NextFunction
     method: req.method,
   });
 
-  res.status(404).json({
+  errorsTotal.inc({ type: 'NotFoundError', code: 'NOT_FOUND' });
+
+  const response: Record<string, unknown> = {
     error: {
       code: error.code,
       message: error.message,
     },
-  });
+  };
+
+  // 开发环境添加额外信息
+  if (process.env.NODE_ENV !== 'production') {
+    response.timestamp = new Date().toISOString();
+    response.requestId = req.headers['x-request-id'] || 'unknown';
+    response.availableRoutes = [
+      'GET /health',
+      'GET /api-docs',
+      'POST /api/v1/logs',
+      'GET /api/v1/logs',
+      'GET /api/v1/logs/:id',
+      'GET /api/v1/reports/device/:uuid',
+      'GET /api/v1/reports/timerange',
+      'GET /api/v1/reports/errors',
+    ];
+  }
+
+  res.status(404).json(response);
 }
 
 /**

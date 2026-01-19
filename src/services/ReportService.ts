@@ -14,6 +14,14 @@ import { logRepository, LogRepository } from '../repositories/LogRepository';
 import { validateOrThrow } from '../validation/validator';
 import { deviceUuidParamSchema, timeRangeQuerySchema } from '../validation/schemas';
 import { logger } from '../config/logger';
+import { cacheService } from '../config/redis';
+
+// 缓存 TTL（秒）
+const CACHE_TTL = {
+  DEVICE_REPORT: 60,      // 设备报表缓存 1 分钟
+  TIME_RANGE_REPORT: 120, // 时间段报表缓存 2 分钟
+  ERROR_REPORT: 60,       // 错误报表缓存 1 分钟
+};
 
 export class ReportService {
   constructor(private repository: LogRepository = logRepository) {}
@@ -32,9 +40,20 @@ export class ReportService {
     // Validate UUID format
     const validated = validateOrThrow<{ uuid: string }>(deviceUuidParamSchema, { uuid });
 
+    // 尝试从缓存获取
+    const cacheKey = `report:device:${validated.uuid}`;
+    const cached = await cacheService.get<DeviceReport>(cacheKey);
+    if (cached) {
+      logger.debug('Device report from cache', { uuid: validated.uuid });
+      return cached;
+    }
+
     logger.info('Generating device report', { uuid: validated.uuid });
 
     const report = await this.repository.aggregateByDevice(validated.uuid);
+
+    // 存入缓存
+    await cacheService.set(cacheKey, report, CACHE_TTL.DEVICE_REPORT);
 
     logger.info('Device report generated', {
       uuid: validated.uuid,
@@ -62,6 +81,14 @@ export class ReportService {
       { startTime, endTime }
     );
 
+    // 尝试从缓存获取
+    const cacheKey = `report:timerange:${validated.startTime.getTime()}:${validated.endTime.getTime()}`;
+    const cached = await cacheService.get<TimeRangeReport>(cacheKey);
+    if (cached) {
+      logger.debug('Time range report from cache', { startTime, endTime });
+      return cached;
+    }
+
     logger.info('Generating time range report', {
       startTime: validated.startTime,
       endTime: validated.endTime,
@@ -71,6 +98,9 @@ export class ReportService {
       validated.startTime,
       validated.endTime
     );
+
+    // 存入缓存
+    await cacheService.set(cacheKey, report, CACHE_TTL.TIME_RANGE_REPORT);
 
     logger.info('Time range report generated', {
       totalLogs: report.totalLogs,
@@ -89,9 +119,20 @@ export class ReportService {
    * Requirements: 3.3
    */
   async generateErrorReport(): Promise<ErrorReport> {
+    // 尝试从缓存获取
+    const cacheKey = 'report:errors';
+    const cached = await cacheService.get<ErrorReport>(cacheKey);
+    if (cached) {
+      logger.debug('Error report from cache');
+      return cached;
+    }
+
     logger.info('Generating error report');
 
     const report = await this.repository.aggregateErrors();
+
+    // 存入缓存
+    await cacheService.set(cacheKey, report, CACHE_TTL.ERROR_REPORT);
 
     logger.info('Error report generated', {
       totalErrors: report.totalErrors,
