@@ -93,10 +93,10 @@ jobs:
       - name: 登录腾讯云容器镜像服务
         uses: docker/login-action@v2
         with:
-          registry: ${{ secrets.TCR_REGISTRY }}
+          registry: hkccr.ccs.tencentyun.com
           username: ${{ secrets.TCR_USERNAME }}
           password: ${{ secrets.TCR_PASSWORD }}
-        if: ${{ secrets.TCR_REGISTRY != '' }}
+        if: ${{ secrets.TCR_USERNAME != '' }}
       
       - name: 提取 Docker 元数据
         id: meta
@@ -104,7 +104,7 @@ jobs:
         with:
           images: |
             ghcr.io/${{ github.repository }}
-            ${{ secrets.TCR_REGISTRY }}/${{ secrets.TCR_NAMESPACE }}/hardware-log-system
+            hkccr.ccs.tencentyun.com/gdgeek/log
           tags: |
             type=raw,value=latest
             type=sha,prefix=
