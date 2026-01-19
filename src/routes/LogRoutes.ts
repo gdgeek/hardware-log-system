@@ -18,10 +18,30 @@ import { logger } from '../config/logger';
 const router: IRouter = Router();
 
 /**
- * POST /api/logs
- * 创建新的日志记录
- * 
- * 需求：1.1, 1.2, 1.3, 1.4, 1.5
+ * @swagger
+ * /logs:
+ *   post:
+ *     summary: 创建日志记录
+ *     tags: [Logs]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/LogInput'
+ *     responses:
+ *       201:
+ *         description: 日志创建成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Log'
+ *       400:
+ *         description: 请求参数错误
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post(
   '/',
@@ -41,32 +61,66 @@ router.post(
 );
 
 /**
- * GET /api/logs
- * 查询日志记录（支持过滤和分页）
- * 
- * 查询参数：
- * - deviceUuid: 设备 UUID（可选）
- * - dataType: 数据类型（可选）
- * - startTime: 开始时间（可选）
- * - endTime: 结束时间（可选）
- * - page: 页码（可选，默认 1）
- * - pageSize: 每页大小（可选，默认 20）
- * 
- * 需求：2.1, 2.2, 2.3, 2.4, 2.5
+ * @swagger
+ * /logs:
+ *   get:
+ *     summary: 查询日志记录
+ *     tags: [Logs]
+ *     parameters:
+ *       - in: query
+ *         name: deviceUuid
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: 设备 UUID
+ *       - in: query
+ *         name: dataType
+ *         schema:
+ *           type: string
+ *           enum: [record, warning, error]
+ *         description: 数据类型
+ *       - in: query
+ *         name: startTime
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: 开始时间
+ *       - in: query
+ *         name: endTime
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: 结束时间
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: 页码
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: 每页大小
+ *     responses:
+ *       200:
+ *         description: 查询成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/PaginatedLogs'
  */
 router.get(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
-    // 分离过滤参数和分页参数
     const { page, pageSize, ...filterParams } = req.query;
 
-    // 验证过滤参数
     const filters = logFiltersSchema.validate(filterParams, {
       stripUnknown: true,
       convert: true,
     }).value;
 
-    // 验证分页参数
     const pagination = paginationSchema.validate(
       { page, pageSize },
       { stripUnknown: true, convert: true }
@@ -86,10 +140,31 @@ router.get(
 );
 
 /**
- * GET /api/logs/:id
- * 获取单条日志记录
- * 
- * 需求：2.1
+ * @swagger
+ * /logs/{id}:
+ *   get:
+ *     summary: 获取单条日志
+ *     tags: [Logs]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: 日志 ID
+ *     responses:
+ *       200:
+ *         description: 获取成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Log'
+ *       404:
+ *         description: 日志未找到
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.get(
   '/:id',

@@ -25,6 +25,8 @@ const DATA_TYPES = ['record', 'warning', 'error'] as const;
  * 
  * Validates:
  * - deviceUuid: Must be a valid UUID v4 format (Requirement 1.3)
+ * - projectName: Optional string, max length 100 characters
+ * - projectVersion: Optional string, max length 50 characters
  * - dataType: Must be one of 'record', 'warning', 'error' (Requirement 1.5)
  * - key: Required string, max length 255 characters (Requirement 1.3)
  * - value: Must be a valid object/JSON (Requirement 1.4)
@@ -37,6 +39,22 @@ export const logInputSchema = Joi.object({
       'string.pattern.base': 'deviceUuid must be a valid UUID v4 format',
       'any.required': 'deviceUuid is required',
       'string.empty': 'deviceUuid cannot be empty'
+    }),
+  
+  projectName: Joi.string()
+    .max(100)
+    .allow(null, '')
+    .optional()
+    .messages({
+      'string.max': 'projectName must not exceed 100 characters'
+    }),
+  
+  projectVersion: Joi.string()
+    .max(50)
+    .allow(null, '')
+    .optional()
+    .messages({
+      'string.max': 'projectVersion must not exceed 50 characters'
     }),
   
   dataType: Joi.string()
@@ -72,6 +90,8 @@ export const logInputSchema = Joi.object({
  * 
  * Validates:
  * - deviceUuid: Optional UUID v4 format
+ * - projectName: Optional string
+ * - projectVersion: Optional string
  * - dataType: Optional, must be one of the valid data types
  * - startTime: Optional ISO 8601 date string
  * - endTime: Optional ISO 8601 date string
@@ -82,6 +102,20 @@ export const logFiltersSchema = Joi.object({
     .optional()
     .messages({
       'string.pattern.base': 'deviceUuid must be a valid UUID v4 format'
+    }),
+  
+  projectName: Joi.string()
+    .max(100)
+    .optional()
+    .messages({
+      'string.max': 'projectName must not exceed 100 characters'
+    }),
+  
+  projectVersion: Joi.string()
+    .max(50)
+    .optional()
+    .messages({
+      'string.max': 'projectVersion must not exceed 50 characters'
     }),
   
   dataType: Joi.string()

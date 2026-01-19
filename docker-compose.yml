@@ -50,6 +50,7 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - ./src/models/migrations/001_create_logs_table.sql:/docker-entrypoint-initdb.d/001_create_logs_table.sql
+      - ./src/models/migrations/002_add_project_fields.sql:/docker-entrypoint-initdb.d/002_add_project_fields.sql
     networks:
       - app-network
     restart: unless-stopped

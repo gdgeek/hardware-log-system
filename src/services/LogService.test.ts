@@ -45,6 +45,8 @@ describe('LogService', () => {
       const mockLog = {
         id: 1,
         deviceUuid: validLogInput.deviceUuid,
+        projectName: null,
+        projectVersion: null,
         dataType: validLogInput.dataType,
         logKey: validLogInput.key,
         logValue: validLogInput.value,
@@ -58,6 +60,8 @@ describe('LogService', () => {
       expect(result).toEqual({
         id: 1,
         deviceUuid: validLogInput.deviceUuid,
+        projectName: null,
+        projectVersion: null,
         dataType: validLogInput.dataType,
         key: validLogInput.key,
         value: validLogInput.value,
@@ -66,6 +70,8 @@ describe('LogService', () => {
 
       expect(mockRepository.create).toHaveBeenCalledWith({
         deviceUuid: validLogInput.deviceUuid,
+        projectName: null,
+        projectVersion: null,
         dataType: validLogInput.dataType,
         logKey: validLogInput.key,
         logValue: validLogInput.value,
@@ -136,6 +142,8 @@ describe('LogService', () => {
         const mockLog = {
           id: 1,
           deviceUuid: input.deviceUuid,
+          projectName: null,
+          projectVersion: null,
           dataType: input.dataType,
           logKey: input.key,
           logValue: input.value,
@@ -154,6 +162,8 @@ describe('LogService', () => {
       const mockLog = {
         id: 1,
         deviceUuid: '550e8400-e29b-41d4-a716-446655440000',
+        projectName: null,
+        projectVersion: null,
         dataType: 'record',
         logKey: 'temperature',
         logValue: { temp: 25.5 },
@@ -167,6 +177,8 @@ describe('LogService', () => {
       expect(result).toEqual({
         id: 1,
         deviceUuid: mockLog.deviceUuid,
+        projectName: null,
+        projectVersion: null,
         dataType: mockLog.dataType,
         key: mockLog.logKey,
         value: mockLog.logValue,
@@ -191,6 +203,8 @@ describe('LogService', () => {
       {
         id: 1,
         deviceUuid: '550e8400-e29b-41d4-a716-446655440000',
+        projectName: null,
+        projectVersion: null,
         dataType: 'record',
         logKey: 'temp',
         logValue: { value: 25 },
@@ -199,6 +213,8 @@ describe('LogService', () => {
       {
         id: 2,
         deviceUuid: '550e8400-e29b-41d4-a716-446655440000',
+        projectName: null,
+        projectVersion: null,
         dataType: 'warning',
         logKey: 'temp',
         logValue: { value: 30 },

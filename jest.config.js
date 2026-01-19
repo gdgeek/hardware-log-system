@@ -13,6 +13,8 @@ module.exports = {
     '!src/index.ts', // 排除主入口文件（需要真实服务器）
     '!src/routes/**', // 排除路由文件（集成测试中覆盖）
     '!src/models/migrations/**', // 排除迁移脚本
+    '!src/config/redis.ts', // 排除 Redis 配置（需要真实 Redis 服务）
+    '!src/config/swagger.ts', // 排除 Swagger 配置（纯配置文件）
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],

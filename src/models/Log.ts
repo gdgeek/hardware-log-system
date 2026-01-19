@@ -8,6 +8,8 @@ import { DataType } from '../types';
 export interface LogAttributes {
   id: number;
   deviceUuid: string;
+  projectName: string | null;
+  projectVersion: string | null;
   dataType: DataType;
   logKey: string;
   logValue: object;
@@ -17,7 +19,7 @@ export interface LogAttributes {
 /**
  * Optional attributes for Log creation (id and createdAt are auto-generated)
  */
-export interface LogCreationAttributes extends Optional<LogAttributes, 'id' | 'createdAt'> {}
+export interface LogCreationAttributes extends Optional<LogAttributes, 'id' | 'createdAt' | 'projectName' | 'projectVersion'> {}
 
 /**
  * Log model class
@@ -26,6 +28,8 @@ export interface LogCreationAttributes extends Optional<LogAttributes, 'id' | 'c
 export class Log extends Model<LogAttributes, LogCreationAttributes> implements LogAttributes {
   declare id: number;
   declare deviceUuid: string;
+  declare projectName: string | null;
+  declare projectVersion: string | null;
   declare dataType: DataType;
   declare logKey: string;
   declare logValue: object;
@@ -38,6 +42,8 @@ export class Log extends Model<LogAttributes, LogCreationAttributes> implements 
     return {
       id: this.id,
       deviceUuid: this.deviceUuid,
+      projectName: this.projectName,
+      projectVersion: this.projectVersion,
       dataType: this.dataType,
       logKey: this.logKey,
       logValue: this.logValue,
@@ -71,6 +77,18 @@ Log.init(
           msg: 'Device UUID must be between 1 and 36 characters',
         },
       },
+    },
+    projectName: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      field: 'project_name',
+      comment: 'Project name that generated the log',
+    },
+    projectVersion: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      field: 'project_version',
+      comment: 'Project version that generated the log',
     },
     dataType: {
       type: DataTypes.ENUM('record', 'warning', 'error'),
@@ -123,7 +141,7 @@ Log.init(
   {
     sequelize,
     tableName: 'logs',
-    timestamps: false, // We manage createdAt manually
+    timestamps: false,
     indexes: [
       {
         name: 'idx_device_uuid',
@@ -144,6 +162,10 @@ Log.init(
       {
         name: 'idx_device_time',
         fields: ['device_uuid', 'created_at'],
+      },
+      {
+        name: 'idx_project',
+        fields: ['project_name', 'project_version'],
       },
     ],
     comment: 'Table storing hardware device logs',

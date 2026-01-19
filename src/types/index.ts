@@ -12,6 +12,8 @@ export type DataType = 'record' | 'warning' | 'error';
  */
 export interface LogInput {
   deviceUuid: string;
+  projectName?: string;
+  projectVersion?: string;
   dataType: DataType;
   key: string;
   value: object;
@@ -23,6 +25,8 @@ export interface LogInput {
 export interface LogOutput {
   id: number;
   deviceUuid: string;
+  projectName: string | null;
+  projectVersion: string | null;
   dataType: DataType;
   key: string;
   value: object;
@@ -34,6 +38,8 @@ export interface LogOutput {
  */
 export interface LogFilters {
   deviceUuid?: string;
+  projectName?: string;
+  projectVersion?: string;
   dataType?: DataType;
   startTime?: Date;
   endTime?: Date;

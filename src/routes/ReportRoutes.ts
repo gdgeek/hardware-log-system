@@ -18,10 +18,28 @@ import { logger } from '../config/logger';
 const router: IRouter = Router();
 
 /**
- * GET /api/reports/device/:uuid
- * 获取设备统计报表
- * 
- * 需求：3.1
+ * @swagger
+ * /reports/device/{uuid}:
+ *   get:
+ *     summary: 获取设备统计报表
+ *     tags: [Reports]
+ *     parameters:
+ *       - in: path
+ *         name: uuid
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: 设备 UUID
+ *     responses:
+ *       200:
+ *         description: 获取成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/DeviceReport'
+ *       400:
+ *         description: 无效的 UUID
  */
 router.get(
   '/device/:uuid',
@@ -43,14 +61,35 @@ router.get(
 );
 
 /**
- * GET /api/reports/timerange
- * 获取时间段统计报表
- * 
- * 查询参数：
- * - startTime: 开始时间（ISO 8601 格式）
- * - endTime: 结束时间（ISO 8601 格式）
- * 
- * 需求：3.2
+ * @swagger
+ * /reports/timerange:
+ *   get:
+ *     summary: 获取时间段统计报表
+ *     tags: [Reports]
+ *     parameters:
+ *       - in: query
+ *         name: startTime
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: 开始时间
+ *       - in: query
+ *         name: endTime
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: 结束时间
+ *     responses:
+ *       200:
+ *         description: 获取成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/TimeRangeReport'
+ *       400:
+ *         description: 无效的时间参数
  */
 router.get(
   '/timerange',
@@ -75,10 +114,18 @@ router.get(
 );
 
 /**
- * GET /api/reports/errors
- * 获取错误统计报表
- * 
- * 需求：3.3
+ * @swagger
+ * /reports/errors:
+ *   get:
+ *     summary: 获取错误统计报表
+ *     tags: [Reports]
+ *     responses:
+ *       200:
+ *         description: 获取成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorReport'
  */
 router.get(
   '/errors',

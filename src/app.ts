@@ -8,6 +8,7 @@
 
 import express, { Application } from 'express';
 import cors from 'cors';
+import swaggerUi from 'swagger-ui-express';
 import { logRoutes, reportRoutes } from './routes';
 import { 
   loggingMiddleware, 
@@ -17,6 +18,7 @@ import {
   requestIdMiddleware,
 } from './middleware';
 import { logger } from './config/logger';
+import { swaggerSpec } from './config/swagger';
 
 /**
  * 创建并配置 Express 应用
@@ -37,6 +39,18 @@ export function createApp(): Application {
 
   // 请求日志中间件
   app.use(loggingMiddleware);
+
+  // Swagger UI
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: '硬件日志管理系统 API',
+  }));
+
+  // Swagger JSON
+  app.get('/api-docs.json', (_req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerSpec);
+  });
 
   // 健康检查端点（不限流）
   app.get('/health', (_req, res) => {

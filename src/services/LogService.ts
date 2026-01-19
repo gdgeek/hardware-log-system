@@ -42,6 +42,8 @@ export class LogService {
     // Create log with auto-generated timestamp (Requirement 1.2)
     const log = await this.repository.create({
       deviceUuid: validatedData.deviceUuid,
+      projectName: validatedData.projectName || null,
+      projectVersion: validatedData.projectVersion || null,
       dataType: validatedData.dataType,
       logKey: validatedData.key,
       logValue: validatedData.value,
@@ -132,6 +134,8 @@ export class LogService {
     return {
       id: log.id,
       deviceUuid: log.deviceUuid,
+      projectName: log.projectName,
+      projectVersion: log.projectVersion,
       dataType: log.dataType,
       key: log.logKey,
       value: log.logValue,

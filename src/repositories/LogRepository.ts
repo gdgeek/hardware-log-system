@@ -369,6 +369,14 @@ export class LogRepository {
       where.deviceUuid = filters.deviceUuid;
     }
 
+    if (filters.projectName) {
+      where.projectName = filters.projectName;
+    }
+
+    if (filters.projectVersion) {
+      where.projectVersion = filters.projectVersion;
+    }
+
     if (filters.dataType) {
       where.dataType = filters.dataType;
     }
