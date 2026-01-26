@@ -128,7 +128,8 @@ const options: swaggerJsdoc.Options = {
       { name: "Reports", description: "统计报表" },
     ],
   },
-  apis: ["./src/routes/*.ts"],
+  // 支持开发环境 (.ts) 和生产环境 (.js)
+  apis: ["./src/routes/*.ts", "./dist/routes/*.js"],
 };
 
 export const swaggerSpec = swaggerJsdoc(options);
