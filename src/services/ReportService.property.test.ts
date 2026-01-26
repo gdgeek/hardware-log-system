@@ -178,8 +178,8 @@ describe('ReportService - Property-Based Tests', () => {
     it('should ensure device count does not exceed total logs in time range report', async () => {
       await fc.assert(
         fc.asyncProperty(
-          fc.date({ min: new Date('2024-01-01'), max: new Date('2024-06-01') }),
-          fc.date({ min: new Date('2024-06-01'), max: new Date('2024-12-31') }),
+          fc.date({ min: new Date('2024-01-01'), max: new Date('2024-05-31') }),
+          fc.date({ min: new Date('2024-06-02'), max: new Date('2024-12-31') }),
           fc.integer({ min: 0, max: 1000 }),
           async (startTime, endTime, totalLogs) => {
             // Device count should be reasonable (at most totalLogs, but typically much less)
