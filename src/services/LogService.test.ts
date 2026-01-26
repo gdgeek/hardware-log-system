@@ -23,6 +23,8 @@ describe("LogService", () => {
       aggregateByDevice: jest.fn(),
       aggregateByTimeRange: jest.fn(),
       aggregateErrors: jest.fn(),
+      deleteById: jest.fn(),
+      deleteByFilters: jest.fn(),
     } as any;
 
     logService = new LogService(mockRepository);
@@ -363,6 +365,57 @@ describe("LogService", () => {
       const result = await logService.queryLogs({}, { page: 1, pageSize: 10 });
 
       expect(result.pagination.totalPages).toBe(3);
+    });
+  });
+
+  describe("deleteLog", () => {
+    it("should delete log when found", async () => {
+      mockRepository.deleteById.mockResolvedValue(true);
+
+      const result = await logService.deleteLog(1);
+
+      expect(result).toBe(true);
+      expect(mockRepository.deleteById).toHaveBeenCalledWith(1);
+    });
+
+    it("should return false when log not found", async () => {
+      mockRepository.deleteById.mockResolvedValue(false);
+
+      const result = await logService.deleteLog(999);
+
+      expect(result).toBe(false);
+      expect(mockRepository.deleteById).toHaveBeenCalledWith(999);
+    });
+  });
+
+  describe("deleteLogs", () => {
+    it("should delete logs by filters", async () => {
+      mockRepository.deleteByFilters.mockResolvedValue(5);
+
+      const filters = { deviceUuid: "550e8400-e29b-41d4-a716-446655440000" };
+      const result = await logService.deleteLogs(filters);
+
+      expect(result).toBe(5);
+      expect(mockRepository.deleteByFilters).toHaveBeenCalledWith(filters);
+    });
+
+    it("should delete all logs when no filters", async () => {
+      mockRepository.deleteByFilters.mockResolvedValue(100);
+
+      const result = await logService.deleteLogs({});
+
+      expect(result).toBe(100);
+      expect(mockRepository.deleteByFilters).toHaveBeenCalledWith({});
+    });
+
+    it("should delete logs by dataType filter", async () => {
+      mockRepository.deleteByFilters.mockResolvedValue(10);
+
+      const filters = { dataType: "error" as const };
+      const result = await logService.deleteLogs(filters);
+
+      expect(result).toBe(10);
+      expect(mockRepository.deleteByFilters).toHaveBeenCalledWith(filters);
     });
   });
 });

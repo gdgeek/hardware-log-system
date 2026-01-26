@@ -248,4 +248,55 @@ describe("LogRepository", () => {
       expect(report.errors).toHaveLength(0);
     });
   });
+
+  describe("deleteById", () => {
+    it("should delete a log by ID", async () => {
+      mockLog.destroy = jest.fn().mockResolvedValue(1);
+
+      const result = await repository.deleteById(1);
+
+      expect(result).toBe(true);
+      expect(mockLog.destroy).toHaveBeenCalledWith({ where: { id: 1 } });
+    });
+
+    it("should return false when log not found", async () => {
+      mockLog.destroy = jest.fn().mockResolvedValue(0);
+
+      const result = await repository.deleteById(999);
+
+      expect(result).toBe(false);
+    });
+
+    it("should throw DatabaseError when deletion fails", async () => {
+      mockLog.destroy = jest.fn().mockRejectedValue(new Error("Database error"));
+
+      await expect(repository.deleteById(1)).rejects.toThrow(DatabaseError);
+    });
+  });
+
+  describe("deleteByFilters", () => {
+    it("should delete logs by filters", async () => {
+      mockLog.destroy = jest.fn().mockResolvedValue(5);
+
+      const filters: LogFilters = { deviceUuid: "device-1" };
+      const result = await repository.deleteByFilters(filters);
+
+      expect(result).toBe(5);
+      expect(mockLog.destroy).toHaveBeenCalled();
+    });
+
+    it("should delete all logs when no filters", async () => {
+      mockLog.destroy = jest.fn().mockResolvedValue(100);
+
+      const result = await repository.deleteByFilters({});
+
+      expect(result).toBe(100);
+    });
+
+    it("should throw DatabaseError when deletion fails", async () => {
+      mockLog.destroy = jest.fn().mockRejectedValue(new Error("Database error"));
+
+      await expect(repository.deleteByFilters({})).rejects.toThrow(DatabaseError);
+    });
+  });
 });
