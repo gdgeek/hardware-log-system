@@ -24,17 +24,19 @@ services:
     ports:
       - "${APP_PORT:-3000}:3000"
     environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - DB_HOST=mysql
-      - DB_PORT=3306
-      - DB_NAME=hardware_logs
-      - DB_USER=root
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_POOL_MIN=2
-      - DB_POOL_MAX=10
-      - LOG_LEVEL=${LOG_LEVEL:-info}
-      - LOG_FILE=/app/logs/app.log
+      # 日志配置
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_FILE: logs/app.log
+      
+      # API 配置
+      API_PREFIX: /api/v1
+      
+      # Redis 缓存 (腾讯云)
+      REDIS_ENABLED: "true"
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: ""
+      REDIS_TTL: "3600"
     depends_on:
       mysql:
         condition: service_healthy

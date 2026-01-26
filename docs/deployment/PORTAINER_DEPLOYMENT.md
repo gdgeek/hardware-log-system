@@ -1,270 +1,68 @@
 # Portainer 部署指南
 
-本指南介绍如何使用 Portainer 在腾讯云服务器上部署硬件日志管理系统。
+本指南将指导您如何使用 Portainer 的 **Stacks** 功能将“硬件日志管理系统”部署到线上环境。
 
-## 目录
+## 准备工作
 
-- [前置要求](#前置要求)
-- [Portainer 安装](#portainer-安装)
-- [部署方式](#部署方式)
-- [方式一：使用 Stack 部署](#方式一使用-stack-部署)
-- [方式二：使用 Git 仓库部署](#方式二使用-git-仓库部署)
-- [环境变量配置](#环境变量配置)
-- [验证部署](#验证部署)
-- [运维管理](#运维管理)
+1. **环境要求**：已安装 Portainer 的 Linux 服务器，且具备 Docker 运行环境。
+2. **所需文件**：项目根目录下的 `portainer-stack.yml`。
+3. **域名/IP**：确保服务器的 3000 端口已开放（或您自定义的端口）。
 
-## 前置要求
+## 部署步骤
 
-- 腾讯云服务器（已安装 Docker）
-- Portainer CE 已安装并运行
-- 开放端口：9000（Portainer）、3000（应用）
+### 第一步：创建 Stack
 
-## Portainer 安装
+1. 登录您的 Portainer 管理界面。
+2. 在左侧菜单点击 **Stacks**。
+3. 点击右上角的 **+ Add stack** 按钮。
 
-如果还没有安装 Portainer，执行以下命令：
+### 第二步：配置 Stack
 
-```bash
-# 创建 Portainer 数据卷
-docker volume create portainer_data
+1. **Name**: 输入 `hardware-log-system`。
+2. **Build method**: 选择 **Web editor**。
+3. **Web editor**: 将项目中的 `portainer-stack.yml` 内容完整复制并粘贴到编辑器中。
 
-# 运行 Portainer
-docker run -d \
-  -p 9000:9000 \
-  --name portainer \
-  --restart=always \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -v portainer_data:/data \
-  portainer/portainer-ce:latest
-```
+### 第三步：配置环境变量
 
-访问 `http://<服务器IP>:9000` 完成初始化设置。
+在 Web 编辑器下方的 **Environment variables** 部分，点击 **+ Add environment variable**，添加以下关键变量：
 
-## 部署方式
+| 变量名        | 示例值                 | 说明                                  |
+| :------------ | :--------------------- | :------------------------------------ |
+| `DB_PASSWORD` | `your_strong_password` | **必填**。MySQL root 用户的密码。     |
+| `APP_PORT`    | `3000`                 | 可选。应用对外暴露的端口。            |
+| `LOG_LEVEL`   | `info`                 | 可选。日志记录级别。                  |
+| `JWT_SECRET`  | `your_jwt_secret_key`  | 可选。用于生成管理后台 Token 的密钥。 |
 
-### 方式一：使用 Stack 部署（推荐）
+> [!IMPORTANT]
+> 请务必设置一个强密码作为 `DB_PASSWORD`。
 
-1. 登录 Portainer Web UI
-2. 选择你的 Docker 环境
-3. 点击左侧菜单 **Stacks**
-4. 点击 **+ Add stack**
-5. 输入 Stack 名称：`hardware-log-system`
-6. 选择 **Web editor**
-7. 粘贴以下配置：
+### 第四步：部署 Stack
 
-```yaml
-version: '3.8'
+1. 检查配置无误后，点击底部的 **Deploy the stack**。
+2. 等待容器启动。您可以在 **Containers** 页面查看 `hardware-log-system` 和 `hardware-log-mysql` 的状态。
 
-services:
-  app:
-    image: node:18-alpine
-    container_name: hardware-log-system
-    working_dir: /app
-    command: sh -c "npm install -g pnpm && pnpm install --prod && node dist/index.js"
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - DB_HOST=mysql
-      - DB_PORT=3306
-      - DB_NAME=hardware_logs
-      - DB_USER=root
-      - DB_PASSWORD=${DB_PASSWORD:-your_secure_password}
-      - DB_POOL_MIN=2
-      - DB_POOL_MAX=10
-      - LOG_LEVEL=info
-      - LOG_FILE=/app/logs/app.log
-    depends_on:
-      mysql:
-        condition: service_healthy
-    volumes:
-      - app_logs:/app/logs
-    networks:
-      - app-network
-    restart: always
-    healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 3s
-      start_period: 30s
-      retries: 3
+## 常用操作
 
-  mysql:
-    image: mysql:8.0
-    container_name: hardware-log-mysql
-    environment:
-      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD:-your_secure_password}
-      - MYSQL_DATABASE=hardware_logs
-      - MYSQL_CHARACTER_SET_SERVER=utf8mb4
-      - MYSQL_COLLATION_SERVER=utf8mb4_unicode_ci
-    volumes:
-      - mysql_data:/var/lib/mysql
-    networks:
-      - app-network
-    restart: always
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-your_secure_password}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+### 1. 查看运行日志
 
-networks:
-  app-network:
-    driver: bridge
+在 Portainer 的 **Containers** 页面，找到 `hardware-log-system` 容器，点击 **Logs** 图标即可查看应用实时日志。
 
-volumes:
-  mysql_data:
-  app_logs:
-```
+### 2. 数据库迁移
 
-8. 在 **Environment variables** 部分添加：
-   - `DB_PASSWORD`: 你的数据库密码
-
-9. 点击 **Deploy the stack**
-
-### 方式二：使用 Git 仓库部署
-
-1. 登录 Portainer Web UI
-2. 选择你的 Docker 环境
-3. 点击左侧菜单 **Stacks**
-4. 点击 **+ Add stack**
-5. 输入 Stack 名称：`hardware-log-system`
-6. 选择 **Repository**
-7. 填写以下信息：
-   - **Repository URL**: `https://github.com/gdgeek/hardware-log-system`
-   - **Repository reference**: `main`
-   - **Compose path**: `docker-compose.portainer.yml`
-
-8. 在 **Environment variables** 部分添加：
-   - `DB_PASSWORD`: 你的数据库密码
-
-9. 点击 **Deploy the stack**
-
-## 环境变量配置
-
-在 Portainer 的 Stack 配置中，添加以下环境变量：
-
-| 变量名 | 说明 | 示例值 |
-|--------|------|--------|
-| DB_PASSWORD | 数据库密码（必填） | MySecureP@ssw0rd |
-| NODE_ENV | 运行环境 | production |
-| LOG_LEVEL | 日志级别 | info |
-| DB_POOL_MAX | 最大连接数 | 10 |
-
-## 验证部署
-
-### 1. 检查容器状态
-
-在 Portainer 中：
-- 点击 **Containers**
-- 确认 `hardware-log-system` 和 `hardware-log-mysql` 状态为 `running`
-
-### 2. 测试健康检查
+系统启动时会自动运行迁移脚本，如果需要手动操作，可以进入容器终端 (Console) 运行：
 
 ```bash
-curl http://<服务器IP>:3000/health
+node dist/index.js --migrate
 ```
 
-预期响应：
-```json
-{
-  "status": "ok",
-  "timestamp": "2024-01-19T12:00:00.000Z"
-}
-```
+### 3. 健康检查
 
-### 3. 测试 API
+应用暴露了 `/health` 端点，Docker 会自动进行健康检查。您可以在镜像列表中看到健康状态。
 
-```bash
-# 创建日志
-curl -X POST http://<服务器IP>:3000/api/logs \
-  -H "Content-Type: application/json" \
-  -d '{
-    "deviceUuid": "550e8400-e29b-41d4-a716-446655440000",
-    "dataType": "record",
-    "key": "temperature",
-    "value": {"celsius": 25.5, "humidity": 60}
-  }'
+## 镜像地址说明
 
-# 查询日志
-curl http://<服务器IP>:3000/api/logs
-```
+本配置默认使用腾讯云镜像（推荐，国内访问快）：
+`hkccr.ccs.tencentyun.com/gdgeek/log:latest`
 
-## 运维管理
-
-### 查看日志
-
-1. 在 Portainer 中点击 **Containers**
-2. 点击 `hardware-log-system` 容器
-3. 点击 **Logs** 查看实时日志
-
-### 重启服务
-
-1. 在 Portainer 中点击 **Stacks**
-2. 选择 `hardware-log-system`
-3. 点击 **Stop** 然后 **Start**
-
-或者重启单个容器：
-1. 点击 **Containers**
-2. 选择容器
-3. 点击 **Restart**
-
-### 更新部署
-
-如果使用 Git 仓库部署：
-1. 点击 **Stacks**
-2. 选择 `hardware-log-system`
-3. 点击 **Pull and redeploy**
-
-### 数据库备份
-
-在 Portainer 中执行：
-1. 点击 **Containers**
-2. 选择 `hardware-log-mysql`
-3. 点击 **Console**
-4. 选择 `/bin/bash`
-5. 执行备份命令：
-
-```bash
-mysqldump -u root -p hardware_logs > /var/lib/mysql/backup.sql
-```
-
-### 查看资源使用
-
-1. 点击 **Containers**
-2. 选择容器
-3. 点击 **Stats** 查看 CPU、内存使用情况
-
-## 故障排查
-
-### 容器无法启动
-
-1. 检查日志：Containers → 选择容器 → Logs
-2. 检查环境变量是否正确配置
-3. 检查端口是否被占用
-
-### 数据库连接失败
-
-1. 确认 MySQL 容器健康状态
-2. 检查 `DB_PASSWORD` 环境变量
-3. 检查网络连接：两个容器应在同一网络
-
-### 健康检查失败
-
-1. 等待应用完全启动（约 30 秒）
-2. 检查应用日志是否有错误
-3. 确认端口映射正确
-
-## 安全建议
-
-1. **修改默认密码**：使用强密码替换 `DB_PASSWORD`
-2. **限制端口访问**：在腾讯云安全组中限制 3000 端口的访问来源
-3. **定期备份**：设置定时任务备份数据库
-4. **更新镜像**：定期更新 Docker 镜像以获取安全补丁
-
-## 相关文件
-
-- `docker-compose.portainer.yml` - Portainer 专用配置
-- `docker-compose.yml` - 标准 Docker Compose 配置
-- `Dockerfile` - 应用镜像构建文件
+如果需要使用 GitHub 镜像，请修改 YAML 文件：
+`ghcr.io/gdgeek/hardware-log-system:latest`

@@ -1,6 +1,6 @@
-import { Sequelize } from 'sequelize';
-import { config } from './env';
-import { logger, logDatabaseOperation } from './logger';
+import { Sequelize } from "sequelize";
+import { config } from "./env";
+import { logger, logDatabaseOperation } from "./logger";
 
 /**
  * Sequelize instance for database connection
@@ -11,23 +11,23 @@ export const sequelize = new Sequelize({
   database: config.dbName,
   username: config.dbUser,
   password: config.dbPassword,
-  dialect: 'mysql',
-  
+  dialect: "mysql",
+
   // Connection pool configuration
   pool: {
     min: config.dbPoolMin,
     max: config.dbPoolMax,
     acquire: 30000, // Maximum time (ms) to try to get connection before throwing error
-    idle: 10000,    // Maximum time (ms) that a connection can be idle before being released
+    idle: 10000, // Maximum time (ms) that a connection can be idle before being released
   },
-  
+
   // Logging configuration
   logging: (sql: string, timing?: number) => {
-    if (config.nodeEnv === 'development') {
-      logger.debug('SQL Query', { sql, timing });
+    if (config.nodeEnv === "development") {
+      logger.debug("SQL Query", { sql, timing });
     }
   },
-  
+
   // Disable automatic timestamp fields (we'll manage them manually)
   define: {
     timestamps: false,
@@ -41,40 +41,45 @@ export const sequelize = new Sequelize({
  */
 export async function testConnection(): Promise<void> {
   const startTime = Date.now();
-  
+
   try {
     await sequelize.authenticate();
     const duration = Date.now() - startTime;
-    
-    logDatabaseOperation('Connection Test', duration, true, {
+
+    logDatabaseOperation("Connection Test", duration, true, {
       host: config.dbHost,
       database: config.dbName,
     });
-    
-    logger.info('Database connection established successfully', {
+
+    logger.info("Database connection established successfully", {
       host: config.dbHost,
       database: config.dbName,
       duration,
     });
   } catch (error) {
     const duration = Date.now() - startTime;
-    
-    logDatabaseOperation('Connection Test', duration, false, {
+
+    logDatabaseOperation("Connection Test", duration, false, {
       host: config.dbHost,
       database: config.dbName,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: error instanceof Error ? error.message : "Unknown error",
     });
-    
-    logger.error('Unable to connect to the database', {
+
+    logger.error("Unable to connect to the database", {
       host: config.dbHost,
       database: config.dbName,
-      error: error instanceof Error ? {
-        message: error.message,
-        stack: error.stack,
-      } : error,
+      error:
+        error instanceof Error
+          ? {
+              message: error.message,
+              stack: error.stack,
+            }
+          : error,
     });
-    
-    throw new Error(`Database connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+
+    throw new Error(
+      `Database connection failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
   }
 }
 
@@ -85,13 +90,16 @@ export async function testConnection(): Promise<void> {
 export async function closeConnection(): Promise<void> {
   try {
     await sequelize.close();
-    logger.info('Database connection closed successfully');
+    logger.info("Database connection closed successfully");
   } catch (error) {
-    logger.error('Error closing database connection', {
-      error: error instanceof Error ? {
-        message: error.message,
-        stack: error.stack,
-      } : error,
+    logger.error("Error closing database connection", {
+      error:
+        error instanceof Error
+          ? {
+              message: error.message,
+              stack: error.stack,
+            }
+          : error,
     });
     throw error;
   }
@@ -107,8 +115,16 @@ export function getPoolStatus(): {
   using: number;
   waiting: number;
 } {
-  const pool = (sequelize.connectionManager as any).pool;
-  
+  const connectionManager = sequelize.connectionManager as unknown as {
+    pool: {
+      size: number;
+      available: number;
+      using: number;
+      waiting: number;
+    };
+  };
+  const pool = connectionManager.pool;
+
   return {
     size: pool?.size || 0,
     available: pool?.available || 0,
@@ -123,11 +139,11 @@ export function getPoolStatus(): {
  */
 export async function isHealthy(): Promise<boolean> {
   try {
-    await sequelize.query('SELECT 1');
+    await sequelize.query("SELECT 1");
     return true;
   } catch (error) {
-    logger.error('Database health check failed', {
-      error: error instanceof Error ? error.message : 'Unknown error',
+    logger.error("Database health check failed", {
+      error: error instanceof Error ? error.message : "Unknown error",
     });
     return false;
   }

@@ -28,7 +28,9 @@ describe("SignatureService", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (Project.findByPk as jest.Mock).mockResolvedValue(mockProject);
+    (Project as unknown as { findByPk: jest.Mock }).findByPk.mockResolvedValue(
+      mockProject,
+    );
   });
 
   const computeSignature = (input: LogInput, key: string) => {
@@ -69,7 +71,9 @@ describe("SignatureService", () => {
   });
 
   it("should throw ValidationError if project is not found", async () => {
-    (Project.findByPk as jest.Mock).mockResolvedValue(null);
+    (Project as unknown as { findByPk: jest.Mock }).findByPk.mockResolvedValue(
+      null,
+    );
     const signature = computeSignature(validLogInput, mockProject.authKey);
     const input = { ...validLogInput, signature };
 

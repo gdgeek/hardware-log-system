@@ -44,7 +44,7 @@ export async function adminAuthMiddleware(
   }
 
   // Attach user info to request
-  (req as any).user = payload;
+  (req as Request & { user: Record<string, unknown> }).user = payload;
 
   next();
 }

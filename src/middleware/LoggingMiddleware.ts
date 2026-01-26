@@ -30,7 +30,7 @@ export function loggingMiddleware(
 
     // 记录请求日志（需求 8.3）
     logRequest(req.method, req.path, res.statusCode, duration, {
-      requestId: (req as any).requestId,
+      requestId: (req as Request & { requestId?: string }).requestId,
       query: Object.keys(req.query).length > 0 ? req.query : undefined,
       userAgent: req.get("user-agent"),
       ip: req.ip || req.socket.remoteAddress,
@@ -45,7 +45,7 @@ export function loggingMiddleware(
     if (res.json === originalJson) {
       const duration = Date.now() - startTime;
       logRequest(req.method, req.path, res.statusCode, duration, {
-        requestId: (req as any).requestId,
+        requestId: (req as Request & { requestId?: string }).requestId,
         query: Object.keys(req.query).length > 0 ? req.query : undefined,
         userAgent: req.get("user-agent"),
         ip: req.ip || req.socket.remoteAddress,

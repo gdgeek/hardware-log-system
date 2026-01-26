@@ -20,7 +20,9 @@ export class AuthService {
    * UI Login: Authenticates a user with only a password
    * @returns JWT token if successful, null otherwise
    */
-  async login(password: string): Promise<{ token: string; user: any } | null> {
+  async login(
+    password: string,
+  ): Promise<{ token: string; user: Record<string, unknown> } | null> {
     try {
       const username = "admin"; // Using default admin user
       logger.info("Password login attempt");
@@ -47,7 +49,7 @@ export class AuthService {
           role: user.role,
         },
         this.jwtSecret,
-        { expiresIn: this.tokenExpiry as any },
+        { expiresIn: this.tokenExpiry as jwt.SignOptions["expiresIn"] },
       );
 
       // Update last login time
@@ -58,7 +60,7 @@ export class AuthService {
 
       return {
         token,
-        user: user.toJSON(),
+        user: user.toJSON() as unknown as Record<string, unknown>,
       };
     } catch (error) {
       logger.error("Login error", {
@@ -72,9 +74,14 @@ export class AuthService {
    * Verifies an admin JWT token
    * @returns Decoded payload if valid, null otherwise
    */
-  async verifyAdminToken(token: string): Promise<any> {
+  async verifyAdminToken(
+    token: string,
+  ): Promise<Record<string, unknown> | null> {
     try {
-      const decoded = jwt.verify(token, this.jwtSecret);
+      const decoded = jwt.verify(token, this.jwtSecret) as Record<
+        string,
+        unknown
+      >;
       return decoded;
     } catch (error) {
       logger.debug("Admin token verification failed", {
