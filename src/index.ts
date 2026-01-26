@@ -1,16 +1,17 @@
 /**
  * 服务器启动脚本
- * 
+ *
  * 验证环境变量、测试数据库连接、启动 HTTP 服务器
- * 
+ *
  * 需求：5.1, 5.4
  */
 
-import dotenv from 'dotenv';
-import { createApp, setupGracefulShutdown } from './app';
-import { sequelize } from './config/database';
-import { config } from './config/env';
-import { logger } from './config/logger';
+import dotenv from "dotenv";
+import { createApp, setupGracefulShutdown } from "./app";
+import { sequelize } from "./config/database";
+import { config } from "./config/env";
+import { logger } from "./config/logger";
+import { initRedis } from "./config/redis";
 
 // 加载环境变量
 dotenv.config();
@@ -25,22 +26,22 @@ async function connectWithRetry(maxRetries = 5, delay = 3000): Promise<void> {
     try {
       logger.info(`数据库连接尝试 ${attempt}/${maxRetries}...`);
       await sequelize.authenticate();
-      logger.info('数据库连接成功', {
+      logger.info("数据库连接成功", {
         host: config.dbHost,
         database: config.dbName,
       });
       return;
     } catch (error) {
       logger.warn(`数据库连接失败 (${attempt}/${maxRetries})`, {
-        error: error instanceof Error ? error.message : '未知错误',
+        error: error instanceof Error ? error.message : "未知错误",
       });
-      
+
       if (attempt === maxRetries) {
         throw new Error(`无法连接数据库，已重试 ${maxRetries} 次`);
       }
-      
+
       logger.info(`${delay / 1000} 秒后重试...`);
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 }
@@ -50,10 +51,13 @@ async function connectWithRetry(maxRetries = 5, delay = 3000): Promise<void> {
  */
 async function startServer(): Promise<void> {
   try {
-    logger.info('环境变量验证通过');
+    logger.info("环境变量验证通过");
 
     // 数据库连接（带重试）
     await connectWithRetry();
+
+    // 初始化 Redis
+    await initRedis();
 
     // 创建 Express 应用
     const app = createApp();
@@ -61,7 +65,7 @@ async function startServer(): Promise<void> {
 
     // 启动 HTTP 服务器
     const server = app.listen(port, () => {
-      logger.info('服务器启动成功', {
+      logger.info("服务器启动成功", {
         port,
         env: config.nodeEnv,
         pid: process.pid,
@@ -73,8 +77,8 @@ async function startServer(): Promise<void> {
 
     setupGracefulShutdown(server);
   } catch (error) {
-    logger.error('服务器启动失败', {
-      error: error instanceof Error ? error.message : '未知错误',
+    logger.error("服务器启动失败", {
+      error: error instanceof Error ? error.message : "未知错误",
       stack: error instanceof Error ? error.stack : undefined,
     });
     process.exit(1);
@@ -82,8 +86,8 @@ async function startServer(): Promise<void> {
 }
 
 // 处理未捕获的异常
-process.on('uncaughtException', (error: Error) => {
-  logger.error('未捕获的异常', {
+process.on("uncaughtException", (error: Error) => {
+  logger.error("未捕获的异常", {
     error: error.message,
     stack: error.stack,
   });
@@ -91,8 +95,8 @@ process.on('uncaughtException', (error: Error) => {
 });
 
 // 处理未处理的 Promise 拒绝
-process.on('unhandledRejection', (reason: unknown) => {
-  logger.error('未处理的 Promise 拒绝', {
+process.on("unhandledRejection", (reason: unknown) => {
+  logger.error("未处理的 Promise 拒绝", {
     reason: reason instanceof Error ? reason.message : String(reason),
     stack: reason instanceof Error ? reason.stack : undefined,
   });

@@ -2,5 +2,6 @@
  * 路由模块导出
  */
 
-export { default as logRoutes } from './LogRoutes';
-export { default as reportRoutes } from './ReportRoutes';
+export { default as logRoutes } from "./LogRoutes";
+export { default as reportRoutes } from "./ReportRoutes";
+export { default as authRoutes } from "./AuthRoutes";

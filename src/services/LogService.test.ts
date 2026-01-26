@@ -2,15 +2,16 @@
  * Unit tests for LogService
  */
 
-import { LogService } from './LogService';
-import { LogRepository } from '../repositories/LogRepository';
-import { LogInput, ValidationError } from '../types';
+import { LogService } from "./LogService";
+import { LogRepository } from "../repositories/LogRepository";
+import { LogInput, ValidationError } from "../types";
 
 // Mock the repository
-jest.mock('../repositories/LogRepository');
-jest.mock('../config/logger');
+jest.mock("../repositories/LogRepository");
+jest.mock("../config/logger");
+jest.mock("./SignatureService");
 
-describe('LogService', () => {
+describe("LogService", () => {
   let logService: LogService;
   let mockRepository: jest.Mocked<LogRepository>;
 
@@ -33,25 +34,30 @@ describe('LogService', () => {
     jest.clearAllMocks();
   });
 
-  describe('createLog', () => {
+  describe("createLog", () => {
     const validLogInput: LogInput = {
-      deviceUuid: '550e8400-e29b-41d4-a716-446655440000',
-      dataType: 'record',
-      key: 'temperature',
-      value: { temp: 25.5, unit: 'celsius' },
+      deviceUuid: "550e8400-e29b-41d4-a716-446655440000",
+      sessionUuid: "550e8400-e29b-41d4-a716-446655440001",
+      projectId: 1,
+      timestamp: Date.now(),
+      signature: "test-signature",
+      dataType: "record",
+      key: "temperature",
+      value: { temp: 25.5, unit: "celsius" },
     };
 
-    it('should create a log with valid input', async () => {
+    it("should create a log with valid input", async () => {
       const mockLog = {
         id: 1,
         deviceUuid: validLogInput.deviceUuid,
-        projectName: null,
-        projectVersion: null,
+        sessionUuid: validLogInput.sessionUuid,
+        projectId: validLogInput.projectId,
         clientIp: null,
         dataType: validLogInput.dataType,
         logKey: validLogInput.key,
         logValue: validLogInput.value,
-        createdAt: new Date('2024-01-01T12:00:00Z'),
+        clientTimestamp: validLogInput.timestamp,
+        createdAt: new Date("2024-01-01T12:00:00Z"),
       };
 
       mockRepository.create.mockResolvedValue(mockLog as any);
@@ -61,96 +67,115 @@ describe('LogService', () => {
       expect(result).toEqual({
         id: 1,
         deviceUuid: validLogInput.deviceUuid,
-        projectName: null,
-        projectVersion: null,
+        sessionUuid: validLogInput.sessionUuid,
+        projectId: validLogInput.projectId,
         clientIp: null,
         dataType: validLogInput.dataType,
         key: validLogInput.key,
         value: validLogInput.value,
-        createdAt: '2024-01-01T12:00:00.000Z',
+        clientTimestamp: validLogInput.timestamp,
+        createdAt: "2024-01-01T12:00:00.000Z",
       });
 
       expect(mockRepository.create).toHaveBeenCalledWith({
         deviceUuid: validLogInput.deviceUuid,
-        projectName: null,
-        projectVersion: null,
+        sessionUuid: validLogInput.sessionUuid,
+        projectId: validLogInput.projectId,
         clientIp: null,
         dataType: validLogInput.dataType,
         logKey: validLogInput.key,
         logValue: validLogInput.value,
+        clientTimestamp: validLogInput.timestamp,
       });
     });
 
-    it('should reject log with missing deviceUuid', async () => {
+    it("should reject log with missing deviceUuid", async () => {
       const invalidInput = {
-        dataType: 'record',
-        key: 'test',
-        value: { data: 'test' },
+        dataType: "record",
+        key: "test",
+        value: { data: "test" },
       } as any;
 
-      await expect(logService.createLog(invalidInput)).rejects.toThrow(ValidationError);
+      await expect(logService.createLog(invalidInput)).rejects.toThrow(
+        ValidationError,
+      );
     });
 
-    it('should reject log with invalid UUID format', async () => {
+    it("should reject log with invalid UUID format", async () => {
       const invalidInput = {
         ...validLogInput,
-        deviceUuid: 'invalid-uuid',
+        deviceUuid: "invalid-uuid",
       };
 
-      await expect(logService.createLog(invalidInput)).rejects.toThrow(ValidationError);
+      await expect(logService.createLog(invalidInput)).rejects.toThrow(
+        ValidationError,
+      );
     });
 
-    it('should reject log with invalid dataType', async () => {
+    it("should reject log with invalid dataType", async () => {
       const invalidInput = {
         ...validLogInput,
-        dataType: 'invalid' as any,
+        dataType: "invalid" as any,
       };
 
-      await expect(logService.createLog(invalidInput)).rejects.toThrow(ValidationError);
+      await expect(logService.createLog(invalidInput)).rejects.toThrow(
+        ValidationError,
+      );
     });
 
-    it('should reject log with missing key', async () => {
+    it("should reject log with missing key", async () => {
       const invalidInput = {
         deviceUuid: validLogInput.deviceUuid,
-        dataType: 'record',
-        value: { data: 'test' },
+        dataType: "record",
+        value: { data: "test" },
       } as any;
 
-      await expect(logService.createLog(invalidInput)).rejects.toThrow(ValidationError);
+      await expect(logService.createLog(invalidInput)).rejects.toThrow(
+        ValidationError,
+      );
     });
 
-    it('should reject log with key exceeding 255 characters', async () => {
+    it("should reject log with key exceeding 255 characters", async () => {
       const invalidInput = {
         ...validLogInput,
-        key: 'a'.repeat(256),
+        key: "a".repeat(256),
       };
 
-      await expect(logService.createLog(invalidInput)).rejects.toThrow(ValidationError);
+      await expect(logService.createLog(invalidInput)).rejects.toThrow(
+        ValidationError,
+      );
     });
 
-    it('should reject log with non-object value', async () => {
+    it("should reject log with non-object value", async () => {
       const invalidInput = {
         ...validLogInput,
-        value: 'not an object' as any,
+        value: "not an object" as any,
       };
 
-      await expect(logService.createLog(invalidInput)).rejects.toThrow(ValidationError);
+      await expect(logService.createLog(invalidInput)).rejects.toThrow(
+        ValidationError,
+      );
     });
 
-    it('should accept all valid dataTypes', async () => {
-      const dataTypes: Array<'record' | 'warning' | 'error'> = ['record', 'warning', 'error'];
+    it("should accept all valid dataTypes", async () => {
+      const dataTypes: Array<"record" | "warning" | "error"> = [
+        "record",
+        "warning",
+        "error",
+      ];
 
       for (const dataType of dataTypes) {
         const input = { ...validLogInput, dataType };
         const mockLog = {
           id: 1,
           deviceUuid: input.deviceUuid,
-          projectName: null,
-          projectVersion: null,
+          sessionUuid: input.sessionUuid,
+          projectId: input.projectId,
           clientIp: null,
           dataType: input.dataType,
           logKey: input.key,
           logValue: input.value,
+          clientTimestamp: input.timestamp,
           createdAt: new Date(),
         };
 
@@ -161,18 +186,19 @@ describe('LogService', () => {
     });
   });
 
-  describe('getLogById', () => {
-    it('should return log when found', async () => {
+  describe("getLogById", () => {
+    it("should return log when found", async () => {
       const mockLog = {
         id: 1,
-        deviceUuid: '550e8400-e29b-41d4-a716-446655440000',
-        projectName: null,
-        projectVersion: null,
+        deviceUuid: "550e8400-e29b-41d4-a716-446655440000",
+        sessionUuid: "test-session-uuid",
+        projectId: 1,
         clientIp: null,
-        dataType: 'record',
-        logKey: 'temperature',
+        dataType: "record",
+        logKey: "temperature",
         logValue: { temp: 25.5 },
-        createdAt: new Date('2024-01-01T12:00:00Z'),
+        clientTimestamp: 1704110400000,
+        createdAt: new Date("2024-01-01T12:00:00Z"),
       };
 
       mockRepository.findById.mockResolvedValue(mockLog as any);
@@ -182,19 +208,20 @@ describe('LogService', () => {
       expect(result).toEqual({
         id: 1,
         deviceUuid: mockLog.deviceUuid,
-        projectName: null,
-        projectVersion: null,
+        sessionUuid: mockLog.sessionUuid,
+        projectId: mockLog.projectId,
         clientIp: null,
         dataType: mockLog.dataType,
         key: mockLog.logKey,
         value: mockLog.logValue,
-        createdAt: '2024-01-01T12:00:00.000Z',
+        clientTimestamp: mockLog.clientTimestamp,
+        createdAt: "2024-01-01T12:00:00.000Z",
       });
 
       expect(mockRepository.findById).toHaveBeenCalledWith(1);
     });
 
-    it('should return null when log not found', async () => {
+    it("should return null when log not found", async () => {
       mockRepository.findById.mockResolvedValue(null);
 
       const result = await logService.getLogById(999);
@@ -204,33 +231,35 @@ describe('LogService', () => {
     });
   });
 
-  describe('queryLogs', () => {
+  describe("queryLogs", () => {
     const mockLogs = [
       {
         id: 1,
-        deviceUuid: '550e8400-e29b-41d4-a716-446655440000',
-        projectName: null,
-        projectVersion: null,
+        deviceUuid: "550e8400-e29b-41d4-a716-446655440000",
+        sessionUuid: "session-1",
+        projectId: 1,
         clientIp: null,
-        dataType: 'record',
-        logKey: 'temp',
+        dataType: "record",
+        logKey: "temp",
         logValue: { value: 25 },
-        createdAt: new Date('2024-01-01T12:00:00Z'),
+        clientTimestamp: 1704110400000,
+        createdAt: new Date("2024-01-01T12:00:00Z"),
       },
       {
         id: 2,
-        deviceUuid: '550e8400-e29b-41d4-a716-446655440000',
-        projectName: null,
-        projectVersion: null,
+        deviceUuid: "550e8400-e29b-41d4-a716-446655440000",
+        sessionUuid: "session-1",
+        projectId: 1,
         clientIp: null,
-        dataType: 'warning',
-        logKey: 'temp',
+        dataType: "warning",
+        logKey: "temp",
         logValue: { value: 30 },
-        createdAt: new Date('2024-01-01T13:00:00Z'),
+        clientTimestamp: 1704114000000,
+        createdAt: new Date("2024-01-01T13:00:00Z"),
       },
     ];
 
-    it('should return paginated results with default pagination', async () => {
+    it("should return paginated results with default pagination", async () => {
       mockRepository.findByFilters.mockResolvedValue(mockLogs as any);
       mockRepository.countByFilters.mockResolvedValue(2);
 
@@ -244,53 +273,56 @@ describe('LogService', () => {
         totalPages: 1,
       });
 
-      expect(mockRepository.findByFilters).toHaveBeenCalledWith({}, { page: 1, pageSize: 20 });
+      expect(mockRepository.findByFilters).toHaveBeenCalledWith(
+        {},
+        { page: 1, pageSize: 20 },
+      );
       expect(mockRepository.countByFilters).toHaveBeenCalledWith({});
     });
 
-    it('should filter by deviceUuid', async () => {
-      const filters = { deviceUuid: '550e8400-e29b-41d4-a716-446655440000' };
+    it("should filter by deviceUuid", async () => {
+      const filters = { deviceUuid: "550e8400-e29b-41d4-a716-446655440000" };
       mockRepository.findByFilters.mockResolvedValue(mockLogs as any);
       mockRepository.countByFilters.mockResolvedValue(2);
 
       await logService.queryLogs(filters);
 
-      expect(mockRepository.findByFilters).toHaveBeenCalledWith(
-        filters,
-        { page: 1, pageSize: 20 }
-      );
+      expect(mockRepository.findByFilters).toHaveBeenCalledWith(filters, {
+        page: 1,
+        pageSize: 20,
+      });
     });
 
-    it('should filter by dataType', async () => {
-      const filters = { dataType: 'error' as const };
+    it("should filter by dataType", async () => {
+      const filters = { dataType: "error" as const };
       mockRepository.findByFilters.mockResolvedValue([mockLogs[0]] as any);
       mockRepository.countByFilters.mockResolvedValue(1);
 
       await logService.queryLogs(filters);
 
-      expect(mockRepository.findByFilters).toHaveBeenCalledWith(
-        filters,
-        { page: 1, pageSize: 20 }
-      );
+      expect(mockRepository.findByFilters).toHaveBeenCalledWith(filters, {
+        page: 1,
+        pageSize: 20,
+      });
     });
 
-    it('should filter by time range', async () => {
+    it("should filter by time range", async () => {
       const filters = {
-        startTime: new Date('2024-01-01T00:00:00Z'),
-        endTime: new Date('2024-01-02T00:00:00Z'),
+        startTime: new Date("2024-01-01T00:00:00Z"),
+        endTime: new Date("2024-01-02T00:00:00Z"),
       };
       mockRepository.findByFilters.mockResolvedValue(mockLogs as any);
       mockRepository.countByFilters.mockResolvedValue(2);
 
       await logService.queryLogs(filters);
 
-      expect(mockRepository.findByFilters).toHaveBeenCalledWith(
-        filters,
-        { page: 1, pageSize: 20 }
-      );
+      expect(mockRepository.findByFilters).toHaveBeenCalledWith(filters, {
+        page: 1,
+        pageSize: 20,
+      });
     });
 
-    it('should handle custom pagination', async () => {
+    it("should handle custom pagination", async () => {
       const pagination = { page: 2, pageSize: 10 };
       mockRepository.findByFilters.mockResolvedValue([mockLogs[0]] as any);
       mockRepository.countByFilters.mockResolvedValue(15);
@@ -307,30 +339,36 @@ describe('LogService', () => {
       expect(mockRepository.findByFilters).toHaveBeenCalledWith({}, pagination);
     });
 
-    it('should return empty results when no logs match', async () => {
+    it("should return empty results when no logs match", async () => {
       mockRepository.findByFilters.mockResolvedValue([]);
       mockRepository.countByFilters.mockResolvedValue(0);
 
-      const result = await logService.queryLogs({ deviceUuid: '550e8400-e29b-41d4-a716-446655440001' });
+      const result = await logService.queryLogs({
+        deviceUuid: "550e8400-e29b-41d4-a716-446655440001",
+      });
 
       expect(result.data).toEqual([]);
       expect(result.pagination.total).toBe(0);
       expect(result.pagination.totalPages).toBe(0);
     });
 
-    it('should reject invalid pagination parameters', async () => {
+    it("should reject invalid pagination parameters", async () => {
       const invalidPagination = { page: 0, pageSize: 10 };
 
-      await expect(logService.queryLogs({}, invalidPagination)).rejects.toThrow(ValidationError);
+      await expect(logService.queryLogs({}, invalidPagination)).rejects.toThrow(
+        ValidationError,
+      );
     });
 
-    it('should reject pageSize exceeding maximum', async () => {
+    it("should reject pageSize exceeding maximum", async () => {
       const invalidPagination = { page: 1, pageSize: 101 };
 
-      await expect(logService.queryLogs({}, invalidPagination)).rejects.toThrow(ValidationError);
+      await expect(logService.queryLogs({}, invalidPagination)).rejects.toThrow(
+        ValidationError,
+      );
     });
 
-    it('should calculate totalPages correctly', async () => {
+    it("should calculate totalPages correctly", async () => {
       mockRepository.findByFilters.mockResolvedValue(mockLogs as any);
       mockRepository.countByFilters.mockResolvedValue(25);
 

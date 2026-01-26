@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   # 应用服务
@@ -8,7 +8,7 @@ services:
       dockerfile: Dockerfile
     container_name: hardware-log-system
     ports:
-      - "${PORT:-3000}:3000"
+      - "0.0.0.0:${PORT:-8080}:3000"
     environment:
       - NODE_ENV=${NODE_ENV:-production}
       - PORT=3000
@@ -21,20 +21,48 @@ services:
       - DB_POOL_MAX=${DB_POOL_MAX:-10}
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - LOG_FILE=/app/logs/app.log
+      - REDIS_ENABLED=true
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
       mysql:
         condition: service_healthy
+      redis:
+        condition: service_started
     volumes:
       - ./logs:/app/logs
     networks:
       - app-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})",
+        ]
       interval: 30s
       timeout: 3s
       start_period: 10s
       retries: 3
+
+  # Redis 缓存服务
+  redis:
+    image: redis:7-alpine
+    container_name: hardware-log-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # MySQL 数据库服务
   mysql:
@@ -52,11 +80,22 @@ services:
       - ./src/models/migrations/001_create_logs_table.sql:/docker-entrypoint-initdb.d/001_create_logs_table.sql
       - ./src/models/migrations/002_add_project_fields.sql:/docker-entrypoint-initdb.d/002_add_project_fields.sql
       - ./src/models/migrations/003_add_client_ip.sql:/docker-entrypoint-initdb.d/003_add_client_ip.sql
+      - ./src/models/migrations/004_add_session_uuid.sql:/docker-entrypoint-initdb.d/004_add_session_uuid.sql
     networks:
       - app-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-password}"]
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p${DB_PASSWORD:-password}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -68,4 +107,6 @@ networks:
 
 volumes:
   mysql_data:
+    driver: local
+  redis_data:
     driver: local

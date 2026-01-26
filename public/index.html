@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>硬件日志管理系统</title>
+  <meta name="description" content="硬件日志管理系统 - 可视化管理和查询日志数据">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<!-- 登录页面覆盖层 -->
+<div id="login-overlay" class="login-overlay active">
+  <div class="login-card">
+    <div class="login-header">
+      <h2>系统认证</h2>
+      <p>请输入管理密码</p>
+    </div>
+
+    <div id="login-error" class="login-error">密码错误</div>
+
+    <form id="login-form" class="login-form">
+      <div class="form-group">
+        <label for="login-password">管理密码</label>
+        <input type="password" id="login-password" required placeholder="请输入密码">
+      </div>
+      <button type="submit" class="btn btn-primary">进入系统</button>
+    </form>
+  </div>
+</div>
+
+<div class="app-container" id="app-content" style="display: none;">
+  <!-- 侧边栏 -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="32" height="32" rx="8" fill="url(#gradient1)" />
+          <path d="M8 12h16M8 16h12M8 20h14" stroke="white" stroke-width="2" stroke-linecap="round" />
+          <defs>
+            <linearGradient id="gradient1" x1="0" y1="0" x2="32" y2="32">
+              <stop stop-color="#6366f1" />
+              <stop offset="1" stop-color="#8b5cf6" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <span>日志管理</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="#dashboard" class="nav-item active" data-page="dashboard">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+          <path
+            d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+        </svg>
+        <span>仪表盘</span>
+      </a>
+      <a href="#logs" class="nav-item" data-page="logs">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd"
+            d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
+            clip-rule="evenodd" />
+        </svg>
+        <span>日志管理</span>
+      </a>
+      <a href="#reports" class="nav-item" data-page="reports">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+          <path
+            d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+        </svg>
+        <span>报表中心</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="/api-docs" target="_blank" class="nav-item">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd"
+            d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+            clip-rule="evenodd" />
+        </svg>
+        <span>API 文档</span>
+      </a>
+      <button id="btn-logout" class="btn btn-logout nav-item">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd"
+            d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 1.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H7a1 1 0 110-2h7.586l-1.293-1.293a1 1 0 010-1.414z"
+            clip-rule="evenodd" />
+        </svg>
+        <span>退出登录</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- 主内容区 -->
+  <main class="main-content">
+    <!-- 顶部栏 -->
+    <header class="top-bar">
+      <div class="search-box">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd"
+            d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+            clip-rule="evenodd" />
+        </svg>
+        <input type="text" id="global-search" placeholder="搜索日志...">
+      </div>
+      <div class="top-bar-right">
+        <div class="health-status" id="health-status">
+          <span class="status-dot"></span>
+          <span class="status-text">检测中...</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- 页面内容 -->
+    <div class="page-content">
+      <!-- 仪表盘页面 -->
+      <section id="page-dashboard" class="page active">
+        <div class="page-header">
+          <h1>仪表盘</h1>
+          <p>系统概览和关键指标</p>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon" style="--icon-bg: linear-gradient(135deg, #6366f1, #8b5cf6);">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-total-logs">--</span>
+              <span class="stat-label">总日志数</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon" style="--icon-bg: linear-gradient(135deg, #10b981, #34d399);">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-record-count">--</span>
+              <span class="stat-label">记录日志</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon" style="--icon-bg: linear-gradient(135deg, #f59e0b, #fbbf24);">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-warning-count">--</span>
+              <span class="stat-label">警告日志</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon" style="--icon-bg: linear-gradient(135deg, #ef4444, #f87171);">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-error-count">--</span>
+              <span class="stat-label">错误日志</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="card chart-card">
+            <div class="card-header">
+              <h3>日志趋势（最近7天）</h3>
+            </div>
+            <div class="card-body">
+              <canvas id="chart-trend"></canvas>
+            </div>
+          </div>
+
+          <div class="card chart-card">
+            <div class="card-header">
+              <h3>日志类型分布</h3>
+            </div>
+            <div class="card-body">
+              <canvas id="chart-type"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>最新日志</h3>
+            <a href="#logs" class="btn btn-link" data-page="logs">查看全部</a>
+          </div>
+          <div class="card-body">
+            <div class="table-container">
+              <table class="data-table" id="recent-logs-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>设备 UUID</th>
+                    <th>类型</th>
+                    <th>Key</th>
+                    <th>项目 ID</th>
+                    <th>会话 UUID</th>
+                    <th>时间</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="loading-row">
+                    <td colspan="6">加载中...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 日志管理页面 -->
+      <section id="page-logs" class="page">
+        <div class="page-header">
+          <h1>日志管理</h1>
+          <p>查询和管理日志记录</p>
+        </div>
+
+        <div class="card filter-card">
+          <div class="card-body">
+            <form id="log-filter-form" class="filter-form">
+              <div class="form-group">
+                <label for="filter-device-uuid">设备 UUID</label>
+                <input type="text" id="filter-device-uuid" placeholder="输入设备 UUID">
+              </div>
+              <div class="form-group">
+                <label for="filter-data-type">日志类型</label>
+                <select id="filter-data-type">
+                  <option value="">全部</option>
+                  <option value="record">记录</option>
+                  <option value="warning">警告</option>
+                  <option value="error">错误</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="filter-project-id">项目 ID</label>
+                <input type="number" id="filter-project-id" placeholder="输入项目 ID">
+              </div>
+              <div class="form-group">
+                <label for="filter-session-uuid">会话 UUID</label>
+                <input type="text" id="filter-session-uuid" placeholder="输入会话 UUID">
+              </div>
+              <div class="form-group">
+                <label for="filter-key">Key</label>
+                <input type="text" id="filter-key" placeholder="输入 Key">
+              </div>
+              <div class="form-group">
+                <label for="filter-start-time">开始时间</label>
+                <input type="datetime-local" id="filter-start-time">
+              </div>
+              <div class="form-group">
+                <label for="filter-end-time">结束时间</label>
+                <input type="datetime-local" id="filter-end-time">
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">搜索</button>
+                <button type="reset" class="btn btn-secondary">重置</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>日志列表</h3>
+            <div class="pagination-info" id="logs-pagination-info"></div>
+          </div>
+          <div class="card-body">
+            <div class="table-container">
+              <table class="data-table" id="logs-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>设备 UUID</th>
+                    <th>类型</th>
+                    <th>Key</th>
+                    <th>Value</th>
+                    <th>项目 ID</th>
+                    <th>会话 UUID</th>
+                    <th>IP</th>
+                    <th>时间</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="loading-row">
+                    <td colspan="9">加载中...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="pagination" id="logs-pagination"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 报表中心页面 -->
+      <section id="page-reports" class="page">
+        <div class="page-header">
+          <h1>报表中心</h1>
+          <p>统计报表和数据分析</p>
+        </div>
+
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="device-report">设备报表</button>
+          <button class="tab-btn" data-tab="time-report">时间段报表</button>
+          <button class="tab-btn" data-tab="error-report">错误统计</button>
+        </div>
+
+        <!-- 设备报表 -->
+        <div id="tab-device-report" class="tab-content active">
+          <div class="card">
+            <div class="card-body">
+              <form id="device-report-form" class="inline-form">
+                <div class="form-group">
+                  <label for="report-device-uuid">设备 UUID</label>
+                  <input type="text" id="report-device-uuid" placeholder="输入设备 UUID" required>
+                </div>
+                <button type="submit" class="btn btn-primary">生成报表</button>
+              </form>
+            </div>
+          </div>
+          <div id="device-report-result" class="report-result" style="display: none;">
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-info">
+                  <span class="stat-value" id="device-total-logs">--</span>
+                  <span class="stat-label">总日志数</span>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-info">
+                  <span class="stat-value" id="device-record-count">--</span>
+                  <span class="stat-label">记录</span>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-info">
+                  <span class="stat-value" id="device-warning-count">--</span>
+                  <span class="stat-label">警告</span>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-info">
+                  <span class="stat-value" id="device-error-count">--</span>
+                  <span class="stat-label">错误</span>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <h3>设备日志类型分布</h3>
+              </div>
+              <div class="card-body">
+                <canvas id="chart-device-type"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 时间段报表 -->
+        <div id="tab-time-report" class="tab-content">
+          <div class="card">
+            <div class="card-body">
+              <form id="time-report-form" class="inline-form">
+                <div class="form-group">
+                  <label for="report-start-time">开始时间</label>
+                  <input type="datetime-local" id="report-start-time" required>
+                </div>
+                <div class="form-group">
+                  <label for="report-end-time">结束时间</label>
+                  <input type="datetime-local" id="report-end-time" required>
+                </div>
+                <button type="submit" class="btn btn-primary">生成报表</button>
+              </form>
+            </div>
+          </div>
+          <div id="time-report-result" class="report-result" style="display: none;">
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-info">
+                  <span class="stat-value" id="time-total-logs">--</span>
+                  <span class="stat-label">总日志数</span>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-info">
+                  <span class="stat-value" id="time-device-count">--</span>
+                  <span class="stat-label">设备数</span>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <h3>时间段日志类型分布</h3>
+              </div>
+              <div class="card-body">
+                <canvas id="chart-time-type"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 错误统计 -->
+        <div id="tab-error-report" class="tab-content">
+          <div class="card">
+            <div class="card-body">
+              <button type="button" class="btn btn-primary" id="btn-load-error-report">加载错误报表</button>
+            </div>
+          </div>
+          <div id="error-report-result" class="report-result" style="display: none;">
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-info">
+                  <span class="stat-value" id="error-total">--</span>
+                  <span class="stat-label">总错误数</span>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <h3>错误列表</h3>
+              </div>
+              <div class="card-body">
+                <div class="table-container">
+                  <table class="data-table" id="error-table">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>设备 UUID</th>
+                        <th>Key</th>
+                        <th>Value</th>
+                        <th>时间</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- 日志详情模态框 -->
+<div class="modal" id="log-detail-modal">
+  <div class="modal-backdrop"></div>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>日志详情</h3>
+      <button class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body" id="log-detail-content"></div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+</body>
+
+</html>

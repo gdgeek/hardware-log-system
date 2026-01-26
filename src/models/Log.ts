@@ -1,6 +1,7 @@
-import { DataTypes, Model, Optional } from 'sequelize';
-import { sequelize } from '../config/database';
-import { DataType } from '../types';
+import { DataTypes, Model, Optional } from "sequelize";
+import { sequelize } from "../config/database";
+import { DataType } from "../types";
+import Project from "./Project";
 
 /**
  * Log model attributes interface
@@ -8,33 +9,40 @@ import { DataType } from '../types';
 export interface LogAttributes {
   id: number;
   deviceUuid: string;
-  projectName: string | null;
-  projectVersion: string | null;
+  sessionUuid: string; // Changed to required
+  projectId: number; // Replacement for projectName/projectVersion
   clientIp: string | null;
   dataType: DataType;
   logKey: string;
   logValue: object;
+  clientTimestamp: number | null; // New field
   createdAt: Date;
 }
 
 /**
- * Optional attributes for Log creation (id and createdAt are auto-generated)
+ * Optional attributes for Log creation
  */
-export interface LogCreationAttributes extends Optional<LogAttributes, 'id' | 'createdAt' | 'projectName' | 'projectVersion' | 'clientIp'> {}
+export interface LogCreationAttributes extends Optional<
+  LogAttributes,
+  "id" | "createdAt" | "clientIp" | "clientTimestamp"
+> {}
 
 /**
  * Log model class
- * Represents a log entry in the database
  */
-export class Log extends Model<LogAttributes, LogCreationAttributes> implements LogAttributes {
+export class Log
+  extends Model<LogAttributes, LogCreationAttributes>
+  implements LogAttributes
+{
   declare id: number;
   declare deviceUuid: string;
-  declare projectName: string | null;
-  declare projectVersion: string | null;
+  declare sessionUuid: string;
+  declare projectId: number;
   declare clientIp: string | null;
   declare dataType: DataType;
   declare logKey: string;
   declare logValue: object;
+  declare clientTimestamp: number | null;
   declare createdAt: Date;
 
   /**
@@ -44,19 +52,20 @@ export class Log extends Model<LogAttributes, LogCreationAttributes> implements 
     return {
       id: this.id,
       deviceUuid: this.deviceUuid,
-      projectName: this.projectName,
-      projectVersion: this.projectVersion,
+      sessionUuid: this.sessionUuid,
+      projectId: this.projectId,
       clientIp: this.clientIp,
       dataType: this.dataType,
       logKey: this.logKey,
       logValue: this.logValue,
+      clientTimestamp: this.clientTimestamp,
       createdAt: this.createdAt,
     };
   }
 }
 
 /**
- * Initialize the Log model with schema definition
+ * Initialize the Log model
  */
 Log.init(
   {
@@ -64,125 +73,77 @@ Log.init(
       type: DataTypes.BIGINT,
       primaryKey: true,
       autoIncrement: true,
-      comment: 'Primary key, auto-incrementing log ID',
     },
     deviceUuid: {
       type: DataTypes.STRING(36),
       allowNull: false,
-      field: 'device_uuid',
-      comment: 'UUID of the device that generated the log',
+      field: "device_uuid",
       validate: {
-        notEmpty: {
-          msg: 'Device UUID cannot be empty',
-        },
-        len: {
-          args: [1, 36],
-          msg: 'Device UUID must be between 1 and 36 characters',
-        },
+        isUUID: 4,
       },
     },
-    projectName: {
-      type: DataTypes.STRING(100),
-      allowNull: true,
-      field: 'project_name',
-      comment: 'Project name that generated the log',
+    sessionUuid: {
+      type: DataTypes.STRING(36),
+      allowNull: false,
+      field: "session_uuid",
+      validate: {
+        isUUID: 4,
+      },
     },
-    projectVersion: {
-      type: DataTypes.STRING(50),
-      allowNull: true,
-      field: 'project_version',
-      comment: 'Project version that generated the log',
+    projectId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      field: "project_id",
+      references: {
+        model: "projects",
+        key: "id",
+      },
     },
     clientIp: {
       type: DataTypes.STRING(45),
       allowNull: true,
-      field: 'client_ip',
-      comment: 'Client IP address (supports IPv4 and IPv6)',
+      field: "client_ip",
     },
     dataType: {
-      type: DataTypes.ENUM('record', 'warning', 'error'),
+      type: DataTypes.ENUM("record", "warning", "error"),
       allowNull: false,
-      field: 'data_type',
-      comment: 'Type of log entry: record, warning, or error',
-      validate: {
-        isIn: {
-          args: [['record', 'warning', 'error']],
-          msg: 'Data type must be one of: record, warning, error',
-        },
-      },
+      field: "data_type",
     },
     logKey: {
       type: DataTypes.STRING(255),
       allowNull: false,
-      field: 'log_key',
-      comment: 'Key identifier for the log entry',
+      field: "log_key",
       validate: {
-        notEmpty: {
-          msg: 'Log key cannot be empty',
-        },
-        len: {
-          args: [1, 255],
-          msg: 'Log key must be between 1 and 255 characters',
-        },
+        notEmpty: true,
+        len: [1, 255],
       },
     },
     logValue: {
       type: DataTypes.JSON,
       allowNull: false,
-      field: 'log_value',
-      comment: 'JSON value containing log data',
-      validate: {
-        isValidJSON(value: unknown) {
-          if (typeof value !== 'object' || value === null) {
-            throw new Error('Log value must be a valid JSON object');
-          }
-        },
-      },
+      field: "log_value",
+    },
+    clientTimestamp: {
+      type: DataTypes.BIGINT,
+      allowNull: true,
+      field: "client_timestamp",
     },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: DataTypes.NOW,
-      field: 'created_at',
-      comment: 'Timestamp when the log was created',
+      field: "created_at",
     },
   },
   {
     sequelize,
-    tableName: 'logs',
+    tableName: "logs",
     timestamps: false,
-    indexes: [
-      {
-        name: 'idx_device_uuid',
-        fields: ['device_uuid'],
-      },
-      {
-        name: 'idx_data_type',
-        fields: ['data_type'],
-      },
-      {
-        name: 'idx_created_at',
-        fields: ['created_at'],
-      },
-      {
-        name: 'idx_device_type',
-        fields: ['device_uuid', 'data_type'],
-      },
-      {
-        name: 'idx_device_time',
-        fields: ['device_uuid', 'created_at'],
-      },
-      {
-        name: 'idx_project',
-        fields: ['project_name', 'project_version'],
-      },
-      {
-        name: 'idx_client_ip',
-        fields: ['client_ip'],
-      },
-    ],
-    comment: 'Table storing hardware device logs',
-  }
+  },
 );
+
+// Setup associations
+Log.belongsTo(Project, { foreignKey: "project_id", as: "project" });
+Project.hasMany(Log, { foreignKey: "project_id", as: "logs" });
 
 export default Log;

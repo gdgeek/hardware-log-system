@@ -35,3 +35,8 @@ coverage/
 # Temporary files
 tmp/
 temp/
+.claude/
+check-db.ts
+fix-password.ts
+re-fix-db.ts
+verify_api.*

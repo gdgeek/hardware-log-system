@@ -1,7 +1,14 @@
-import { Op, fn, col, literal } from 'sequelize';
-import { Log, LogCreationAttributes } from '../models/Log';
-import { LogFilters, Pagination, DeviceReport, TimeRangeReport, ErrorReport, DatabaseError } from '../types';
-import { logger } from '../config/logger';
+import { Op, fn, col, literal } from "sequelize";
+import { Log, LogCreationAttributes } from "../models/Log";
+import {
+  LogFilters,
+  Pagination,
+  DeviceReport,
+  TimeRangeReport,
+  ErrorReport,
+  DatabaseError,
+} from "../types";
+import { logger } from "../config/logger";
 
 /**
  * LogRepository - Data Access Layer for Log operations
@@ -17,17 +24,20 @@ export class LogRepository {
   async create(logData: LogCreationAttributes): Promise<Log> {
     try {
       const log = await Log.create(logData);
-      logger.debug('Log created successfully', { id: log.id, deviceUuid: log.deviceUuid });
+      logger.debug("Log created successfully", {
+        id: log.id,
+        deviceUuid: log.deviceUuid,
+      });
       return log;
     } catch (error) {
-      logger.error('Failed to create log', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+      logger.error("Failed to create log", {
+        error: error instanceof Error ? error.message : "Unknown error",
         logData,
       });
       throw new DatabaseError(
-        'Failed to create log entry',
-        'DATABASE_ERROR',
-        error instanceof Error ? error : undefined
+        "Failed to create log entry",
+        "DATABASE_ERROR",
+        error instanceof Error ? error : undefined,
       );
     }
   }
@@ -41,17 +51,17 @@ export class LogRepository {
   async findById(id: number): Promise<Log | null> {
     try {
       const log = await Log.findByPk(id);
-      logger.debug('Log query by ID', { id, found: !!log });
+      logger.debug("Log query by ID", { id, found: !!log });
       return log;
     } catch (error) {
-      logger.error('Failed to find log by ID', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+      logger.error("Failed to find log by ID", {
+        error: error instanceof Error ? error.message : "Unknown error",
         id,
       });
       throw new DatabaseError(
-        'Failed to query log by ID',
-        'DATABASE_ERROR',
-        error instanceof Error ? error : undefined
+        "Failed to query log by ID",
+        "DATABASE_ERROR",
+        error instanceof Error ? error : undefined,
       );
     }
   }
@@ -63,7 +73,10 @@ export class LogRepository {
    * @returns Promise resolving to an array of Log instances
    * @throws DatabaseError if the operation fails
    */
-  async findByFilters(filters: LogFilters, pagination: Pagination): Promise<Log[]> {
+  async findByFilters(
+    filters: LogFilters,
+    pagination: Pagination,
+  ): Promise<Log[]> {
     try {
       const whereClause = this.buildWhereClause(filters);
       const { page, pageSize } = pagination;
@@ -73,10 +86,10 @@ export class LogRepository {
         where: whereClause,
         limit: pageSize,
         offset: offset,
-        order: [['createdAt', 'DESC']], // Most recent first
+        order: [["createdAt", "DESC"]], // Most recent first
       });
 
-      logger.debug('Logs queried by filters', {
+      logger.debug("Logs queried by filters", {
         filters,
         pagination,
         resultCount: logs.length,
@@ -84,15 +97,15 @@ export class LogRepository {
 
       return logs;
     } catch (error) {
-      logger.error('Failed to query logs by filters', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+      logger.error("Failed to query logs by filters", {
+        error: error instanceof Error ? error.message : "Unknown error",
         filters,
         pagination,
       });
       throw new DatabaseError(
-        'Failed to query logs',
-        'DATABASE_ERROR',
-        error instanceof Error ? error : undefined
+        "Failed to query logs",
+        "DATABASE_ERROR",
+        error instanceof Error ? error : undefined,
       );
     }
   }
@@ -108,18 +121,18 @@ export class LogRepository {
       const whereClause = this.buildWhereClause(filters);
       const count = await Log.count({ where: whereClause });
 
-      logger.debug('Logs counted by filters', { filters, count });
+      logger.debug("Logs counted by filters", { filters, count });
 
       return count;
     } catch (error) {
-      logger.error('Failed to count logs by filters', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+      logger.error("Failed to count logs by filters", {
+        error: error instanceof Error ? error.message : "Unknown error",
         filters,
       });
       throw new DatabaseError(
-        'Failed to count logs',
-        'DATABASE_ERROR',
-        error instanceof Error ? error : undefined
+        "Failed to count logs",
+        "DATABASE_ERROR",
+        error instanceof Error ? error : undefined,
       );
     }
   }
@@ -136,14 +149,19 @@ export class LogRepository {
       const stats = (await Log.findAll({
         where: { deviceUuid: uuid },
         attributes: [
-          'dataType',
-          [fn('COUNT', col('id')), 'count'],
-          [fn('MIN', col('createdAt')), 'firstLogTime'],
-          [fn('MAX', col('createdAt')), 'lastLogTime'],
+          "dataType",
+          [fn("COUNT", col("id")), "count"],
+          [fn("MIN", col("createdAt")), "firstLogTime"],
+          [fn("MAX", col("createdAt")), "lastLogTime"],
         ],
-        group: ['dataType'],
+        group: ["dataType"],
         raw: true,
-      })) as unknown as Array<{ dataType: string; count: string; firstLogTime: Date; lastLogTime: Date }>;
+      })) as unknown as Array<{
+        dataType: string;
+        count: string;
+        firstLogTime: Date;
+        lastLogTime: Date;
+      }>;
 
       // If no logs found, return empty report
       if (stats.length === 0) {
@@ -153,8 +171,8 @@ export class LogRepository {
           recordCount: 0,
           warningCount: 0,
           errorCount: 0,
-          firstLogTime: '',
-          lastLogTime: '',
+          firstLogTime: "",
+          lastLogTime: "",
         };
       }
 
@@ -171,13 +189,13 @@ export class LogRepository {
         totalLogs += count;
 
         switch (stat.dataType) {
-          case 'record':
+          case "record":
             recordCount = count;
             break;
-          case 'warning':
+          case "warning":
             warningCount = count;
             break;
-          case 'error':
+          case "error":
             errorCount = count;
             break;
         }
@@ -197,22 +215,22 @@ export class LogRepository {
         recordCount,
         warningCount,
         errorCount,
-        firstLogTime: firstLogTime ? firstLogTime.toISOString() : '',
-        lastLogTime: lastLogTime ? lastLogTime.toISOString() : '',
+        firstLogTime: firstLogTime ? firstLogTime.toISOString() : "",
+        lastLogTime: lastLogTime ? lastLogTime.toISOString() : "",
       };
 
-      logger.debug('Device aggregation completed', { uuid, report });
+      logger.debug("Device aggregation completed", { uuid, report });
 
       return report;
     } catch (error) {
-      logger.error('Failed to aggregate logs by device', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+      logger.error("Failed to aggregate logs by device", {
+        error: error instanceof Error ? error.message : "Unknown error",
         uuid,
       });
       throw new DatabaseError(
-        'Failed to aggregate device statistics',
-        'DATABASE_ERROR',
-        error instanceof Error ? error : undefined
+        "Failed to aggregate device statistics",
+        "DATABASE_ERROR",
+        error instanceof Error ? error : undefined,
       );
     }
   }
@@ -234,11 +252,8 @@ export class LogRepository {
             [Op.lte]: end,
           },
         },
-        attributes: [
-          'dataType',
-          [fn('COUNT', col('id')), 'count'],
-        ],
-        group: ['dataType'],
+        attributes: ["dataType", [fn("COUNT", col("id")), "count"]],
+        group: ["dataType"],
         raw: true,
       })) as unknown as Array<{ dataType: string; count: string }>;
 
@@ -250,11 +265,16 @@ export class LogRepository {
             [Op.lte]: end,
           },
         },
-        attributes: [[fn('COUNT', fn('DISTINCT', col('deviceUuid'))), 'deviceCount']],
+        attributes: [
+          [fn("COUNT", fn("DISTINCT", col("deviceUuid"))), "deviceCount"],
+        ],
         raw: true,
       })) as unknown as Array<{ deviceCount: string }>;
 
-      const deviceCount = deviceCountResult.length > 0 ? parseInt(deviceCountResult[0].deviceCount, 10) : 0;
+      const deviceCount =
+        deviceCountResult.length > 0
+          ? parseInt(deviceCountResult[0].deviceCount, 10)
+          : 0;
 
       // Calculate totals by type
       let totalLogs = 0;
@@ -267,13 +287,13 @@ export class LogRepository {
         totalLogs += count;
 
         switch (stat.dataType) {
-          case 'record':
+          case "record":
             recordCount = count;
             break;
-          case 'warning':
+          case "warning":
             warningCount = count;
             break;
-          case 'error':
+          case "error":
             errorCount = count;
             break;
         }
@@ -289,19 +309,19 @@ export class LogRepository {
         deviceCount,
       };
 
-      logger.debug('Time range aggregation completed', { start, end, report });
+      logger.debug("Time range aggregation completed", { start, end, report });
 
       return report;
     } catch (error) {
-      logger.error('Failed to aggregate logs by time range', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+      logger.error("Failed to aggregate logs by time range", {
+        error: error instanceof Error ? error.message : "Unknown error",
         start,
         end,
       });
       throw new DatabaseError(
-        'Failed to aggregate time range statistics',
-        'DATABASE_ERROR',
-        error instanceof Error ? error : undefined
+        "Failed to aggregate time range statistics",
+        "DATABASE_ERROR",
+        error instanceof Error ? error : undefined,
       );
     }
   }
@@ -315,17 +335,22 @@ export class LogRepository {
     try {
       // Get error logs grouped by device and key
       const errorStats = (await Log.findAll({
-        where: { dataType: 'error' },
+        where: { dataType: "error" },
         attributes: [
-          'deviceUuid',
-          'logKey',
-          [fn('COUNT', col('id')), 'count'],
-          [fn('MAX', col('createdAt')), 'lastOccurrence'],
+          "deviceUuid",
+          "logKey",
+          [fn("COUNT", col("id")), "count"],
+          [fn("MAX", col("createdAt")), "lastOccurrence"],
         ],
-        group: ['deviceUuid', 'logKey'],
-        order: [[literal('count'), 'DESC']], // Most frequent errors first
+        group: ["deviceUuid", "logKey"],
+        order: [[literal("count"), "DESC"]], // Most frequent errors first
         raw: true,
-      })) as unknown as Array<{ deviceUuid: string; logKey: string; count: string; lastOccurrence: Date }>;
+      })) as unknown as Array<{
+        deviceUuid: string;
+        logKey: string;
+        count: string;
+        lastOccurrence: Date;
+      }>;
 
       const errors = errorStats.map((stat) => ({
         deviceUuid: stat.deviceUuid,
@@ -341,17 +366,20 @@ export class LogRepository {
         totalErrors,
       };
 
-      logger.debug('Error aggregation completed', { totalErrors, errorCount: errors.length });
+      logger.debug("Error aggregation completed", {
+        totalErrors,
+        errorCount: errors.length,
+      });
 
       return report;
     } catch (error) {
-      logger.error('Failed to aggregate error logs', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+      logger.error("Failed to aggregate error logs", {
+        error: error instanceof Error ? error.message : "Unknown error",
       });
       throw new DatabaseError(
-        'Failed to aggregate error statistics',
-        'DATABASE_ERROR',
-        error instanceof Error ? error : undefined
+        "Failed to aggregate error statistics",
+        "DATABASE_ERROR",
+        error instanceof Error ? error : undefined,
       );
     }
   }
@@ -369,12 +397,12 @@ export class LogRepository {
       where.deviceUuid = filters.deviceUuid;
     }
 
-    if (filters.projectName) {
-      where.projectName = filters.projectName;
+    if (filters.sessionUuid) {
+      where.sessionUuid = filters.sessionUuid;
     }
 
-    if (filters.projectVersion) {
-      where.projectVersion = filters.projectVersion;
+    if (filters.projectId) {
+      where.projectId = filters.projectId;
     }
 
     if (filters.dataType) {

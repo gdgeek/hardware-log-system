@@ -1,23 +1,21 @@
 /**
- * Type definitions for the hardware log system
- */
-
-/**
  * Log data types
  */
-export type DataType = 'record' | 'warning' | 'error';
+export type DataType = "record" | "warning" | "error";
 
 /**
  * Input data for creating a log entry
  */
 export interface LogInput {
   deviceUuid: string;
-  projectName?: string;
-  projectVersion?: string;
-  clientIp?: string;
+  sessionUuid: string;
+  projectId: number;
+  timestamp: number;
+  signature: string;
   dataType: DataType;
   key: string;
   value: object;
+  clientIp?: string; // Internal field for server-detected IP
 }
 
 /**
@@ -26,12 +24,13 @@ export interface LogInput {
 export interface LogOutput {
   id: number;
   deviceUuid: string;
-  projectName: string | null;
-  projectVersion: string | null;
+  sessionUuid: string;
+  projectId: number;
   clientIp: string | null;
   dataType: DataType;
   key: string;
   value: object;
+  clientTimestamp: number | null;
   createdAt: string; // ISO 8601 format
 }
 
@@ -40,8 +39,8 @@ export interface LogOutput {
  */
 export interface LogFilters {
   deviceUuid?: string;
-  projectName?: string;
-  projectVersion?: string;
+  sessionUuid?: string;
+  projectId?: number;
   dataType?: DataType;
   startTime?: Date;
   endTime?: Date;
@@ -135,28 +134,31 @@ export interface ValidationResult {
 export class ValidationError extends Error {
   constructor(
     message: string,
-    public code: string = 'VALIDATION_ERROR',
-    public details?: Record<string, unknown>
+    public code: string = "VALIDATION_ERROR",
+    public details?: Record<string, unknown>,
   ) {
     super(message);
-    this.name = 'ValidationError';
+    this.name = "ValidationError";
   }
 }
 
 export class NotFoundError extends Error {
-  constructor(message: string, public code: string = 'NOT_FOUND') {
+  constructor(
+    message: string,
+    public code: string = "NOT_FOUND",
+  ) {
     super(message);
-    this.name = 'NotFoundError';
+    this.name = "NotFoundError";
   }
 }
 
 export class DatabaseError extends Error {
   constructor(
     message: string,
-    public code: string = 'DATABASE_ERROR',
-    public originalError?: Error
+    public code: string = "DATABASE_ERROR",
+    public originalError?: Error,
   ) {
     super(message);
-    this.name = 'DatabaseError';
+    this.name = "DatabaseError";
   }
 }

@@ -1,12 +1,12 @@
-import { LogRepository } from './LogRepository';
-import { Log } from '../models/Log';
-import { DataType, LogFilters, Pagination, DatabaseError } from '../types';
+import { LogRepository } from "./LogRepository";
+import { Log } from "../models/Log";
+import { DataType, LogFilters, Pagination, DatabaseError } from "../types";
 
 // Mock the Log model
-jest.mock('../models/Log');
+jest.mock("../models/Log");
 
 // Mock the logger to avoid console output during tests
-jest.mock('../config/logger', () => ({
+jest.mock("../config/logger", () => ({
   logger: {
     debug: jest.fn(),
     info: jest.fn(),
@@ -16,7 +16,7 @@ jest.mock('../config/logger', () => ({
   logDatabaseOperation: jest.fn(),
 }));
 
-describe('LogRepository', () => {
+describe("LogRepository", () => {
   let repository: LogRepository;
   let mockLog: jest.Mocked<typeof Log>;
 
@@ -26,13 +26,15 @@ describe('LogRepository', () => {
     jest.clearAllMocks();
   });
 
-  describe('create', () => {
-    it('should create a log entry successfully', async () => {
+  describe("create", () => {
+    it("should create a log entry successfully", async () => {
       const logData = {
-        deviceUuid: 'test-device-uuid-1',
-        dataType: 'record' as DataType,
-        logKey: 'test-key',
-        logValue: { message: 'test message' },
+        deviceUuid: "test-device-uuid-1",
+        dataType: "record" as DataType,
+        logKey: "test-key",
+        logValue: { message: "test message" },
+        projectId: 1,
+        sessionUuid: "test-session-uuid",
       };
 
       const mockCreatedLog = {
@@ -55,28 +57,36 @@ describe('LogRepository', () => {
       expect(mockLog.create).toHaveBeenCalledWith(logData);
     });
 
-    it('should throw DatabaseError when creation fails', async () => {
+    it("should throw DatabaseError when creation fails", async () => {
       const invalidData = {
-        deviceUuid: '',
-        dataType: 'record' as DataType,
-        logKey: 'test-key',
-        logValue: { data: 'test' },
+        deviceUuid: "",
+        dataType: "record" as DataType,
+        logKey: "test-key",
+        logValue: { data: "test" },
+        projectId: 1,
+        sessionUuid: "test-session-uuid",
       };
 
-      mockLog.create = jest.fn().mockRejectedValue(new Error('Validation error'));
+      mockLog.create = jest
+        .fn()
+        .mockRejectedValue(new Error("Validation error"));
 
-      await expect(repository.create(invalidData)).rejects.toThrow(DatabaseError);
+      await expect(repository.create(invalidData)).rejects.toThrow(
+        DatabaseError,
+      );
     });
   });
 
-  describe('findById', () => {
-    it('should find a log by ID', async () => {
+  describe("findById", () => {
+    it("should find a log by ID", async () => {
       const mockFoundLog = {
         id: 1,
-        deviceUuid: 'test-device-uuid-3',
-        dataType: 'error' as DataType,
-        logKey: 'test-key',
-        logValue: { error: 'test error' },
+        deviceUuid: "test-device-uuid-3",
+        dataType: "error" as DataType,
+        logKey: "test-key",
+        logValue: { error: "test error" },
+        projectId: 1,
+        sessionUuid: "test-session-uuid",
         createdAt: new Date(),
         toJSON: jest.fn().mockReturnThis(),
       };
@@ -90,7 +100,7 @@ describe('LogRepository', () => {
       expect(mockLog.findByPk).toHaveBeenCalledWith(1);
     });
 
-    it('should return null when log ID does not exist', async () => {
+    it("should return null when log ID does not exist", async () => {
       mockLog.findByPk = jest.fn().mockResolvedValue(null);
 
       const found = await repository.findById(99999);
@@ -99,24 +109,28 @@ describe('LogRepository', () => {
     });
   });
 
-  describe('findByFilters', () => {
-    it('should find logs by device UUID', async () => {
+  describe("findByFilters", () => {
+    it("should find logs by device UUID", async () => {
       const mockLogs = [
         {
           id: 1,
-          deviceUuid: 'device-1',
-          dataType: 'record' as DataType,
-          logKey: 'key-1',
-          logValue: { data: 'test1' },
+          deviceUuid: "device-1",
+          dataType: "record" as DataType,
+          logKey: "key-1",
+          logValue: { data: "test1" },
+          projectId: 1,
+          sessionUuid: "session-1",
           createdAt: new Date(),
           toJSON: jest.fn().mockReturnThis(),
         },
         {
           id: 2,
-          deviceUuid: 'device-1',
-          dataType: 'warning' as DataType,
-          logKey: 'key-2',
-          logValue: { data: 'test2' },
+          deviceUuid: "device-1",
+          dataType: "warning" as DataType,
+          logKey: "key-2",
+          logValue: { data: "test2" },
+          projectId: 1,
+          sessionUuid: "session-1",
           createdAt: new Date(),
           toJSON: jest.fn().mockReturnThis(),
         },
@@ -124,7 +138,7 @@ describe('LogRepository', () => {
 
       mockLog.findAll = jest.fn().mockResolvedValue(mockLogs);
 
-      const filters: LogFilters = { deviceUuid: 'device-1' };
+      const filters: LogFilters = { deviceUuid: "device-1" };
       const pagination: Pagination = { page: 1, pageSize: 10 };
 
       const logs = await repository.findByFilters(filters, pagination);
@@ -133,10 +147,10 @@ describe('LogRepository', () => {
       expect(mockLog.findAll).toHaveBeenCalled();
     });
 
-    it('should return empty array when no logs match filters', async () => {
+    it("should return empty array when no logs match filters", async () => {
       mockLog.findAll = jest.fn().mockResolvedValue([]);
 
-      const filters: LogFilters = { deviceUuid: 'non-existent-device' };
+      const filters: LogFilters = { deviceUuid: "non-existent-device" };
       const pagination: Pagination = { page: 1, pageSize: 10 };
 
       const logs = await repository.findByFilters(filters, pagination);
@@ -145,11 +159,11 @@ describe('LogRepository', () => {
     });
   });
 
-  describe('countByFilters', () => {
-    it('should count logs by device UUID', async () => {
+  describe("countByFilters", () => {
+    it("should count logs by device UUID", async () => {
       mockLog.count = jest.fn().mockResolvedValue(2);
 
-      const filters: LogFilters = { deviceUuid: 'device-1' };
+      const filters: LogFilters = { deviceUuid: "device-1" };
 
       const count = await repository.countByFilters(filters);
 
@@ -157,10 +171,10 @@ describe('LogRepository', () => {
       expect(mockLog.count).toHaveBeenCalled();
     });
 
-    it('should return 0 when no logs match filters', async () => {
+    it("should return 0 when no logs match filters", async () => {
       mockLog.count = jest.fn().mockResolvedValue(0);
 
-      const filters: LogFilters = { deviceUuid: 'non-existent-device' };
+      const filters: LogFilters = { deviceUuid: "non-existent-device" };
 
       const count = await repository.countByFilters(filters);
 
@@ -168,78 +182,79 @@ describe('LogRepository', () => {
     });
   });
 
-  describe('aggregateByDevice', () => {
-    it('should aggregate logs by device', async () => {
+  describe("aggregateByDevice", () => {
+    it("should aggregate logs by device", async () => {
       const mockAggregateResult = [
         {
-          dataType: 'record',
-          count: '2',
-          firstLogTime: new Date('2024-01-01'),
-          lastLogTime: new Date('2024-01-15'),
+          dataType: "record",
+          count: "2",
+          firstLogTime: new Date("2024-01-01"),
+          lastLogTime: new Date("2024-01-15"),
         },
         {
-          dataType: 'warning',
-          count: '1',
-          firstLogTime: new Date('2024-01-10'),
-          lastLogTime: new Date('2024-01-20'),
+          dataType: "warning",
+          count: "1",
+          firstLogTime: new Date("2024-01-10"),
+          lastLogTime: new Date("2024-01-20"),
         },
         {
-          dataType: 'error',
-          count: '1',
-          firstLogTime: new Date('2024-01-05'),
-          lastLogTime: new Date('2024-01-31'),
+          dataType: "error",
+          count: "1",
+          firstLogTime: new Date("2024-01-05"),
+          lastLogTime: new Date("2024-01-31"),
         },
       ];
 
       mockLog.findAll = jest.fn().mockResolvedValue(mockAggregateResult);
 
-      const report = await repository.aggregateByDevice('device-1');
+      const report = await repository.aggregateByDevice("device-1");
 
-      expect(report.deviceUuid).toBe('device-1');
+      expect(report.deviceUuid).toBe("device-1");
       expect(report.totalLogs).toBe(4);
       expect(report.recordCount).toBe(2);
       expect(report.warningCount).toBe(1);
       expect(report.errorCount).toBe(1);
     });
 
-    it('should return empty report for device with no logs', async () => {
+    it("should return empty report for device with no logs", async () => {
       mockLog.findAll = jest.fn().mockResolvedValue([]);
 
-      const report = await repository.aggregateByDevice('non-existent-device');
+      const report = await repository.aggregateByDevice("non-existent-device");
 
-      expect(report.deviceUuid).toBe('non-existent-device');
+      expect(report.deviceUuid).toBe("non-existent-device");
       expect(report.totalLogs).toBe(0);
       expect(report.recordCount).toBe(0);
       expect(report.warningCount).toBe(0);
       expect(report.errorCount).toBe(0);
-      expect(report.firstLogTime).toBe('');
-      expect(report.lastLogTime).toBe('');
+      expect(report.firstLogTime).toBe("");
+      expect(report.lastLogTime).toBe("");
     });
   });
 
-  describe('aggregateByTimeRange', () => {
-    it('should aggregate logs by time range', async () => {
+  describe("aggregateByTimeRange", () => {
+    it("should aggregate logs by time range", async () => {
       const now = new Date();
       const past = new Date(now.getTime() - 1000 * 60 * 60);
 
       const mockAggregateResult = [
         {
-          dataType: 'record',
+          dataType: "record",
           count: 1,
         },
         {
-          dataType: 'warning',
+          dataType: "warning",
           count: 1,
         },
         {
-          dataType: 'error',
+          dataType: "error",
           count: 1,
         },
       ];
 
       const mockDeviceCount = [{ deviceCount: 2 }];
 
-      mockLog.findAll = jest.fn()
+      mockLog.findAll = jest
+        .fn()
         .mockResolvedValueOnce(mockAggregateResult)
         .mockResolvedValueOnce(mockDeviceCount);
 
@@ -252,18 +267,18 @@ describe('LogRepository', () => {
     });
   });
 
-  describe('aggregateErrors', () => {
-    it('should aggregate error logs', async () => {
+  describe("aggregateErrors", () => {
+    it("should aggregate error logs", async () => {
       const mockErrors = [
         {
-          deviceUuid: 'device-1',
-          logKey: 'error-key-1',
+          deviceUuid: "device-1",
+          logKey: "error-key-1",
           count: 2,
           lastOccurrence: new Date(),
         },
         {
-          deviceUuid: 'device-2',
-          logKey: 'error-key-2',
+          deviceUuid: "device-2",
+          logKey: "error-key-2",
           count: 1,
           lastOccurrence: new Date(),
         },
@@ -277,7 +292,7 @@ describe('LogRepository', () => {
       expect(report.errors).toHaveLength(2);
     });
 
-    it('should return empty report when no error logs exist', async () => {
+    it("should return empty report when no error logs exist", async () => {
       mockLog.findAll = jest.fn().mockResolvedValue([]);
 
       const report = await repository.aggregateErrors();

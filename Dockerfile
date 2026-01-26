@@ -14,7 +14,7 @@ COPY package.json pnpm-lock.yaml ./
 COPY tsconfig.json ./
 
 # 安装所有依赖（包括开发依赖，用于构建）
-RUN pnpm install --frozen-lockfile
+RUN pnpm install
 
 # 复制源代码
 COPY src ./src
@@ -35,7 +35,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 
 # 只安装生产依赖
-RUN pnpm install --prod --frozen-lockfile
+RUN pnpm install --prod
 
 # 从构建阶段复制编译后的代码
 COPY --from=builder /app/dist ./dist
@@ -43,12 +43,15 @@ COPY --from=builder /app/dist ./dist
 # 复制迁移脚本
 COPY src/models/migrations ./dist/models/migrations
 
+# 复制静态资源（UI 管理界面）
+COPY public ./public
+
 # 创建日志目录
 RUN mkdir -p logs
 
 # 创建非 root 用户
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
+  adduser -S nodejs -u 1001
 
 # 更改文件所有权
 RUN chown -R nodejs:nodejs /app
