@@ -11,7 +11,7 @@
 
 import { Router, Request, Response, IRouter } from "express";
 import { logService } from "../services/LogService";
-import { validateBody, validateParams, asyncHandler, apiAuthMiddleware } from "../middleware";
+import { validateBody, validateParams, asyncHandler } from "../middleware";
 import {
   logInputSchema,
   logFiltersSchema,
@@ -51,7 +51,6 @@ const router: IRouter = Router();
  */
 router.post(
   "/",
-  apiAuthMiddleware,
   validateBody(logInputSchema),
   asyncHandler(async (req: Request, res: Response) => {
     // 获取客户端 IP（支持代理）
