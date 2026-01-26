@@ -140,20 +140,6 @@ export class LogService {
     }
     return deleted;
   }
-
-  /**
-   * Deletes multiple logs by filter criteria
-   */
-  async deleteLogs(filters: LogFilters): Promise<number> {
-    const validatedFilters = validateOrThrow<LogFilters>(
-      logFiltersSchema,
-      filters,
-    );
-    logger.info("Deleting logs by filters", { filters: validatedFilters });
-    const deleted = await this.repository.deleteByFilters(validatedFilters);
-    logger.info("Logs deleted", { count: deleted });
-    return deleted;
-  }
 }
 
 export const logService = new LogService();

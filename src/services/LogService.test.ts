@@ -387,35 +387,4 @@ describe("LogService", () => {
       expect(mockRepository.deleteById).toHaveBeenCalledWith(999);
     });
   });
-
-  describe("deleteLogs", () => {
-    it("should delete logs by filters", async () => {
-      mockRepository.deleteByFilters.mockResolvedValue(5);
-
-      const filters = { deviceUuid: "550e8400-e29b-41d4-a716-446655440000" };
-      const result = await logService.deleteLogs(filters);
-
-      expect(result).toBe(5);
-      expect(mockRepository.deleteByFilters).toHaveBeenCalledWith(filters);
-    });
-
-    it("should delete all logs when no filters", async () => {
-      mockRepository.deleteByFilters.mockResolvedValue(100);
-
-      const result = await logService.deleteLogs({});
-
-      expect(result).toBe(100);
-      expect(mockRepository.deleteByFilters).toHaveBeenCalledWith({});
-    });
-
-    it("should delete logs by dataType filter", async () => {
-      mockRepository.deleteByFilters.mockResolvedValue(10);
-
-      const filters = { dataType: "error" as const };
-      const result = await logService.deleteLogs(filters);
-
-      expect(result).toBe(10);
-      expect(mockRepository.deleteByFilters).toHaveBeenCalledWith(filters);
-    });
-  });
 });

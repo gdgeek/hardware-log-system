@@ -445,31 +445,6 @@ export class LogRepository {
       );
     }
   }
-
-  /**
-   * Deletes multiple logs by filter criteria
-   * @param filters - Filter criteria for deletion
-   * @returns Promise resolving to the number of deleted logs
-   * @throws DatabaseError if the operation fails
-   */
-  async deleteByFilters(filters: LogFilters): Promise<number> {
-    try {
-      const whereClause = this.buildWhereClause(filters);
-      const deleted = await Log.destroy({ where: whereClause });
-      logger.debug("Logs deleted by filters", { filters, deleted });
-      return deleted;
-    } catch (error) {
-      logger.error("Failed to delete logs by filters", {
-        error: error instanceof Error ? error.message : "Unknown error",
-        filters,
-      });
-      throw new DatabaseError(
-        "Failed to delete logs",
-        "DATABASE_ERROR",
-        error instanceof Error ? error : undefined,
-      );
-    }
-  }
 }
 
 // Export a singleton instance
