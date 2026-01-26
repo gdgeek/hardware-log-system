@@ -27,6 +27,8 @@ const router: IRouter = Router();
  *   get:
  *     summary: 获取设备统计报表
  *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: uuid
@@ -71,6 +73,8 @@ router.get(
  *   get:
  *     summary: 获取时间段统计报表
  *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: startTime
@@ -125,6 +129,8 @@ router.get(
  *   get:
  *     summary: 获取错误统计报表
  *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: 获取成功

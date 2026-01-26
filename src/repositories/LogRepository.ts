@@ -421,6 +421,55 @@ export class LogRepository {
 
     return where;
   }
+
+  /**
+   * Deletes a log entry by ID
+   * @param id - The log ID to delete
+   * @returns Promise resolving to true if deleted, false if not found
+   * @throws DatabaseError if the operation fails
+   */
+  async deleteById(id: number): Promise<boolean> {
+    try {
+      const deleted = await Log.destroy({ where: { id } });
+      logger.debug("Log delete by ID", { id, deleted: deleted > 0 });
+      return deleted > 0;
+    } catch (error) {
+      logger.error("Failed to delete log by ID", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        id,
+      });
+      throw new DatabaseError(
+        "Failed to delete log",
+        "DATABASE_ERROR",
+        error instanceof Error ? error : undefined,
+      );
+    }
+  }
+
+  /**
+   * Deletes multiple logs by filter criteria
+   * @param filters - Filter criteria for deletion
+   * @returns Promise resolving to the number of deleted logs
+   * @throws DatabaseError if the operation fails
+   */
+  async deleteByFilters(filters: LogFilters): Promise<number> {
+    try {
+      const whereClause = this.buildWhereClause(filters);
+      const deleted = await Log.destroy({ where: whereClause });
+      logger.debug("Logs deleted by filters", { filters, deleted });
+      return deleted;
+    } catch (error) {
+      logger.error("Failed to delete logs by filters", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        filters,
+      });
+      throw new DatabaseError(
+        "Failed to delete logs",
+        "DATABASE_ERROR",
+        error instanceof Error ? error : undefined,
+      );
+    }
+  }
 }
 
 // Export a singleton instance

@@ -79,6 +79,8 @@ router.post(
  *   get:
  *     summary: 查询日志记录
  *     tags: [Logs]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: deviceUuid
@@ -159,6 +161,8 @@ router.get(
  *   get:
  *     summary: 获取单条日志
  *     tags: [Logs]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -205,6 +209,125 @@ router.get(
     logger.info("日志获取成功", { id });
 
     res.status(200).json(log);
+  }),
+);
+
+/**
+ * @swagger
+ * /logs/{id}:
+ *   delete:
+ *     summary: 删除单条日志
+ *     tags: [Logs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: 日志 ID
+ *     responses:
+ *       204:
+ *         description: 删除成功
+ *       401:
+ *         description: 未授权
+ *       404:
+ *         description: 日志未找到
+ */
+router.delete(
+  "/:id",
+  adminAuthMiddleware,
+  validateParams(logIdParamSchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id, 10);
+
+    logger.info("收到删除日志请求", { id });
+
+    const deleted = await logService.deleteLog(id);
+
+    if (!deleted) {
+      logger.warn("日志未找到", { id });
+      res.status(404).json({
+        error: {
+          code: "NOT_FOUND",
+          message: `日志 ID ${id} 未找到`,
+        },
+      });
+      return;
+    }
+
+    logger.info("日志删除成功", { id });
+
+    res.status(204).send();
+  }),
+);
+
+/**
+ * @swagger
+ * /logs:
+ *   delete:
+ *     summary: 批量删除日志
+ *     tags: [Logs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: deviceUuid
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: 设备 UUID
+ *       - in: query
+ *         name: dataType
+ *         schema:
+ *           type: string
+ *           enum: [record, warning, error]
+ *         description: 数据类型
+ *       - in: query
+ *         name: startTime
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: 开始时间
+ *       - in: query
+ *         name: endTime
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: 结束时间
+ *     responses:
+ *       200:
+ *         description: 删除成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 deleted:
+ *                   type: integer
+ *                   description: 删除的日志数量
+ *       401:
+ *         description: 未授权
+ */
+router.delete(
+  "/",
+  adminAuthMiddleware,
+  asyncHandler(async (req: Request, res: Response) => {
+    const filters = logFiltersSchema.validate(req.query, {
+      stripUnknown: true,
+      convert: true,
+    }).value;
+
+    logger.info("收到批量删除日志请求", { filters });
+
+    const deleted = await logService.deleteLogs(filters);
+
+    logger.info("批量删除日志成功", { deleted });
+
+    res.status(200).json({ message: "删除成功", deleted });
   }),
 );
 

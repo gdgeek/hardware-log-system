@@ -26,6 +26,14 @@ const options: swaggerJsdoc.Options = {
       },
     ],
     components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+          description: "JWT 认证令牌",
+        },
+      },
       schemas: {
         Log: {
           type: "object",
