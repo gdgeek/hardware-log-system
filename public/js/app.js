@@ -431,10 +431,10 @@ function updateLogsTable() {
       <td>${log.id}</td>
       <td title="${log.deviceUuid}">${truncateText(log.deviceUuid, 12)}</td>
       <td>${getDataTypeBadge(log.dataType)}</td>
-      <td>${escapeHtml(log.key || '-')}</td>
-      <td class="value-preview" title="点击查看详情">${truncateText(log.value, 20)}</td>
+      <td title="${log.key || ''}">${escapeHtml(truncateText(log.key, 15) || '-')}</td>
+      <td class="value-preview" title="${escapeHtml(JSON.stringify(log.value))}">${truncateText(log.value, 15)}</td>
       <td>${log.projectId || '-'}</td>
-      <td title="${log.sessionUuid}">${truncateText(log.sessionUuid, 10)}</td>
+      <td title="${log.sessionUuid || ''}">${truncateText(log.sessionUuid, 10)}</td>
       <td>${escapeHtml(log.clientIp || '-')}</td>
       <td>${formatDate(log.createdAt)}</td>
     </tr>
