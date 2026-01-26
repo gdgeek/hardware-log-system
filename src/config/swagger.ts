@@ -31,78 +31,31 @@ const options: swaggerJsdoc.Options = {
           type: "object",
           properties: {
             id: { type: "integer", description: "日志 ID" },
-            deviceUuid: {
-              type: "string",
-              format: "uuid",
-              description: "设备 UUID",
-            },
+            deviceUuid: { type: "string", format: "uuid", description: "设备 UUID" },
             sessionUuid: { type: "string", description: "会话 UUID" },
-            projectId: { type: "integer", description: "项目 ID" },
-            dataType: {
-              type: "string",
-              enum: ["record", "warning", "error"],
-              description: "数据类型",
-            },
+            dataType: { type: "string", enum: ["record", "warning", "error"], description: "数据类型" },
             key: { type: "string", description: "日志键" },
             value: { type: "object", description: "日志值（JSON）" },
             clientTimestamp: { type: "number", description: "客户端时间戳" },
-            createdAt: {
-              type: "string",
-              format: "date-time",
-              description: "创建时间",
-            },
+            createdAt: { type: "string", format: "date-time", description: "创建时间" },
           },
         },
         LogInput: {
           type: "object",
-          required: [
-            "deviceUuid",
-            "projectId",
-            "timestamp",
-            "signature",
-            "dataType",
-            "key",
-            "value",
-            "sessionUuid",
-          ],
+          required: ["deviceUuid", "timestamp", "dataType", "key", "value", "sessionUuid"],
           properties: {
-            deviceUuid: {
-              type: "string",
-              format: "uuid",
-              description: "设备 UUID",
-            },
-            projectId: { type: "integer", description: "项目 ID" },
-            timestamp: {
-              type: "number",
-              description: "客户端 Unix 毫秒时间戳",
-            },
-            signature: { type: "string", description: "请求签名" },
-            sessionUuid: {
-              type: "string",
-              format: "uuid",
-              description: "会话 UUID",
-            },
-            dataType: {
-              type: "string",
-              enum: ["record", "warning", "error"],
-              description: "数据类型",
-            },
-            key: {
-              type: "string",
-              minLength: 1,
-              maxLength: 255,
-              description: "日志键",
-            },
+            deviceUuid: { type: "string", format: "uuid", description: "设备 UUID" },
+            timestamp: { type: "number", description: "客户端 Unix 毫秒时间戳" },
+            sessionUuid: { type: "string", format: "uuid", description: "会话 UUID" },
+            dataType: { type: "string", enum: ["record", "warning", "error"], description: "数据类型" },
+            key: { type: "string", minLength: 1, maxLength: 255, description: "日志键" },
             value: { type: "object", description: "日志值（JSON）" },
           },
         },
         PaginatedLogs: {
           type: "object",
           properties: {
-            data: {
-              type: "array",
-              items: { $ref: "#/components/schemas/Log" },
-            },
+            data: { type: "array", items: { $ref: "#/components/schemas/Log" } },
             pagination: {
               type: "object",
               properties: {

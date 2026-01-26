@@ -1,8 +1,5 @@
 /**
  * Property-Based Tests for LogService
- *
- * Tests universal properties that should hold for all valid inputs
- * using fast-check for property-based testing
  */
 
 import fc from "fast-check";
@@ -10,59 +7,31 @@ import { LogService } from "./LogService";
 import { LogRepository } from "../repositories/LogRepository";
 import { LogInput } from "../types";
 
-// Mock dependencies
 jest.mock("../repositories/LogRepository");
 jest.mock("../config/logger");
-jest.mock("./SignatureService");
 
 describe("LogService - Property-Based Tests", () => {
   let logService: LogService;
   let mockRepository: jest.Mocked<LogRepository>;
 
-  // Arbitraries for generating test data
-  // Generate valid UUID v4 (version 4, variant 1)
   const uuidArbitrary = fc
     .uuid()
     .filter((uuid) =>
-      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-        uuid,
-      ),
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(uuid),
     );
-  const dataTypeArbitrary = fc.constantFrom(
-    "record" as const,
-    "warning" as const,
-    "error" as const,
-  );
-  // Generate keys that are not empty and not just whitespace
-  const keyArbitrary = fc
-    .string({ minLength: 1, maxLength: 255 })
-    .filter((s) => s.trim().length > 0);
-  // Generate non-empty JSON objects with non-whitespace keys
-  // Filter out keys that contain only whitespace or have trailing/leading whitespace
-  const jsonKeyArbitrary = fc
-    .string({ minLength: 1, maxLength: 50 })
-    .filter((s) => {
-      const trimmed = s.trim();
-      return trimmed.length > 0 && trimmed === s; // No leading/trailing whitespace
-    });
+  const dataTypeArbitrary = fc.constantFrom("record" as const, "warning" as const, "error" as const);
+  const keyArbitrary = fc.string({ minLength: 1, maxLength: 255 }).filter((s) => s.trim().length > 0);
+  const jsonKeyArbitrary = fc.string({ minLength: 1, maxLength: 50 }).filter((s) => s.trim() === s && s.length > 0);
   const jsonValueArbitrary = fc.dictionary(
     jsonKeyArbitrary,
-    fc.oneof(
-      fc.string(),
-      fc.integer(),
-      fc.double(),
-      fc.boolean(),
-      fc.constant(null),
-    ),
-    { minKeys: 1, maxKeys: 10 }, // Ensure at least one key
+    fc.oneof(fc.string(), fc.integer(), fc.double(), fc.boolean(), fc.constant(null)),
+    { minKeys: 1, maxKeys: 10 },
   );
 
   const logInputArbitrary: fc.Arbitrary<LogInput> = fc.record({
     deviceUuid: uuidArbitrary,
     sessionUuid: uuidArbitrary,
-    projectId: fc.integer({ min: 1, max: 1000 }),
     timestamp: fc.integer({ min: 1704067200000, max: 1735603200000 }),
-    signature: fc.string({ minLength: 10, maxLength: 50 }),
     dataType: dataTypeArbitrary,
     key: keyArbitrary,
     value: jsonValueArbitrary,
@@ -86,7 +55,6 @@ describe("LogService - Property-Based Tests", () => {
     jest.clearAllMocks();
   });
 
-  // Feature: hardware-log-system, Property 1: 有效日志数据的往返一致性
   describe("Property 1: Round-trip consistency for valid log data", () => {
     it("should preserve log data when creating and retrieving", async () => {
       await fc.assert(
@@ -96,7 +64,6 @@ describe("LogService - Property-Based Tests", () => {
             id: Math.floor(Math.random() * 1000000),
             deviceUuid: logInput.deviceUuid,
             sessionUuid: logInput.sessionUuid,
-            projectId: logInput.projectId,
             clientIp: null,
             dataType: logInput.dataType,
             logKey: logInput.key,
@@ -108,13 +75,9 @@ describe("LogService - Property-Based Tests", () => {
           mockRepository.create.mockResolvedValue(mockCreatedLog as any);
           mockRepository.findById.mockResolvedValue(mockCreatedLog as any);
 
-          // Create the log
           const created = await logService.createLog(logInput);
-
-          // Retrieve the log
           const retrieved = await logService.getLogById(created.id);
 
-          // Verify round-trip consistency
           expect(retrieved).not.toBeNull();
           expect(retrieved!.deviceUuid).toBe(logInput.deviceUuid);
           expect(retrieved!.dataType).toBe(logInput.dataType);
@@ -134,7 +97,6 @@ describe("LogService - Property-Based Tests", () => {
               id: index + 1,
               deviceUuid: input.deviceUuid,
               sessionUuid: input.sessionUuid,
-              projectId: input.projectId,
               clientIp: null,
               dataType: input.dataType,
               logKey: input.key,
@@ -143,37 +105,23 @@ describe("LogService - Property-Based Tests", () => {
               createdAt: new Date(),
             }));
 
-            // Mock create to return corresponding log
             mockRepository.create.mockImplementation(async (data: any) => {
               const index = logInputs.findIndex(
-                (input) =>
-                  input.deviceUuid === data.deviceUuid &&
-                  input.key === data.logKey,
+                (input) => input.deviceUuid === data.deviceUuid && input.key === data.logKey,
               );
               return mockLogs[index] as any;
             });
 
-            // Mock findById to return corresponding log
             mockRepository.findById.mockImplementation(async (id: number) => {
               return mockLogs.find((log) => log.id === id) as any;
             });
 
-            // Create all logs
-            const createdLogs = await Promise.all(
-              logInputs.map((input) => logService.createLog(input)),
-            );
+            const createdLogs = await Promise.all(logInputs.map((input) => logService.createLog(input)));
+            const retrievedLogs = await Promise.all(createdLogs.map((log) => logService.getLogById(log.id)));
 
-            // Retrieve all logs
-            const retrievedLogs = await Promise.all(
-              createdLogs.map((log) => logService.getLogById(log.id)),
-            );
-
-            // Verify all logs maintain consistency
             for (let i = 0; i < logInputs.length; i++) {
               expect(retrievedLogs[i]).not.toBeNull();
-              expect(retrievedLogs[i]!.deviceUuid).toBe(
-                logInputs[i].deviceUuid,
-              );
+              expect(retrievedLogs[i]!.deviceUuid).toBe(logInputs[i].deviceUuid);
               expect(retrievedLogs[i]!.dataType).toBe(logInputs[i].dataType);
               expect(retrievedLogs[i]!.key).toBe(logInputs[i].key);
               expect(retrievedLogs[i]!.value).toEqual(logInputs[i].value);
@@ -185,7 +133,6 @@ describe("LogService - Property-Based Tests", () => {
     });
   });
 
-  // Feature: hardware-log-system, Property 2: 时间戳自动生成
   describe("Property 2: Automatic timestamp generation", () => {
     it("should generate timestamp within reasonable time range for any log", async () => {
       await fc.assert(
@@ -196,37 +143,24 @@ describe("LogService - Property-Based Tests", () => {
             id: Math.floor(Math.random() * 1000000),
             deviceUuid: logInput.deviceUuid,
             sessionUuid: logInput.sessionUuid,
-            projectId: logInput.projectId,
             clientIp: null,
             dataType: logInput.dataType,
             logKey: logInput.key,
             logValue: logInput.value,
             clientTimestamp: logInput.timestamp,
-            createdAt: new Date(), // Simulates database auto-generation
+            createdAt: new Date(),
           };
 
           mockRepository.create.mockResolvedValue(mockCreatedLog as any);
 
           const created = await logService.createLog(logInput);
-
           const afterCreate = new Date();
           const createdTime = new Date(created.createdAt);
 
-          // Timestamp should be within 5 seconds of request time
-          const timeDiff = Math.abs(
-            createdTime.getTime() - beforeCreate.getTime(),
-          );
+          const timeDiff = Math.abs(createdTime.getTime() - beforeCreate.getTime());
           expect(timeDiff).toBeLessThan(5000);
-
-          // Timestamp should not be in the future
-          expect(createdTime.getTime()).toBeLessThanOrEqual(
-            afterCreate.getTime(),
-          );
-
-          // Timestamp should be a valid ISO 8601 string
-          expect(created.createdAt).toMatch(
-            /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
-          );
+          expect(createdTime.getTime()).toBeLessThanOrEqual(afterCreate.getTime());
+          expect(created.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
         }),
         { numRuns: 100 },
       );
@@ -244,7 +178,6 @@ describe("LogService - Property-Based Tests", () => {
                 id: Math.floor(Math.random() * 1000000),
                 deviceUuid: input.deviceUuid,
                 sessionUuid: input.sessionUuid,
-                projectId: input.projectId,
                 clientIp: null,
                 dataType: input.dataType,
                 logKey: input.key,
@@ -258,15 +191,11 @@ describe("LogService - Property-Based Tests", () => {
               const created = await logService.createLog(input);
               timestamps.push(new Date(created.createdAt));
 
-              // Small delay to ensure different timestamps
               await new Promise((resolve) => setTimeout(resolve, 1));
             }
 
-            // Verify timestamps are in chronological order (or equal if created very quickly)
             for (let i = 1; i < timestamps.length; i++) {
-              expect(timestamps[i].getTime()).toBeGreaterThanOrEqual(
-                timestamps[i - 1].getTime(),
-              );
+              expect(timestamps[i].getTime()).toBeGreaterThanOrEqual(timestamps[i - 1].getTime());
             }
           },
         ),
@@ -275,7 +204,6 @@ describe("LogService - Property-Based Tests", () => {
     });
   });
 
-  // Feature: hardware-log-system, Property 4: 查询过滤正确性
   describe("Property 4: Query filter correctness", () => {
     it("should return only logs matching deviceUuid filter", async () => {
       await fc.assert(
@@ -283,7 +211,6 @@ describe("LogService - Property-Based Tests", () => {
           fc.array(logInputArbitrary, { minLength: 5, maxLength: 20 }),
           uuidArbitrary,
           async (logInputs: LogInput[], filterUuid: string) => {
-            // Create mock logs
             const mockLogs = logInputs.map((input, index) => ({
               id: index + 1,
               deviceUuid: input.deviceUuid,
@@ -293,21 +220,13 @@ describe("LogService - Property-Based Tests", () => {
               createdAt: new Date(),
             }));
 
-            // Filter logs that match the UUID
-            const matchingLogs = mockLogs.filter(
-              (log) => log.deviceUuid === filterUuid,
-            );
+            const matchingLogs = mockLogs.filter((log) => log.deviceUuid === filterUuid);
 
             mockRepository.findByFilters.mockResolvedValue(matchingLogs as any);
-            mockRepository.countByFilters.mockResolvedValue(
-              matchingLogs.length,
-            );
+            mockRepository.countByFilters.mockResolvedValue(matchingLogs.length);
 
-            const result = await logService.queryLogs({
-              deviceUuid: filterUuid,
-            });
+            const result = await logService.queryLogs({ deviceUuid: filterUuid });
 
-            // All returned logs should match the filter
             result.data.forEach((log) => {
               expect(log.deviceUuid).toBe(filterUuid);
             });
@@ -334,18 +253,12 @@ describe("LogService - Property-Based Tests", () => {
               createdAt: new Date(),
             }));
 
-            const matchingLogs = mockLogs.filter(
-              (log) => log.dataType === filterDataType,
-            );
+            const matchingLogs = mockLogs.filter((log) => log.dataType === filterDataType);
 
             mockRepository.findByFilters.mockResolvedValue(matchingLogs as any);
-            mockRepository.countByFilters.mockResolvedValue(
-              matchingLogs.length,
-            );
+            mockRepository.countByFilters.mockResolvedValue(matchingLogs.length);
 
-            const result = await logService.queryLogs({
-              dataType: filterDataType,
-            });
+            const result = await logService.queryLogs({ dataType: filterDataType });
 
             result.data.forEach((log) => {
               expect(log.dataType).toBe(filterDataType);
@@ -370,15 +283,12 @@ describe("LogService - Property-Based Tests", () => {
 
             const mockLogs = logInputs.map((input, index) => {
               const randomTime = new Date(
-                startTime.getTime() +
-                  Math.random() *
-                    (endTime.getTime() - startTime.getTime() + 86400000),
+                startTime.getTime() + Math.random() * (endTime.getTime() - startTime.getTime() + 86400000),
               );
               return {
                 id: index + 1,
                 deviceUuid: input.deviceUuid,
                 sessionUuid: input.sessionUuid,
-                projectId: input.projectId,
                 clientIp: null,
                 dataType: input.dataType,
                 logKey: input.key,
@@ -393,17 +303,13 @@ describe("LogService - Property-Based Tests", () => {
             );
 
             mockRepository.findByFilters.mockResolvedValue(matchingLogs as any);
-            mockRepository.countByFilters.mockResolvedValue(
-              matchingLogs.length,
-            );
+            mockRepository.countByFilters.mockResolvedValue(matchingLogs.length);
 
             const result = await logService.queryLogs({ startTime, endTime });
 
             result.data.forEach((log) => {
               const logTime = new Date(log.createdAt);
-              expect(logTime.getTime()).toBeGreaterThanOrEqual(
-                startTime.getTime(),
-              );
+              expect(logTime.getTime()).toBeGreaterThanOrEqual(startTime.getTime());
               expect(logTime.getTime()).toBeLessThanOrEqual(endTime.getTime());
             });
           },
@@ -423,7 +329,6 @@ describe("LogService - Property-Based Tests", () => {
               id: index + 1,
               deviceUuid: input.deviceUuid,
               sessionUuid: input.sessionUuid,
-              projectId: input.projectId,
               clientIp: null,
               dataType: input.dataType,
               logKey: input.key,
@@ -433,15 +338,11 @@ describe("LogService - Property-Based Tests", () => {
             }));
 
             const matchingLogs = mockLogs.filter(
-              (log) =>
-                log.deviceUuid === filterUuid &&
-                log.dataType === filterDataType,
+              (log) => log.deviceUuid === filterUuid && log.dataType === filterDataType,
             );
 
             mockRepository.findByFilters.mockResolvedValue(matchingLogs as any);
-            mockRepository.countByFilters.mockResolvedValue(
-              matchingLogs.length,
-            );
+            mockRepository.countByFilters.mockResolvedValue(matchingLogs.length);
 
             const result = await logService.queryLogs({
               deviceUuid: filterUuid,
@@ -459,7 +360,6 @@ describe("LogService - Property-Based Tests", () => {
     });
   });
 
-  // Feature: hardware-log-system, Property 5: 分页一致性
   describe("Property 5: Pagination consistency", () => {
     it("should not exceed specified page size", async () => {
       await fc.assert(
@@ -471,7 +371,6 @@ describe("LogService - Property-Based Tests", () => {
               id: index + 1,
               deviceUuid: input.deviceUuid,
               sessionUuid: input.sessionUuid,
-              projectId: input.projectId,
               clientIp: null,
               dataType: input.dataType,
               logKey: input.key,
@@ -480,16 +379,12 @@ describe("LogService - Property-Based Tests", () => {
               createdAt: new Date(),
             }));
 
-            // Return only up to pageSize logs
             const pagedLogs = mockLogs.slice(0, pageSize);
 
             mockRepository.findByFilters.mockResolvedValue(pagedLogs as any);
             mockRepository.countByFilters.mockResolvedValue(mockLogs.length);
 
-            const result = await logService.queryLogs(
-              {},
-              { page: 1, pageSize },
-            );
+            const result = await logService.queryLogs({}, { page: 1, pageSize });
 
             expect(result.data.length).toBeLessThanOrEqual(pageSize);
             expect(result.pagination.pageSize).toBe(pageSize);
@@ -510,7 +405,6 @@ describe("LogService - Property-Based Tests", () => {
               id: index + 1,
               deviceUuid: input.deviceUuid,
               sessionUuid: input.sessionUuid,
-              projectId: input.projectId,
               clientIp: null,
               dataType: input.dataType,
               logKey: input.key,
@@ -544,10 +438,7 @@ describe("LogService - Property-Based Tests", () => {
             mockRepository.findByFilters.mockResolvedValue([]);
             mockRepository.countByFilters.mockResolvedValue(totalLogs);
 
-            const result = await logService.queryLogs(
-              {},
-              { page: 1, pageSize },
-            );
+            const result = await logService.queryLogs({}, { page: 1, pageSize });
 
             const expectedTotalPages = Math.ceil(totalLogs / pageSize);
             expect(result.pagination.totalPages).toBe(expectedTotalPages);
@@ -567,7 +458,6 @@ describe("LogService - Property-Based Tests", () => {
               id: index + 1,
               deviceUuid: input.deviceUuid,
               sessionUuid: input.sessionUuid,
-              projectId: input.projectId,
               clientIp: null,
               dataType: input.dataType,
               logKey: input.key,
@@ -593,7 +483,6 @@ describe("LogService - Property-Based Tests", () => {
               });
             }
 
-            // All logs should be retrieved exactly once
             expect(allRetrievedIds.size).toBe(mockLogs.length);
             mockLogs.forEach((log) => {
               expect(allRetrievedIds.has(log.id)).toBe(true);
@@ -616,10 +505,7 @@ describe("LogService - Property-Based Tests", () => {
             mockRepository.findByFilters.mockResolvedValue([]);
             mockRepository.countByFilters.mockResolvedValue(totalLogs);
 
-            const result = await logService.queryLogs(
-              {},
-              { page: beyondPage, pageSize },
-            );
+            const result = await logService.queryLogs({}, { page: beyondPage, pageSize });
 
             expect(result.data).toEqual([]);
             expect(result.pagination.total).toBe(totalLogs);

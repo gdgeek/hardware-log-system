@@ -32,6 +32,12 @@ interface EnvConfig {
 
   // JWT configuration
   jwtSecret: string;
+
+  // Admin authentication
+  adminPassword: string;
+
+  // API authentication
+  authKey: string;
 }
 
 /**
@@ -102,6 +108,12 @@ function loadConfig(): EnvConfig {
         "JWT_SECRET",
         "hardware-log-system-secret-key-change-it",
       ),
+
+      // Admin authentication
+      adminPassword: getEnv("ADMIN_PASSWORD", "admin123"),
+
+      // API authentication
+      authKey: getEnv("AUTH_KEY", "123456"),
     };
 
     // Validate configuration values
@@ -188,6 +200,8 @@ function logConfiguration(config: EnvConfig): void {
     maxPageSize: config.maxPageSize,
     defaultPageSize: config.defaultPageSize,
     jwtSecret: "***MASKED***",
+    adminPassword: "***MASKED***",
+    authKey: "***MASKED***",
   });
 }
 

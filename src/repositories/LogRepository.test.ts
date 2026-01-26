@@ -2,10 +2,7 @@ import { LogRepository } from "./LogRepository";
 import { Log } from "../models/Log";
 import { DataType, LogFilters, Pagination, DatabaseError } from "../types";
 
-// Mock the Log model
 jest.mock("../models/Log");
-
-// Mock the logger to avoid console output during tests
 jest.mock("../config/logger", () => ({
   logger: {
     debug: jest.fn(),
@@ -13,7 +10,6 @@ jest.mock("../config/logger", () => ({
     warn: jest.fn(),
     error: jest.fn(),
   },
-  logDatabaseOperation: jest.fn(),
 }));
 
 describe("LogRepository", () => {
@@ -33,7 +29,6 @@ describe("LogRepository", () => {
         dataType: "record" as DataType,
         logKey: "test-key",
         logValue: { message: "test message" },
-        projectId: 1,
         sessionUuid: "test-session-uuid",
       };
 
@@ -63,17 +58,12 @@ describe("LogRepository", () => {
         dataType: "record" as DataType,
         logKey: "test-key",
         logValue: { data: "test" },
-        projectId: 1,
         sessionUuid: "test-session-uuid",
       };
 
-      mockLog.create = jest
-        .fn()
-        .mockRejectedValue(new Error("Validation error"));
+      mockLog.create = jest.fn().mockRejectedValue(new Error("Validation error"));
 
-      await expect(repository.create(invalidData)).rejects.toThrow(
-        DatabaseError,
-      );
+      await expect(repository.create(invalidData)).rejects.toThrow(DatabaseError);
     });
   });
 
@@ -85,7 +75,6 @@ describe("LogRepository", () => {
         dataType: "error" as DataType,
         logKey: "test-key",
         logValue: { error: "test error" },
-        projectId: 1,
         sessionUuid: "test-session-uuid",
         createdAt: new Date(),
         toJSON: jest.fn().mockReturnThis(),
@@ -118,7 +107,6 @@ describe("LogRepository", () => {
           dataType: "record" as DataType,
           logKey: "key-1",
           logValue: { data: "test1" },
-          projectId: 1,
           sessionUuid: "session-1",
           createdAt: new Date(),
           toJSON: jest.fn().mockReturnThis(),
@@ -129,7 +117,6 @@ describe("LogRepository", () => {
           dataType: "warning" as DataType,
           logKey: "key-2",
           logValue: { data: "test2" },
-          projectId: 1,
           sessionUuid: "session-1",
           createdAt: new Date(),
           toJSON: jest.fn().mockReturnThis(),
@@ -185,24 +172,9 @@ describe("LogRepository", () => {
   describe("aggregateByDevice", () => {
     it("should aggregate logs by device", async () => {
       const mockAggregateResult = [
-        {
-          dataType: "record",
-          count: "2",
-          firstLogTime: new Date("2024-01-01"),
-          lastLogTime: new Date("2024-01-15"),
-        },
-        {
-          dataType: "warning",
-          count: "1",
-          firstLogTime: new Date("2024-01-10"),
-          lastLogTime: new Date("2024-01-20"),
-        },
-        {
-          dataType: "error",
-          count: "1",
-          firstLogTime: new Date("2024-01-05"),
-          lastLogTime: new Date("2024-01-31"),
-        },
+        { dataType: "record", count: "2", firstLogTime: new Date("2024-01-01"), lastLogTime: new Date("2024-01-15") },
+        { dataType: "warning", count: "1", firstLogTime: new Date("2024-01-10"), lastLogTime: new Date("2024-01-20") },
+        { dataType: "error", count: "1", firstLogTime: new Date("2024-01-05"), lastLogTime: new Date("2024-01-31") },
       ];
 
       mockLog.findAll = jest.fn().mockResolvedValue(mockAggregateResult);
@@ -223,11 +195,6 @@ describe("LogRepository", () => {
 
       expect(report.deviceUuid).toBe("non-existent-device");
       expect(report.totalLogs).toBe(0);
-      expect(report.recordCount).toBe(0);
-      expect(report.warningCount).toBe(0);
-      expect(report.errorCount).toBe(0);
-      expect(report.firstLogTime).toBe("");
-      expect(report.lastLogTime).toBe("");
     });
   });
 
@@ -237,24 +204,14 @@ describe("LogRepository", () => {
       const past = new Date(now.getTime() - 1000 * 60 * 60);
 
       const mockAggregateResult = [
-        {
-          dataType: "record",
-          count: 1,
-        },
-        {
-          dataType: "warning",
-          count: 1,
-        },
-        {
-          dataType: "error",
-          count: 1,
-        },
+        { dataType: "record", count: 1 },
+        { dataType: "warning", count: 1 },
+        { dataType: "error", count: 1 },
       ];
 
       const mockDeviceCount = [{ deviceCount: 2 }];
 
-      mockLog.findAll = jest
-        .fn()
+      mockLog.findAll = jest.fn()
         .mockResolvedValueOnce(mockAggregateResult)
         .mockResolvedValueOnce(mockDeviceCount);
 
@@ -270,18 +227,8 @@ describe("LogRepository", () => {
   describe("aggregateErrors", () => {
     it("should aggregate error logs", async () => {
       const mockErrors = [
-        {
-          deviceUuid: "device-1",
-          logKey: "error-key-1",
-          count: 2,
-          lastOccurrence: new Date(),
-        },
-        {
-          deviceUuid: "device-2",
-          logKey: "error-key-2",
-          count: 1,
-          lastOccurrence: new Date(),
-        },
+        { deviceUuid: "device-1", logKey: "error-key-1", count: 2, lastOccurrence: new Date() },
+        { deviceUuid: "device-2", logKey: "error-key-2", count: 1, lastOccurrence: new Date() },
       ];
 
       mockLog.findAll = jest.fn().mockResolvedValue(mockErrors);

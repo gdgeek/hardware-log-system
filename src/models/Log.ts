@@ -1,7 +1,6 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import { sequelize } from "../config/database";
 import { DataType } from "../types";
-import Project from "./Project";
 
 /**
  * Log model attributes interface
@@ -9,13 +8,12 @@ import Project from "./Project";
 export interface LogAttributes {
   id: number;
   deviceUuid: string;
-  sessionUuid: string; // Changed to required
-  projectId: number; // Replacement for projectName/projectVersion
+  sessionUuid: string;
   clientIp: string | null;
   dataType: DataType;
   logKey: string;
   logValue: object;
-  clientTimestamp: number | null; // New field
+  clientTimestamp: number | null;
   createdAt: Date;
 }
 
@@ -37,7 +35,6 @@ export class Log
   declare id: number;
   declare deviceUuid: string;
   declare sessionUuid: string;
-  declare projectId: number;
   declare clientIp: string | null;
   declare dataType: DataType;
   declare logKey: string;
@@ -53,7 +50,6 @@ export class Log
       id: this.id,
       deviceUuid: this.deviceUuid,
       sessionUuid: this.sessionUuid,
-      projectId: this.projectId,
       clientIp: this.clientIp,
       dataType: this.dataType,
       logKey: this.logKey,
@@ -88,15 +84,6 @@ Log.init(
       field: "session_uuid",
       validate: {
         isUUID: 4,
-      },
-    },
-    projectId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      field: "project_id",
-      references: {
-        model: "projects",
-        key: "id",
       },
     },
     clientIp: {
@@ -141,9 +128,5 @@ Log.init(
     timestamps: false,
   },
 );
-
-// Setup associations
-Log.belongsTo(Project, { foreignKey: "project_id", as: "project" });
-Project.hasMany(Log, { foreignKey: "project_id", as: "logs" });
 
 export default Log;

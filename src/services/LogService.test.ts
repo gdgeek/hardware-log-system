@@ -9,14 +9,12 @@ import { LogInput, ValidationError } from "../types";
 // Mock the repository
 jest.mock("../repositories/LogRepository");
 jest.mock("../config/logger");
-jest.mock("./SignatureService");
 
 describe("LogService", () => {
   let logService: LogService;
   let mockRepository: jest.Mocked<LogRepository>;
 
   beforeEach(() => {
-    // Create mock repository
     mockRepository = {
       create: jest.fn(),
       findById: jest.fn(),
@@ -38,9 +36,7 @@ describe("LogService", () => {
     const validLogInput: LogInput = {
       deviceUuid: "550e8400-e29b-41d4-a716-446655440000",
       sessionUuid: "550e8400-e29b-41d4-a716-446655440001",
-      projectId: 1,
       timestamp: Date.now(),
-      signature: "test-signature",
       dataType: "record",
       key: "temperature",
       value: { temp: 25.5, unit: "celsius" },
@@ -51,7 +47,6 @@ describe("LogService", () => {
         id: 1,
         deviceUuid: validLogInput.deviceUuid,
         sessionUuid: validLogInput.sessionUuid,
-        projectId: validLogInput.projectId,
         clientIp: null,
         dataType: validLogInput.dataType,
         logKey: validLogInput.key,
@@ -68,7 +63,6 @@ describe("LogService", () => {
         id: 1,
         deviceUuid: validLogInput.deviceUuid,
         sessionUuid: validLogInput.sessionUuid,
-        projectId: validLogInput.projectId,
         clientIp: null,
         dataType: validLogInput.dataType,
         key: validLogInput.key,
@@ -80,7 +74,6 @@ describe("LogService", () => {
       expect(mockRepository.create).toHaveBeenCalledWith({
         deviceUuid: validLogInput.deviceUuid,
         sessionUuid: validLogInput.sessionUuid,
-        projectId: validLogInput.projectId,
         clientIp: null,
         dataType: validLogInput.dataType,
         logKey: validLogInput.key,
@@ -170,7 +163,6 @@ describe("LogService", () => {
           id: 1,
           deviceUuid: input.deviceUuid,
           sessionUuid: input.sessionUuid,
-          projectId: input.projectId,
           clientIp: null,
           dataType: input.dataType,
           logKey: input.key,
@@ -192,7 +184,6 @@ describe("LogService", () => {
         id: 1,
         deviceUuid: "550e8400-e29b-41d4-a716-446655440000",
         sessionUuid: "test-session-uuid",
-        projectId: 1,
         clientIp: null,
         dataType: "record",
         logKey: "temperature",
@@ -209,7 +200,6 @@ describe("LogService", () => {
         id: 1,
         deviceUuid: mockLog.deviceUuid,
         sessionUuid: mockLog.sessionUuid,
-        projectId: mockLog.projectId,
         clientIp: null,
         dataType: mockLog.dataType,
         key: mockLog.logKey,
@@ -237,7 +227,6 @@ describe("LogService", () => {
         id: 1,
         deviceUuid: "550e8400-e29b-41d4-a716-446655440000",
         sessionUuid: "session-1",
-        projectId: 1,
         clientIp: null,
         dataType: "record",
         logKey: "temp",
@@ -249,7 +238,6 @@ describe("LogService", () => {
         id: 2,
         deviceUuid: "550e8400-e29b-41d4-a716-446655440000",
         sessionUuid: "session-1",
-        projectId: 1,
         clientIp: null,
         dataType: "warning",
         logKey: "temp",

@@ -1,11 +1,5 @@
 /**
  * Validation schemas using Joi
- *
- * This module defines validation schemas for:
- * - LogInput: Validates log creation requests
- * - Query parameters: Validates filters and pagination
- *
- * Requirements: 1.3, 1.4, 1.5
  */
 
 import Joi from "joi";
@@ -23,14 +17,6 @@ const DATA_TYPES = ["record", "warning", "error"] as const;
 
 /**
  * Schema for validating LogInput
- *
- * Validates:
- * - deviceUuid: Must be a valid UUID v4 format (Requirement 1.3)
- * - projectName: Optional string, max length 100 characters
- * - projectVersion: Optional string, max length 50 characters
- * - dataType: Must be one of 'record', 'warning', 'error' (Requirement 1.5)
- * - key: Required string, max length 255 characters (Requirement 1.3)
- * - value: Must be a valid object/JSON (Requirement 1.4)
  */
 export const logInputSchema = Joi.object({
   deviceUuid: Joi.string().pattern(UUID_PATTERN).required().messages({
@@ -44,18 +30,9 @@ export const logInputSchema = Joi.object({
     "any.required": "sessionUuid is required",
   }),
 
-  projectId: Joi.number().integer().required().messages({
-    "number.base": "projectId must be a number",
-    "any.required": "projectId is required",
-  }),
-
   timestamp: Joi.number().integer().required().messages({
     "number.base": "timestamp must be a number",
     "any.required": "timestamp is required",
-  }),
-
-  signature: Joi.string().required().messages({
-    "any.required": "signature is required",
   }),
 
   dataType: Joi.string()
@@ -82,14 +59,6 @@ export const logInputSchema = Joi.object({
 
 /**
  * Schema for validating log query filters
- *
- * Validates:
- * - deviceUuid: Optional UUID v4 format
- * - projectName: Optional string
- * - projectVersion: Optional string
- * - dataType: Optional, must be one of the valid data types
- * - startTime: Optional ISO 8601 date string
- * - endTime: Optional ISO 8601 date string
  */
 export const logFiltersSchema = Joi.object({
   deviceUuid: Joi.string().pattern(UUID_PATTERN).optional().messages({
@@ -98,10 +67,6 @@ export const logFiltersSchema = Joi.object({
 
   sessionUuid: Joi.string().pattern(UUID_PATTERN).optional().messages({
     "string.pattern.base": "sessionUuid must be a valid UUID v4 format",
-  }),
-
-  projectId: Joi.number().integer().optional().messages({
-    "number.base": "projectId must be a number",
   }),
 
   dataType: Joi.string()
@@ -122,10 +87,6 @@ export const logFiltersSchema = Joi.object({
 
 /**
  * Schema for validating pagination parameters
- *
- * Validates:
- * - page: Must be a positive integer, defaults to 1
- * - pageSize: Must be between 1 and 100, defaults to 20
  */
 export const paginationSchema = Joi.object({
   page: Joi.number().integer().min(1).default(1).messages({
@@ -166,7 +127,6 @@ export const timeRangeQuerySchema = Joi.object({
     "any.required": "endTime is required",
   }),
 }).custom((value, helpers) => {
-  // Validate that endTime is after startTime
   if (value.endTime <= value.startTime) {
     return helpers.error("any.invalid", {
       message: "endTime must be after startTime",

@@ -1,66 +1,56 @@
 import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
-import { User } from "../models/User";
 import { config } from "../config/env";
 import { logger } from "../config/logger";
 
 /**
- * AuthService handles authentication logic for both hardware and UI
+ * AuthService handles authentication logic for the admin UI
+ * Uses environment variable password instead of database
  */
 export class AuthService {
   private readonly jwtSecret: string;
+  private readonly adminPassword: string;
   private readonly tokenExpiry: string;
 
   constructor() {
     this.jwtSecret = config.jwtSecret;
+    this.adminPassword = config.adminPassword;
     this.tokenExpiry = "24h";
   }
 
   /**
-   * UI Login: Authenticates a user with only a password
+   * UI Login: Authenticates with environment variable password
    * @returns JWT token if successful, null otherwise
    */
   async login(
     password: string,
   ): Promise<{ token: string; user: Record<string, unknown> } | null> {
     try {
-      const username = "admin"; // Using default admin user
       logger.info("Password login attempt");
 
-      // Find user by username
-      const user = await User.findOne({ where: { username } });
-      if (!user) {
-        logger.error("Login failed: Admin user missing from database");
-        return null;
-      }
-
-      // Verify password
-      const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
-      if (!isPasswordValid) {
-        logger.warn("Login failed: Invalid password", { username });
+      // Verify password against environment variable
+      if (password !== this.adminPassword) {
+        logger.warn("Login failed: Invalid password");
         return null;
       }
 
       // Generate JWT
       const token = jwt.sign(
         {
-          id: user.id,
-          username: user.username,
-          role: user.role,
+          username: "admin",
+          role: "admin",
         },
         this.jwtSecret,
         { expiresIn: this.tokenExpiry as jwt.SignOptions["expiresIn"] },
       );
 
-      // Update last login time
-      user.lastLoginAt = new Date();
-      await user.save();
-
-      logger.info("User login successful", { username, id: user.id });
+      logger.info("Admin login successful");
 
       return {
         token,
-        user: user.toJSON() as unknown as Record<string, unknown>,
+        user: {
+          username: "admin",
+          role: "admin",
+        },
       };
     } catch (error) {
       logger.error("Login error", {
