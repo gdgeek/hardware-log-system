@@ -2,7 +2,8 @@ import { Router, Request, Response } from "express";
 import { authService } from "../services/AuthService";
 import { asyncHandler } from "../middleware";
 
-const router = Router();
+import type { Router as ExpressRouter } from "express";
+const router: ExpressRouter = Router();
 
 /**
  * @swagger
