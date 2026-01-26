@@ -80,6 +80,30 @@ const api = {
     return res.json();
   },
 
+  async deleteLog(id) {
+    const res = await fetch(`${API_BASE}/logs/${id}`, {
+      method: 'DELETE',
+      headers: auth.getHeaders()
+    });
+    if (res.status === 401) handleUnauthorized();
+    return res.status === 204;
+  },
+
+  async deleteLogs(params = {}) {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        query.append(key, value);
+      }
+    });
+    const res = await fetch(`${API_BASE}/logs?${query}`, {
+      method: 'DELETE',
+      headers: auth.getHeaders()
+    });
+    if (res.status === 401) handleUnauthorized();
+    return res.json();
+  },
+
   // 报表相关
   async getDeviceReport(uuid) {
     const res = await fetch(`${API_BASE}/reports/device/${uuid}`, {
@@ -509,6 +533,9 @@ async function showLogDetail(logId) {
         <span class="detail-label">Value</span>
         <pre class="detail-value json">${JSON.stringify(log.value, null, 2)}</pre>
       </div>
+      <div class="modal-actions">
+        <button class="btn btn-danger" onclick="deleteLogConfirm(${log.id})">删除此日志</button>
+      </div>
     `;
 
     modal.classList.add('active');
@@ -516,6 +543,55 @@ async function showLogDetail(logId) {
     console.error('获取日志详情失败:', error);
     content.innerHTML = '<p>获取日志详情失败</p>';
     modal.classList.add('active');
+  }
+}
+
+async function deleteLogConfirm(logId) {
+  if (!confirm('确定要删除这条日志吗？此操作不可恢复。')) {
+    return;
+  }
+  
+  try {
+    const success = await api.deleteLog(logId);
+    if (success) {
+      closeModal();
+      loadLogs();
+      if (state.currentPage === 'dashboard') {
+        loadDashboard();
+      }
+    } else {
+      alert('删除失败');
+    }
+  } catch (error) {
+    console.error('删除日志失败:', error);
+    alert('删除失败: ' + (error.message || '未知错误'));
+  }
+}
+
+async function deleteBatchLogs() {
+  const filters = { ...state.filters };
+  
+  // 检查是否有过滤条件
+  const hasFilters = Object.values(filters).some(v => v !== undefined && v !== null && v !== '');
+  
+  const message = hasFilters 
+    ? '确定要删除符合当前筛选条件的所有日志吗？此操作不可恢复。'
+    : '警告：没有设置筛选条件，将删除所有日志！确定继续吗？';
+  
+  if (!confirm(message)) {
+    return;
+  }
+  
+  try {
+    const result = await api.deleteLogs(filters);
+    alert(`成功删除 ${result.deleted} 条日志`);
+    loadLogs();
+    if (state.currentPage === 'dashboard') {
+      loadDashboard();
+    }
+  } catch (error) {
+    console.error('批量删除日志失败:', error);
+    alert('删除失败: ' + (error.message || '未知错误'));
   }
 }
 
