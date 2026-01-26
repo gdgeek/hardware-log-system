@@ -4,10 +4,14 @@
 # 
 # 必须配置的环境变量：
 #   - DB_PASSWORD: 数据库密码
+#   - REDIS_HOST: Redis 主机地址
 #
 # 可选环境变量：
 #   - APP_PORT: 应用端口（默认 3000）
 #   - LOG_LEVEL: 日志级别（默认 info）
+#   - ADMIN_PASSWORD: 管理员密码（默认 admin123）
+#   - JWT_SECRET: JWT 密钥
+#   - AUTH_KEY: API 认证密钥（默认 123456）
 #
 # 镜像地址：
 #   - 腾讯云(香港): hkccr.ccs.tencentyun.com/gdgeek/log:latest
@@ -24,12 +28,26 @@ services:
     ports:
       - "${APP_PORT:-3000}:3000"
     environment:
+      # 数据库配置
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_NAME: hardware_logs
+      DB_USER: root
+      DB_PASSWORD: ${DB_PASSWORD}
+      
       # 日志配置
       LOG_LEVEL: ${LOG_LEVEL:-info}
       LOG_FILE: logs/app.log
       
       # API 配置
       API_PREFIX: /api/v1
+      
+      # 管理员认证
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+      JWT_SECRET: ${JWT_SECRET:-hardware-log-system-secret-key-change-it}
+      
+      # API 认证
+      AUTH_KEY: ${AUTH_KEY:-123456}
       
       # Redis 缓存 (腾讯云)
       REDIS_ENABLED: "true"

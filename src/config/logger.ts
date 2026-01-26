@@ -62,14 +62,12 @@ export const logger = winston.createLogger({
   ],
 });
 
-// Add console transport in non-production environments
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(
-    new winston.transports.Console({
-      format: consoleFormat,
-    })
-  );
-}
+// Add console transport (always enabled for container logs visibility)
+logger.add(
+  new winston.transports.Console({
+    format: consoleFormat,
+  })
+);
 
 /**
  * Stream for Morgan HTTP request logging
