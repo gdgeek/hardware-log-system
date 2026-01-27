@@ -26,6 +26,7 @@ describe("LogRepository", () => {
     it("should create a log entry successfully", async () => {
       const logData = {
         deviceUuid: "test-device-uuid-1",
+        projectId: 1001,
         dataType: "record" as DataType,
         logKey: "test-key",
         logValue: "test message",
@@ -46,6 +47,7 @@ describe("LogRepository", () => {
       expect(log).toBeDefined();
       expect(log.id).toBe(1);
       expect(log.deviceUuid).toBe(logData.deviceUuid);
+      expect(log.projectId).toBe(logData.projectId);
       expect(log.dataType).toBe(logData.dataType);
       expect(log.logKey).toBe(logData.logKey);
       expect(log.logValue).toEqual(logData.logValue);
@@ -55,6 +57,7 @@ describe("LogRepository", () => {
     it("should throw DatabaseError when creation fails", async () => {
       const invalidData = {
         deviceUuid: "",
+        projectId: 1001,
         dataType: "record" as DataType,
         logKey: "test-key",
         logValue: "test data",
@@ -72,6 +75,7 @@ describe("LogRepository", () => {
       const mockFoundLog = {
         id: 1,
         deviceUuid: "test-device-uuid-3",
+        projectId: 1001,
         dataType: "error" as DataType,
         logKey: "test-key",
         logValue: "test error",
@@ -104,6 +108,7 @@ describe("LogRepository", () => {
         {
           id: 1,
           deviceUuid: "device-1",
+          projectId: 1001,
           dataType: "record" as DataType,
           logKey: "key-1",
           logValue: "test1",
@@ -114,6 +119,7 @@ describe("LogRepository", () => {
         {
           id: 2,
           deviceUuid: "device-1",
+          projectId: 1001,
           dataType: "warning" as DataType,
           logKey: "key-2",
           logValue: "test2",

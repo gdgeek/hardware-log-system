@@ -18,6 +18,7 @@ function getErrorFields(error: ValidationError | undefined): string[] {
 const validString = fc.string({ minLength: 1, maxLength: 100 });
 
 const validTimestamp = fc.integer({ min: 1704067200000, max: 1735660800000 });
+const validProjectId = fc.integer({ min: 1, max: 10000 });
 
 describe("Property-Based Tests: Input Validation", () => {
   describe("Property 3: Input validation rejects invalid data", () => {
@@ -26,6 +27,7 @@ describe("Property-Based Tests: Input Validation", () => {
         fc.property(
           fc.record({
             sessionUuid: validString,
+            projectId: validProjectId,
             timestamp: validTimestamp,
             dataType: fc.constantFrom("record", "warning", "error"),
             key: fc.string({ minLength: 1, maxLength: 255 }).filter((s) => s.trim().length > 0),
@@ -48,6 +50,7 @@ describe("Property-Based Tests: Input Validation", () => {
           fc.record({
             deviceUuid: validString,
             sessionUuid: validString,
+            projectId: validProjectId,
             timestamp: validTimestamp,
             key: fc.string({ minLength: 1, maxLength: 255 }).filter((s) => s.trim().length > 0),
             value: fc.string({ minLength: 1 }),
@@ -69,6 +72,7 @@ describe("Property-Based Tests: Input Validation", () => {
           fc.record({
             deviceUuid: validString,
             sessionUuid: validString,
+            projectId: validProjectId,
             timestamp: validTimestamp,
             dataType: fc.constantFrom("record", "warning", "error"),
             value: fc.string({ minLength: 1 }),
@@ -90,6 +94,7 @@ describe("Property-Based Tests: Input Validation", () => {
           fc.record({
             deviceUuid: validString,
             sessionUuid: validString,
+            projectId: validProjectId,
             timestamp: validTimestamp,
             dataType: fc.constantFrom("record", "warning", "error"),
             key: fc.string({ minLength: 1, maxLength: 255 }).filter((s) => s.trim().length > 0),
@@ -111,6 +116,7 @@ describe("Property-Based Tests: Input Validation", () => {
           fc.record({
             deviceUuid: fc.string({ minLength: 1 }),
             sessionUuid: validString,
+            projectId: validProjectId,
             timestamp: validTimestamp,
             dataType: fc.constantFrom("record", "warning", "error"),
             key: fc.string({ minLength: 1, maxLength: 255 }).filter((s) => s.trim().length > 0),
@@ -137,6 +143,7 @@ describe("Property-Based Tests: Input Validation", () => {
           fc.record({
             deviceUuid: validString,
             sessionUuid: validString,
+            projectId: validProjectId,
             timestamp: validTimestamp,
             dataType: invalidDataTypeGen,
             key: fc.string({ minLength: 1, maxLength: 255 }).filter((s) => s.trim().length > 0),
@@ -159,6 +166,7 @@ describe("Property-Based Tests: Input Validation", () => {
           fc.record({
             deviceUuid: validString,
             sessionUuid: validString,
+            projectId: validProjectId,
             timestamp: validTimestamp,
             dataType: fc.constantFrom("record", "warning", "error"),
             key: fc.string({ minLength: 1, maxLength: 255 }).filter((s) => s.trim().length > 0),
@@ -181,6 +189,7 @@ describe("Property-Based Tests: Input Validation", () => {
           fc.record({
             deviceUuid: validString,
             sessionUuid: validString,
+            projectId: validProjectId,
             timestamp: validTimestamp,
             dataType: fc.constantFrom("record", "warning", "error"),
             key: fc.string({ minLength: 1, maxLength: 255 }).filter((s) => s.trim().length > 0),

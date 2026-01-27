@@ -118,6 +118,7 @@ export class LogService {
       id: Number(log.id),
       deviceUuid: log.deviceUuid,
       sessionUuid: log.sessionUuid,
+      projectId: log.projectId,
       clientIp: log.clientIp,
       dataType: log.dataType,
       key: log.logKey,

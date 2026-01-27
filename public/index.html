@@ -230,8 +230,13 @@
       <!-- 日志管理页面 -->
       <section id="page-logs" class="page">
         <div class="page-header">
-          <h1>日志管理</h1>
-          <p>查询和管理日志记录</p>
+          <div class="page-header-content">
+            <div>
+              <h1>日志管理</h1>
+              <p>查询和管理日志记录</p>
+            </div>
+            <button id="btn-add-log" class="btn btn-primary">+ 添加日志</button>
+          </div>
         </div>
 
         <div class="card filter-card">
@@ -475,6 +480,71 @@
       <button class="modal-close">&times;</button>
     </div>
     <div class="modal-body" id="log-detail-content"></div>
+  </div>
+</div>
+
+<!-- 添加日志模态框 -->
+<div class="modal" id="add-log-modal">
+  <div class="modal-backdrop"></div>
+  <div class="modal-content modal-wide">
+    <div class="modal-header">
+      <h3>添加日志</h3>
+      <button class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="add-log-form" class="add-log-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="add-device-uuid">设备 UUID <span class="required">*</span></label>
+            <input type="text" id="add-device-uuid" placeholder="输入设备 UUID" required>
+          </div>
+          <div class="form-group">
+            <label for="add-session-uuid">会话 UUID <span class="required">*</span></label>
+            <input type="text" id="add-session-uuid" placeholder="输入会话 UUID" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="add-project-id">项目 ID <span class="required">*</span></label>
+            <input type="number" id="add-project-id" placeholder="输入项目 ID" required>
+          </div>
+          <div class="form-group">
+            <label for="add-data-type">日志类型 <span class="required">*</span></label>
+            <select id="add-data-type" required>
+              <option value="record">记录</option>
+              <option value="warning">警告</option>
+              <option value="error">错误</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="add-key">Key <span class="required">*</span></label>
+            <input type="text" id="add-key" placeholder="输入 Key" required>
+          </div>
+          <div class="form-group">
+            <label for="add-timestamp">时间戳</label>
+            <input type="number" id="add-timestamp" placeholder="留空使用当前时间">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="add-client-ip">客户端 IP</label>
+            <input type="text" id="add-client-ip" placeholder="可选，如 192.168.1.1">
+          </div>
+          <div class="form-group"></div>
+        </div>
+        <div class="form-group">
+          <label for="add-value">Value <span class="required">*</span></label>
+          <textarea id="add-value" placeholder="输入 Value" rows="4" required></textarea>
+        </div>
+        <div id="add-log-error" class="form-error"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary modal-close">取消</button>
+          <button type="submit" class="btn btn-primary">添加日志</button>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
 

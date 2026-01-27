@@ -86,8 +86,12 @@ router.post(
  *         name: deviceUuid
  *         schema:
  *           type: string
- *           format: uuid
  *         description: 设备 UUID
+ *       - in: query
+ *         name: projectId
+ *         schema:
+ *           type: integer
+ *         description: 项目 ID
  *       - in: query
  *         name: dataType
  *         schema:

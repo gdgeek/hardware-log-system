@@ -18,10 +18,12 @@ describe("LogService - Property-Based Tests", () => {
   const dataTypeArbitrary = fc.constantFrom("record" as const, "warning" as const, "error" as const);
   const keyArbitrary = fc.string({ minLength: 1, maxLength: 255 }).filter((s) => s.trim().length > 0);
   const valueArbitrary = fc.string({ minLength: 1, maxLength: 500 });
+  const projectIdArbitrary = fc.integer({ min: 1, max: 10000 });
 
   const logInputArbitrary: fc.Arbitrary<LogInput> = fc.record({
     deviceUuid: stringArbitrary,
     sessionUuid: stringArbitrary,
+    projectId: projectIdArbitrary,
     timestamp: fc.integer({ min: 1704067200000, max: 1735603200000 }),
     dataType: dataTypeArbitrary,
     key: keyArbitrary,
@@ -55,6 +57,7 @@ describe("LogService - Property-Based Tests", () => {
             id: Math.floor(Math.random() * 1000000),
             deviceUuid: logInput.deviceUuid,
             sessionUuid: logInput.sessionUuid,
+            projectId: logInput.projectId,
             clientIp: null,
             dataType: logInput.dataType,
             logKey: logInput.key,
@@ -71,6 +74,7 @@ describe("LogService - Property-Based Tests", () => {
 
           expect(retrieved).not.toBeNull();
           expect(retrieved!.deviceUuid).toBe(logInput.deviceUuid);
+          expect(retrieved!.projectId).toBe(logInput.projectId);
           expect(retrieved!.dataType).toBe(logInput.dataType);
           expect(retrieved!.key).toBe(logInput.key);
           expect(retrieved!.value).toEqual(logInput.value);
@@ -88,6 +92,7 @@ describe("LogService - Property-Based Tests", () => {
               id: index + 1,
               deviceUuid: input.deviceUuid,
               sessionUuid: input.sessionUuid,
+              projectId: input.projectId,
               clientIp: null,
               dataType: input.dataType,
               logKey: input.key,
@@ -113,6 +118,7 @@ describe("LogService - Property-Based Tests", () => {
             for (let i = 0; i < logInputs.length; i++) {
               expect(retrievedLogs[i]).not.toBeNull();
               expect(retrievedLogs[i]!.deviceUuid).toBe(logInputs[i].deviceUuid);
+              expect(retrievedLogs[i]!.projectId).toBe(logInputs[i].projectId);
               expect(retrievedLogs[i]!.dataType).toBe(logInputs[i].dataType);
               expect(retrievedLogs[i]!.key).toBe(logInputs[i].key);
               expect(retrievedLogs[i]!.value).toEqual(logInputs[i].value);
@@ -134,6 +140,7 @@ describe("LogService - Property-Based Tests", () => {
             id: Math.floor(Math.random() * 1000000),
             deviceUuid: logInput.deviceUuid,
             sessionUuid: logInput.sessionUuid,
+            projectId: logInput.projectId,
             clientIp: null,
             dataType: logInput.dataType,
             logKey: logInput.key,
@@ -169,6 +176,7 @@ describe("LogService - Property-Based Tests", () => {
                 id: Math.floor(Math.random() * 1000000),
                 deviceUuid: input.deviceUuid,
                 sessionUuid: input.sessionUuid,
+                projectId: input.projectId,
                 clientIp: null,
                 dataType: input.dataType,
                 logKey: input.key,
@@ -205,6 +213,7 @@ describe("LogService - Property-Based Tests", () => {
             const mockLogs = logInputs.map((input, index) => ({
               id: index + 1,
               deviceUuid: input.deviceUuid,
+              projectId: input.projectId,
               dataType: input.dataType,
               logKey: input.key,
               logValue: input.value,
@@ -238,6 +247,7 @@ describe("LogService - Property-Based Tests", () => {
             const mockLogs = logInputs.map((input, index) => ({
               id: index + 1,
               deviceUuid: input.deviceUuid,
+              projectId: input.projectId,
               dataType: input.dataType,
               logKey: input.key,
               logValue: input.value,
@@ -280,6 +290,7 @@ describe("LogService - Property-Based Tests", () => {
                 id: index + 1,
                 deviceUuid: input.deviceUuid,
                 sessionUuid: input.sessionUuid,
+                projectId: input.projectId,
                 clientIp: null,
                 dataType: input.dataType,
                 logKey: input.key,
@@ -320,6 +331,7 @@ describe("LogService - Property-Based Tests", () => {
               id: index + 1,
               deviceUuid: input.deviceUuid,
               sessionUuid: input.sessionUuid,
+              projectId: input.projectId,
               clientIp: null,
               dataType: input.dataType,
               logKey: input.key,
@@ -362,6 +374,7 @@ describe("LogService - Property-Based Tests", () => {
               id: index + 1,
               deviceUuid: input.deviceUuid,
               sessionUuid: input.sessionUuid,
+              projectId: input.projectId,
               clientIp: null,
               dataType: input.dataType,
               logKey: input.key,
@@ -396,6 +409,7 @@ describe("LogService - Property-Based Tests", () => {
               id: index + 1,
               deviceUuid: input.deviceUuid,
               sessionUuid: input.sessionUuid,
+              projectId: input.projectId,
               clientIp: null,
               dataType: input.dataType,
               logKey: input.key,
@@ -449,6 +463,7 @@ describe("LogService - Property-Based Tests", () => {
               id: index + 1,
               deviceUuid: input.deviceUuid,
               sessionUuid: input.sessionUuid,
+              projectId: input.projectId,
               clientIp: null,
               dataType: input.dataType,
               logKey: input.key,

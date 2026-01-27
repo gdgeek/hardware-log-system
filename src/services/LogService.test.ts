@@ -38,6 +38,7 @@ describe("LogService", () => {
     const validLogInput: LogInput = {
       deviceUuid: "device-001",
       sessionUuid: "session-001",
+      projectId: 1001,
       timestamp: Date.now(),
       dataType: "record",
       key: "temperature",
@@ -49,6 +50,7 @@ describe("LogService", () => {
         id: 1,
         deviceUuid: validLogInput.deviceUuid,
         sessionUuid: validLogInput.sessionUuid,
+        projectId: validLogInput.projectId,
         clientIp: null,
         dataType: validLogInput.dataType,
         logKey: validLogInput.key,
@@ -65,6 +67,7 @@ describe("LogService", () => {
         id: 1,
         deviceUuid: validLogInput.deviceUuid,
         sessionUuid: validLogInput.sessionUuid,
+        projectId: validLogInput.projectId,
         clientIp: null,
         dataType: validLogInput.dataType,
         key: validLogInput.key,
@@ -76,6 +79,7 @@ describe("LogService", () => {
       expect(mockRepository.create).toHaveBeenCalledWith({
         deviceUuid: validLogInput.deviceUuid,
         sessionUuid: validLogInput.sessionUuid,
+        projectId: validLogInput.projectId,
         clientIp: null,
         dataType: validLogInput.dataType,
         logKey: validLogInput.key,
@@ -86,6 +90,7 @@ describe("LogService", () => {
 
     it("should reject log with missing deviceUuid", async () => {
       const invalidInput = {
+        projectId: 1001,
         dataType: "record",
         key: "test",
         value: "test data",
@@ -106,6 +111,7 @@ describe("LogService", () => {
         id: 1,
         deviceUuid: input.deviceUuid,
         sessionUuid: input.sessionUuid,
+        projectId: input.projectId,
         clientIp: null,
         dataType: input.dataType,
         logKey: input.key,
@@ -133,6 +139,7 @@ describe("LogService", () => {
     it("should reject log with missing key", async () => {
       const invalidInput = {
         deviceUuid: validLogInput.deviceUuid,
+        projectId: 1001,
         dataType: "record",
         value: "test data",
       } as any;
@@ -163,6 +170,7 @@ describe("LogService", () => {
         id: 1,
         deviceUuid: input.deviceUuid,
         sessionUuid: input.sessionUuid,
+        projectId: input.projectId,
         clientIp: null,
         dataType: input.dataType,
         logKey: input.key,
@@ -189,6 +197,7 @@ describe("LogService", () => {
           id: 1,
           deviceUuid: input.deviceUuid,
           sessionUuid: input.sessionUuid,
+          projectId: input.projectId,
           clientIp: null,
           dataType: input.dataType,
           logKey: input.key,
@@ -210,6 +219,7 @@ describe("LogService", () => {
         id: 1,
         deviceUuid: "device-001",
         sessionUuid: "test-session-uuid",
+        projectId: 1001,
         clientIp: null,
         dataType: "record",
         logKey: "temperature",
@@ -226,6 +236,7 @@ describe("LogService", () => {
         id: 1,
         deviceUuid: mockLog.deviceUuid,
         sessionUuid: mockLog.sessionUuid,
+        projectId: mockLog.projectId,
         clientIp: null,
         dataType: mockLog.dataType,
         key: mockLog.logKey,
@@ -253,6 +264,7 @@ describe("LogService", () => {
         id: 1,
         deviceUuid: "device-001",
         sessionUuid: "session-1",
+        projectId: 1001,
         clientIp: null,
         dataType: "record",
         logKey: "temp",
@@ -264,6 +276,7 @@ describe("LogService", () => {
         id: 2,
         deviceUuid: "device-001",
         sessionUuid: "session-1",
+        projectId: 1001,
         clientIp: null,
         dataType: "warning",
         logKey: "temp",

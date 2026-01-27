@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS logs (
   id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT 'Primary key',
   device_uuid VARCHAR(36) NOT NULL COMMENT 'Device UUID',
   session_uuid VARCHAR(36) NOT NULL COMMENT 'Session UUID for tracking app runs',
+  project_id INT NOT NULL DEFAULT 0 COMMENT 'Project ID',
   client_ip VARCHAR(45) NULL COMMENT 'Client IP address (IPv4/IPv6)',
   data_type ENUM('record', 'warning', 'error') NOT NULL COMMENT 'Log type',
   log_key VARCHAR(255) NOT NULL COMMENT 'Log key identifier',
@@ -27,6 +28,7 @@ CREATE TABLE IF NOT EXISTS logs (
   
   INDEX idx_device_uuid (device_uuid),
   INDEX idx_session_uuid (session_uuid),
+  INDEX idx_project_id (project_id),
   INDEX idx_data_type (data_type),
   INDEX idx_created_at (created_at),
   INDEX idx_client_ip (client_ip),

@@ -401,6 +401,10 @@ export class LogRepository {
       where.sessionUuid = filters.sessionUuid;
     }
 
+    if (filters.projectId !== undefined) {
+      where.projectId = filters.projectId;
+    }
+
     if (filters.dataType) {
       where.dataType = filters.dataType;
     }

@@ -29,6 +29,12 @@ export const logInputSchema = Joi.object({
     "string.empty": "sessionUuid cannot be empty",
   }),
 
+  projectId: Joi.number().integer().required().messages({
+    "number.base": "projectId must be a number",
+    "number.integer": "projectId must be an integer",
+    "any.required": "projectId is required",
+  }),
+
   timestamp: Joi.number().integer().required().messages({
     "number.base": "timestamp must be a number",
     "any.required": "timestamp is required",
@@ -67,6 +73,11 @@ export const logFiltersSchema = Joi.object({
 
   sessionUuid: Joi.string().optional().messages({
     "string.empty": "sessionUuid cannot be empty",
+  }),
+
+  projectId: Joi.number().integer().optional().messages({
+    "number.base": "projectId must be a number",
+    "number.integer": "projectId must be an integer",
   }),
 
   dataType: Joi.string()

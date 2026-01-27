@@ -89,6 +89,23 @@ const api = {
     return res.status === 204;
   },
 
+  // 创建日志
+  async createLog(logData) {
+    const res = await fetch(`${API_BASE}/logs`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...auth.getHeaders()
+      },
+      body: JSON.stringify(logData)
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error?.message || '创建日志失败');
+    }
+    return res.json();
+  },
+
   // 报表相关
   async getDeviceReport(uuid) {
     const res = await fetch(`${API_BASE}/reports/device/${uuid}`, {
@@ -537,7 +554,7 @@ async function deleteLogConfirm(logId) {
   if (!confirm('确定要删除这条日志吗？此操作不可恢复。')) {
     return;
   }
-  
+
   try {
     const success = await api.deleteLog(logId);
     if (success) {
@@ -818,6 +835,56 @@ function bindEvents() {
     // 移除 confirm 以解决某些浏览器/环境下确认框“闪退”的问题
     auth.clear();
     showLoginPage();
+  });
+
+  // 添加日志按钮点击
+  document.getElementById('btn-add-log')?.addEventListener('click', () => {
+    document.getElementById('add-log-modal').classList.add('active');
+    document.getElementById('add-log-error').textContent = '';
+    document.getElementById('add-log-form').reset();
+  });
+
+  // 添加日志表单提交
+  document.getElementById('add-log-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errorEl = document.getElementById('add-log-error');
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+
+    const logData = {
+      deviceUuid: document.getElementById('add-device-uuid').value.trim(),
+      sessionUuid: document.getElementById('add-session-uuid').value.trim(),
+      projectId: parseInt(document.getElementById('add-project-id').value, 10),
+      dataType: document.getElementById('add-data-type').value,
+      key: document.getElementById('add-key').value.trim(),
+      value: document.getElementById('add-value').value.trim(),
+      timestamp: document.getElementById('add-timestamp').value
+        ? parseInt(document.getElementById('add-timestamp').value, 10)
+        : Date.now(),
+      clientIp: document.getElementById('add-client-ip').value.trim() || undefined
+    };
+
+    try {
+      errorEl.textContent = '';
+      errorEl.classList.remove('active');
+      submitBtn.disabled = true;
+      submitBtn.textContent = '添加中...';
+
+      await api.createLog(logData);
+
+      closeModal();
+      // 刷新日志列表
+      if (state.currentPage === 'logs') {
+        loadLogs();
+      } else if (state.currentPage === 'dashboard') {
+        loadDashboard();
+      }
+    } catch (error) {
+      errorEl.classList.add('active');
+      errorEl.textContent = error.message || '添加日志失败';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = '添加日志';
+    }
   });
 
   // 登录表单提交

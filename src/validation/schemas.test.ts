@@ -18,6 +18,7 @@ describe("Validation Schemas", () => {
         const validInput = {
           deviceUuid: "device-001",
           sessionUuid: "session-001",
+          projectId: 1001,
           timestamp: 1704110400000,
           dataType: "record",
           key: "temperature",
@@ -36,6 +37,7 @@ describe("Validation Schemas", () => {
           const input = {
             deviceUuid: "device-001",
             sessionUuid: "session-001",
+            projectId: 1001,
             timestamp: 1704110400000,
             dataType,
             key: "test",
@@ -51,6 +53,7 @@ describe("Validation Schemas", () => {
         const input = {
           deviceUuid: "device-001",
           sessionUuid: "session-001",
+          projectId: 1001,
           timestamp: 1704110400000,
           dataType: "record",
           key: "a".repeat(255),
@@ -65,6 +68,7 @@ describe("Validation Schemas", () => {
         const input = {
           deviceUuid: "device-001",
           sessionUuid: "session-001",
+          projectId: 1001,
           timestamp: 1704110400000,
           dataType: "record",
           key: "sensor_data",
@@ -79,6 +83,7 @@ describe("Validation Schemas", () => {
         const input = {
           deviceUuid: "device-001",
           sessionUuid: "session-001",
+          projectId: 1001,
           timestamp: 1704110400000,
           dataType: "record",
           key: "test",
@@ -96,6 +101,7 @@ describe("Validation Schemas", () => {
       it("should reject missing deviceUuid", () => {
         const input = {
           sessionUuid: "session-001",
+          projectId: 1001,
           timestamp: 1704110400000,
           dataType: "record",
           key: "test",
@@ -111,6 +117,7 @@ describe("Validation Schemas", () => {
         const input = {
           deviceUuid: "any-string-is-valid",
           sessionUuid: "session-001",
+          projectId: 1001,
           timestamp: 1704110400000,
           dataType: "record",
           key: "test",
@@ -127,6 +134,7 @@ describe("Validation Schemas", () => {
         const input = {
           deviceUuid: "device-001",
           sessionUuid: "session-001",
+          projectId: 1001,
           timestamp: 1704110400000,
           key: "test",
           value: "test data",
@@ -141,6 +149,7 @@ describe("Validation Schemas", () => {
         const input = {
           deviceUuid: "device-001",
           sessionUuid: "session-001",
+          projectId: 1001,
           timestamp: 1704110400000,
           dataType: "invalid",
           key: "test",
@@ -158,6 +167,7 @@ describe("Validation Schemas", () => {
         const input = {
           deviceUuid: "device-001",
           sessionUuid: "session-001",
+          projectId: 1001,
           timestamp: 1704110400000,
           dataType: "record",
           value: "test data",
@@ -172,6 +182,7 @@ describe("Validation Schemas", () => {
         const input = {
           deviceUuid: "device-001",
           sessionUuid: "session-001",
+          projectId: 1001,
           timestamp: 1704110400000,
           dataType: "record",
           key: "a".repeat(256),
@@ -189,6 +200,7 @@ describe("Validation Schemas", () => {
         const input = {
           deviceUuid: "device-001",
           sessionUuid: "session-001",
+          projectId: 1001,
           timestamp: 1704110400000,
           dataType: "record",
           key: "test",
@@ -203,6 +215,7 @@ describe("Validation Schemas", () => {
         const input = {
           deviceUuid: "device-001",
           sessionUuid: "session-001",
+          projectId: 1001,
           timestamp: 1704110400000,
           dataType: "record",
           key: "test",
@@ -211,6 +224,23 @@ describe("Validation Schemas", () => {
 
         const { error } = logInputSchema.validate(input);
         expect(error).toBeDefined();
+      });
+    });
+
+    describe("invalid projectId", () => {
+      it("should reject missing projectId", () => {
+        const input = {
+          deviceUuid: "device-001",
+          sessionUuid: "session-001",
+          timestamp: 1704110400000,
+          dataType: "record",
+          key: "test",
+          value: "test data",
+        };
+
+        const { error } = logInputSchema.validate(input);
+        expect(error).toBeDefined();
+        expect(error?.details[0].path).toContain("projectId");
       });
     });
   });

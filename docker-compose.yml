@@ -81,6 +81,8 @@ services:
       - ./src/models/migrations/002_add_project_fields.sql:/docker-entrypoint-initdb.d/002_add_project_fields.sql
       - ./src/models/migrations/003_add_client_ip.sql:/docker-entrypoint-initdb.d/003_add_client_ip.sql
       - ./src/models/migrations/004_add_session_uuid.sql:/docker-entrypoint-initdb.d/004_add_session_uuid.sql
+      - ./src/models/migrations/005_change_value_to_text.sql:/docker-entrypoint-initdb.d/005_change_value_to_text.sql
+      - ./src/models/migrations/006_add_project_id.sql:/docker-entrypoint-initdb.d/006_add_project_id.sql
     networks:
       - app-network
     restart: unless-stopped

@@ -9,6 +9,7 @@ export type DataType = "record" | "warning" | "error";
 export interface LogInput {
   deviceUuid: string;
   sessionUuid: string;
+  projectId: number;
   timestamp: number;
   dataType: DataType;
   key: string;
@@ -23,6 +24,7 @@ export interface LogOutput {
   id: number;
   deviceUuid: string;
   sessionUuid: string;
+  projectId: number;
   clientIp: string | null;
   dataType: DataType;
   key: string;
@@ -37,6 +39,7 @@ export interface LogOutput {
 export interface LogFilters {
   deviceUuid?: string;
   sessionUuid?: string;
+  projectId?: number;
   dataType?: DataType;
   startTime?: Date;
   endTime?: Date;
