@@ -28,7 +28,7 @@ describe("LogRepository", () => {
         deviceUuid: "test-device-uuid-1",
         dataType: "record" as DataType,
         logKey: "test-key",
-        logValue: { message: "test message" },
+        logValue: "test message",
         sessionUuid: "test-session-uuid",
       };
 
@@ -57,7 +57,7 @@ describe("LogRepository", () => {
         deviceUuid: "",
         dataType: "record" as DataType,
         logKey: "test-key",
-        logValue: { data: "test" },
+        logValue: "test data",
         sessionUuid: "test-session-uuid",
       };
 
@@ -74,7 +74,7 @@ describe("LogRepository", () => {
         deviceUuid: "test-device-uuid-3",
         dataType: "error" as DataType,
         logKey: "test-key",
-        logValue: { error: "test error" },
+        logValue: "test error",
         sessionUuid: "test-session-uuid",
         createdAt: new Date(),
         toJSON: jest.fn().mockReturnThis(),
@@ -106,7 +106,7 @@ describe("LogRepository", () => {
           deviceUuid: "device-1",
           dataType: "record" as DataType,
           logKey: "key-1",
-          logValue: { data: "test1" },
+          logValue: "test1",
           sessionUuid: "session-1",
           createdAt: new Date(),
           toJSON: jest.fn().mockReturnThis(),
@@ -116,7 +116,7 @@ describe("LogRepository", () => {
           deviceUuid: "device-1",
           dataType: "warning" as DataType,
           logKey: "key-2",
-          logValue: { data: "test2" },
+          logValue: "test2",
           sessionUuid: "session-1",
           createdAt: new Date(),
           toJSON: jest.fn().mockReturnThis(),

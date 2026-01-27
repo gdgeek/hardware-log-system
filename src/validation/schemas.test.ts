@@ -16,12 +16,12 @@ describe("Validation Schemas", () => {
     describe("valid inputs", () => {
       it("should accept valid log input with all required fields", () => {
         const validInput = {
-          deviceUuid: "550e8400-e29b-41d4-a716-446655440000",
-          sessionUuid: "550e8400-e29b-41d4-a716-446655440001",
+          deviceUuid: "device-001",
+          sessionUuid: "session-001",
           timestamp: 1704110400000,
           dataType: "record",
           key: "temperature",
-          value: { temp: 25.5, unit: "celsius" },
+          value: "temp: 25.5, unit: celsius",
         };
 
         const { error, value } = logInputSchema.validate(validInput);
@@ -34,12 +34,12 @@ describe("Validation Schemas", () => {
 
         dataTypes.forEach((dataType) => {
           const input = {
-            deviceUuid: "550e8400-e29b-41d4-a716-446655440000",
-            sessionUuid: "550e8400-e29b-41d4-a716-446655440001",
+            deviceUuid: "device-001",
+            sessionUuid: "session-001",
             timestamp: 1704110400000,
             dataType,
             key: "test",
-            value: { data: "test" },
+            value: "test data",
           };
 
           const { error } = logInputSchema.validate(input);
@@ -49,31 +49,26 @@ describe("Validation Schemas", () => {
 
       it("should accept key with maximum length of 255 characters", () => {
         const input = {
-          deviceUuid: "550e8400-e29b-41d4-a716-446655440000",
-          sessionUuid: "550e8400-e29b-41d4-a716-446655440001",
+          deviceUuid: "device-001",
+          sessionUuid: "session-001",
           timestamp: 1704110400000,
           dataType: "record",
           key: "a".repeat(255),
-          value: { data: "test" },
+          value: "test data",
         };
 
         const { error } = logInputSchema.validate(input);
         expect(error).toBeUndefined();
       });
 
-      it("should accept complex nested JSON objects as value", () => {
+      it("should accept any string as value", () => {
         const input = {
-          deviceUuid: "550e8400-e29b-41d4-a716-446655440000",
-          sessionUuid: "550e8400-e29b-41d4-a716-446655440001",
+          deviceUuid: "device-001",
+          sessionUuid: "session-001",
           timestamp: 1704110400000,
           dataType: "record",
           key: "sensor_data",
-          value: {
-            temperature: 25.5,
-            humidity: 60,
-            location: { lat: 40.7128, lng: -74.006 },
-            readings: [1, 2, 3, 4, 5],
-          },
+          value: "temperature: 25.5, humidity: 60, location: lat 40.7128 lng -74.006",
         };
 
         const { error } = logInputSchema.validate(input);
@@ -82,12 +77,12 @@ describe("Validation Schemas", () => {
 
       it("should strip unknown fields", () => {
         const input = {
-          deviceUuid: "550e8400-e29b-41d4-a716-446655440000",
-          sessionUuid: "550e8400-e29b-41d4-a716-446655440001",
+          deviceUuid: "device-001",
+          sessionUuid: "session-001",
           timestamp: 1704110400000,
           dataType: "record",
           key: "test",
-          value: { data: "test" },
+          value: "test data",
           unknownField: "should be removed",
         };
 
@@ -100,11 +95,11 @@ describe("Validation Schemas", () => {
     describe("invalid deviceUuid", () => {
       it("should reject missing deviceUuid", () => {
         const input = {
-          sessionUuid: "550e8400-e29b-41d4-a716-446655440001",
+          sessionUuid: "session-001",
           timestamp: 1704110400000,
           dataType: "record",
           key: "test",
-          value: { data: "test" },
+          value: "test data",
         };
 
         const { error } = logInputSchema.validate(input);
@@ -112,30 +107,29 @@ describe("Validation Schemas", () => {
         expect(error?.details[0].path).toContain("deviceUuid");
       });
 
-      it("should reject invalid UUID format", () => {
+      it("should accept any string as deviceUuid", () => {
         const input = {
-          deviceUuid: "invalid-uuid",
-          sessionUuid: "550e8400-e29b-41d4-a716-446655440001",
+          deviceUuid: "any-string-is-valid",
+          sessionUuid: "session-001",
           timestamp: 1704110400000,
           dataType: "record",
           key: "test",
-          value: { data: "test" },
+          value: "test data",
         };
 
         const { error } = logInputSchema.validate(input);
-        expect(error).toBeDefined();
-        expect(error?.details[0].message).toContain("valid UUID v4 format");
+        expect(error).toBeUndefined();
       });
     });
 
     describe("invalid dataType", () => {
       it("should reject missing dataType", () => {
         const input = {
-          deviceUuid: "550e8400-e29b-41d4-a716-446655440000",
-          sessionUuid: "550e8400-e29b-41d4-a716-446655440001",
+          deviceUuid: "device-001",
+          sessionUuid: "session-001",
           timestamp: 1704110400000,
           key: "test",
-          value: { data: "test" },
+          value: "test data",
         };
 
         const { error } = logInputSchema.validate(input);
@@ -145,12 +139,12 @@ describe("Validation Schemas", () => {
 
       it("should reject invalid dataType values", () => {
         const input = {
-          deviceUuid: "550e8400-e29b-41d4-a716-446655440000",
-          sessionUuid: "550e8400-e29b-41d4-a716-446655440001",
+          deviceUuid: "device-001",
+          sessionUuid: "session-001",
           timestamp: 1704110400000,
           dataType: "invalid",
           key: "test",
-          value: { data: "test" },
+          value: "test data",
         };
 
         const { error } = logInputSchema.validate(input);
@@ -162,11 +156,11 @@ describe("Validation Schemas", () => {
     describe("invalid key", () => {
       it("should reject missing key", () => {
         const input = {
-          deviceUuid: "550e8400-e29b-41d4-a716-446655440000",
-          sessionUuid: "550e8400-e29b-41d4-a716-446655440001",
+          deviceUuid: "device-001",
+          sessionUuid: "session-001",
           timestamp: 1704110400000,
           dataType: "record",
-          value: { data: "test" },
+          value: "test data",
         };
 
         const { error } = logInputSchema.validate(input);
@@ -176,12 +170,12 @@ describe("Validation Schemas", () => {
 
       it("should reject key exceeding 255 characters", () => {
         const input = {
-          deviceUuid: "550e8400-e29b-41d4-a716-446655440000",
-          sessionUuid: "550e8400-e29b-41d4-a716-446655440001",
+          deviceUuid: "device-001",
+          sessionUuid: "session-001",
           timestamp: 1704110400000,
           dataType: "record",
           key: "a".repeat(256),
-          value: { data: "test" },
+          value: "test data",
         };
 
         const { error } = logInputSchema.validate(input);
@@ -193,8 +187,8 @@ describe("Validation Schemas", () => {
     describe("invalid value", () => {
       it("should reject missing value", () => {
         const input = {
-          deviceUuid: "550e8400-e29b-41d4-a716-446655440000",
-          sessionUuid: "550e8400-e29b-41d4-a716-446655440001",
+          deviceUuid: "device-001",
+          sessionUuid: "session-001",
           timestamp: 1704110400000,
           dataType: "record",
           key: "test",
@@ -205,19 +199,18 @@ describe("Validation Schemas", () => {
         expect(error?.details[0].path).toContain("value");
       });
 
-      it("should reject non-object value types", () => {
+      it("should reject empty value", () => {
         const input = {
-          deviceUuid: "550e8400-e29b-41d4-a716-446655440000",
-          sessionUuid: "550e8400-e29b-41d4-a716-446655440001",
+          deviceUuid: "device-001",
+          sessionUuid: "session-001",
           timestamp: 1704110400000,
           dataType: "record",
           key: "test",
-          value: "not an object",
+          value: "",
         };
 
         const { error } = logInputSchema.validate(input);
         expect(error).toBeDefined();
-        expect(error?.details[0].message).toContain("must be a valid JSON object");
       });
     });
   });
@@ -225,8 +218,8 @@ describe("Validation Schemas", () => {
   describe("logFiltersSchema", () => {
     it("should accept valid filters", () => {
       const filters = {
-        deviceUuid: "550e8400-e29b-41d4-a716-446655440000",
-        sessionUuid: "550e8400-e29b-41d4-a716-446655440001",
+        deviceUuid: "device-001",
+        sessionUuid: "session-001",
         dataType: "error",
         startTime: "2024-01-01T00:00:00.000Z",
         endTime: "2024-01-31T23:59:59.999Z",
@@ -241,10 +234,10 @@ describe("Validation Schemas", () => {
       expect(error).toBeUndefined();
     });
 
-    it("should reject invalid UUID in filters", () => {
-      const filters = { deviceUuid: "invalid-uuid" };
+    it("should accept any string as deviceUuid in filters", () => {
+      const filters = { deviceUuid: "any-string" };
       const { error } = logFiltersSchema.validate(filters);
-      expect(error).toBeDefined();
+      expect(error).toBeUndefined();
     });
 
     it("should reject invalid dataType in filters", () => {

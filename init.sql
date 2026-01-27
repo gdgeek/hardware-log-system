@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS logs (
   client_ip VARCHAR(45) NULL COMMENT 'Client IP address (IPv4/IPv6)',
   data_type ENUM('record', 'warning', 'error') NOT NULL COMMENT 'Log type',
   log_key VARCHAR(255) NOT NULL COMMENT 'Log key identifier',
-  log_value JSON NOT NULL COMMENT 'Log data in JSON format',
+  log_value TEXT NOT NULL COMMENT 'Log data as string',
   client_timestamp BIGINT NULL COMMENT 'Client-side timestamp',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Server timestamp',
   

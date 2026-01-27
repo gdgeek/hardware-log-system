@@ -12,7 +12,7 @@ export interface LogInput {
   timestamp: number;
   dataType: DataType;
   key: string;
-  value: object;
+  value: string;
   clientIp?: string; // Internal field for server-detected IP
 }
 
@@ -26,7 +26,7 @@ export interface LogOutput {
   clientIp: string | null;
   dataType: DataType;
   key: string;
-  value: object;
+  value: string;
   clientTimestamp: number | null;
   createdAt: string; // ISO 8601 format
 }

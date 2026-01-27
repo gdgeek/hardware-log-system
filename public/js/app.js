@@ -283,18 +283,20 @@ async function loadDashboard() {
 function updateRecentLogsTable(logs) {
   const tbody = document.querySelector('#recent-logs-table tbody');
   if (logs.length === 0) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="6">暂无日志数据</td></tr>';
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="9">暂无日志数据</td></tr>';
     return;
   }
 
   tbody.innerHTML = logs.map(log => `
     <tr data-id="${log.id}" class="clickable-row">
       <td>${log.id}</td>
-      <td>${truncateText(log.deviceUuid, 16)}</td>
+      <td title="${log.deviceUuid}">${truncateText(log.deviceUuid, 12)}</td>
       <td>${getDataTypeBadge(log.dataType)}</td>
-      <td>${escapeHtml(log.key || '-')}</td>
+      <td title="${log.key || ''}">${escapeHtml(truncateText(log.key, 15) || '-')}</td>
+      <td class="value-preview" title="${escapeHtml(log.value || '')}">${truncateText(log.value, 15)}</td>
       <td>${log.projectId || '-'}</td>
-      <td title="${log.sessionUuid}">${truncateText(log.sessionUuid, 12)}</td>
+      <td title="${log.sessionUuid || ''}">${truncateText(log.sessionUuid, 10)}</td>
+      <td>${escapeHtml(log.clientIp || '-')}</td>
       <td>${formatDate(log.createdAt)}</td>
     </tr>
   `).join('');
@@ -432,7 +434,7 @@ function updateLogsTable() {
       <td title="${log.deviceUuid}">${truncateText(log.deviceUuid, 12)}</td>
       <td>${getDataTypeBadge(log.dataType)}</td>
       <td title="${log.key || ''}">${escapeHtml(truncateText(log.key, 15) || '-')}</td>
-      <td class="value-preview" title="${escapeHtml(JSON.stringify(log.value))}">${truncateText(log.value, 15)}</td>
+      <td class="value-preview" title="${escapeHtml(log.value || '')}">${truncateText(log.value, 15)}</td>
       <td>${log.projectId || '-'}</td>
       <td title="${log.sessionUuid || ''}">${truncateText(log.sessionUuid, 10)}</td>
       <td>${escapeHtml(log.clientIp || '-')}</td>
@@ -516,7 +518,7 @@ async function showLogDetail(logId) {
         <span class="detail-value">${formatDate(log.createdAt)}</span>
         
         <span class="detail-label">Value</span>
-        <pre class="detail-value json">${JSON.stringify(log.value, null, 2)}</pre>
+        <pre class="detail-value json">${escapeHtml(log.value || '')}</pre>
       </div>
       <div class="modal-actions">
         <button class="btn btn-danger" onclick="deleteLogConfirm(${log.id})">删除此日志</button>
@@ -658,14 +660,18 @@ async function loadErrorReport() {
     const errors = report.errors || [];
 
     if (errors.length === 0) {
-      tbody.innerHTML = '<tr class="empty-row"><td colspan="5">暂无错误日志</td></tr>';
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="9">暂无错误日志</td></tr>';
     } else {
       tbody.innerHTML = errors.map(err => `
         <tr>
           <td>${err.id}</td>
-          <td>${truncateText(err.deviceUuid, 16)}</td>
-          <td>${escapeHtml(err.key || '-')}</td>
-          <td class="value-preview">${truncateText(err.value, 50)}</td>
+          <td title="${err.deviceUuid}">${truncateText(err.deviceUuid, 12)}</td>
+          <td>${getDataTypeBadge(err.dataType)}</td>
+          <td title="${err.key || ''}">${escapeHtml(truncateText(err.key, 15) || '-')}</td>
+          <td class="value-preview" title="${escapeHtml(err.value || '')}">${truncateText(err.value, 15)}</td>
+          <td>${err.projectId || '-'}</td>
+          <td title="${err.sessionUuid || ''}">${truncateText(err.sessionUuid, 10)}</td>
+          <td>${escapeHtml(err.clientIp || '-')}</td>
           <td>${formatDate(err.createdAt)}</td>
         </tr>
       `).join('');

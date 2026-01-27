@@ -12,7 +12,7 @@ export interface LogAttributes {
   clientIp: string | null;
   dataType: DataType;
   logKey: string;
-  logValue: object;
+  logValue: string;
   clientTimestamp: number | null;
   createdAt: Date;
 }
@@ -38,7 +38,7 @@ export class Log
   declare clientIp: string | null;
   declare dataType: DataType;
   declare logKey: string;
-  declare logValue: object;
+  declare logValue: string;
   declare clientTimestamp: number | null;
   declare createdAt: Date;
 
@@ -74,17 +74,11 @@ Log.init(
       type: DataTypes.STRING(36),
       allowNull: false,
       field: "device_uuid",
-      validate: {
-        isUUID: 4,
-      },
     },
     sessionUuid: {
       type: DataTypes.STRING(36),
       allowNull: false,
       field: "session_uuid",
-      validate: {
-        isUUID: 4,
-      },
     },
     clientIp: {
       type: DataTypes.STRING(45),
@@ -106,7 +100,7 @@ Log.init(
       },
     },
     logValue: {
-      type: DataTypes.JSON,
+      type: DataTypes.TEXT,
       allowNull: false,
       field: "log_value",
     },

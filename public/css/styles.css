@@ -1068,23 +1068,7 @@ a:hover {
 
 /* 表格行悬停效果 */
 .data-table tbody tr {
-  position: relative;
-}
-
-.data-table tbody tr::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: var(--color-primary);
-  transform: scaleY(0);
-  transition: transform var(--transition-fast);
-}
-
-.data-table tbody tr:hover::before {
-  transform: scaleY(1);
+  transition: background var(--transition-fast);
 }
 
 .clickable-row {

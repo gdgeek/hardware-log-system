@@ -36,12 +36,12 @@ describe("LogService", () => {
 
   describe("createLog", () => {
     const validLogInput: LogInput = {
-      deviceUuid: "550e8400-e29b-41d4-a716-446655440000",
-      sessionUuid: "550e8400-e29b-41d4-a716-446655440001",
+      deviceUuid: "device-001",
+      sessionUuid: "session-001",
       timestamp: Date.now(),
       dataType: "record",
       key: "temperature",
-      value: { temp: 25.5, unit: "celsius" },
+      value: "temp: 25.5, unit: celsius",
     };
 
     it("should create a log with valid input", async () => {
@@ -88,7 +88,7 @@ describe("LogService", () => {
       const invalidInput = {
         dataType: "record",
         key: "test",
-        value: { data: "test" },
+        value: "test data",
       } as any;
 
       await expect(logService.createLog(invalidInput)).rejects.toThrow(
@@ -96,15 +96,27 @@ describe("LogService", () => {
       );
     });
 
-    it("should reject log with invalid UUID format", async () => {
-      const invalidInput = {
+    it("should accept any string as deviceUuid", async () => {
+      const input = {
         ...validLogInput,
-        deviceUuid: "invalid-uuid",
+        deviceUuid: "any-string-is-valid",
       };
 
-      await expect(logService.createLog(invalidInput)).rejects.toThrow(
-        ValidationError,
-      );
+      const mockLog = {
+        id: 1,
+        deviceUuid: input.deviceUuid,
+        sessionUuid: input.sessionUuid,
+        clientIp: null,
+        dataType: input.dataType,
+        logKey: input.key,
+        logValue: input.value,
+        clientTimestamp: input.timestamp,
+        createdAt: new Date(),
+      };
+
+      mockRepository.create.mockResolvedValue(mockLog as any);
+
+      await expect(logService.createLog(input)).resolves.toBeDefined();
     });
 
     it("should reject log with invalid dataType", async () => {
@@ -122,7 +134,7 @@ describe("LogService", () => {
       const invalidInput = {
         deviceUuid: validLogInput.deviceUuid,
         dataType: "record",
-        value: { data: "test" },
+        value: "test data",
       } as any;
 
       await expect(logService.createLog(invalidInput)).rejects.toThrow(
@@ -141,15 +153,27 @@ describe("LogService", () => {
       );
     });
 
-    it("should reject log with non-object value", async () => {
-      const invalidInput = {
+    it("should accept string value", async () => {
+      const input = {
         ...validLogInput,
-        value: "not an object" as any,
+        value: "this is a string value",
       };
 
-      await expect(logService.createLog(invalidInput)).rejects.toThrow(
-        ValidationError,
-      );
+      const mockLog = {
+        id: 1,
+        deviceUuid: input.deviceUuid,
+        sessionUuid: input.sessionUuid,
+        clientIp: null,
+        dataType: input.dataType,
+        logKey: input.key,
+        logValue: input.value,
+        clientTimestamp: input.timestamp,
+        createdAt: new Date(),
+      };
+
+      mockRepository.create.mockResolvedValue(mockLog as any);
+
+      await expect(logService.createLog(input)).resolves.toBeDefined();
     });
 
     it("should accept all valid dataTypes", async () => {
@@ -184,12 +208,12 @@ describe("LogService", () => {
     it("should return log when found", async () => {
       const mockLog = {
         id: 1,
-        deviceUuid: "550e8400-e29b-41d4-a716-446655440000",
+        deviceUuid: "device-001",
         sessionUuid: "test-session-uuid",
         clientIp: null,
         dataType: "record",
         logKey: "temperature",
-        logValue: { temp: 25.5 },
+        logValue: "temp: 25.5",
         clientTimestamp: 1704110400000,
         createdAt: new Date("2024-01-01T12:00:00Z"),
       };
@@ -227,23 +251,23 @@ describe("LogService", () => {
     const mockLogs = [
       {
         id: 1,
-        deviceUuid: "550e8400-e29b-41d4-a716-446655440000",
+        deviceUuid: "device-001",
         sessionUuid: "session-1",
         clientIp: null,
         dataType: "record",
         logKey: "temp",
-        logValue: { value: 25 },
+        logValue: "value: 25",
         clientTimestamp: 1704110400000,
         createdAt: new Date("2024-01-01T12:00:00Z"),
       },
       {
         id: 2,
-        deviceUuid: "550e8400-e29b-41d4-a716-446655440000",
+        deviceUuid: "device-001",
         sessionUuid: "session-1",
         clientIp: null,
         dataType: "warning",
         logKey: "temp",
-        logValue: { value: 30 },
+        logValue: "value: 30",
         clientTimestamp: 1704114000000,
         createdAt: new Date("2024-01-01T13:00:00Z"),
       },
@@ -271,7 +295,7 @@ describe("LogService", () => {
     });
 
     it("should filter by deviceUuid", async () => {
-      const filters = { deviceUuid: "550e8400-e29b-41d4-a716-446655440000" };
+      const filters = { deviceUuid: "device-001" };
       mockRepository.findByFilters.mockResolvedValue(mockLogs as any);
       mockRepository.countByFilters.mockResolvedValue(2);
 
@@ -334,7 +358,7 @@ describe("LogService", () => {
       mockRepository.countByFilters.mockResolvedValue(0);
 
       const result = await logService.queryLogs({
-        deviceUuid: "550e8400-e29b-41d4-a716-446655440001",
+        deviceUuid: "device-002",
       });
 
       expect(result.data).toEqual([]);

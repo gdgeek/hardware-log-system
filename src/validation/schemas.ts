@@ -19,15 +19,14 @@ const DATA_TYPES = ["record", "warning", "error"] as const;
  * Schema for validating LogInput
  */
 export const logInputSchema = Joi.object({
-  deviceUuid: Joi.string().pattern(UUID_PATTERN).required().messages({
-    "string.pattern.base": "deviceUuid must be a valid UUID v4 format",
+  deviceUuid: Joi.string().required().messages({
     "any.required": "deviceUuid is required",
     "string.empty": "deviceUuid cannot be empty",
   }),
 
-  sessionUuid: Joi.string().pattern(UUID_PATTERN).required().messages({
-    "string.pattern.base": "sessionUuid must be a valid UUID v4 format",
+  sessionUuid: Joi.string().required().messages({
     "any.required": "sessionUuid is required",
+    "string.empty": "sessionUuid cannot be empty",
   }),
 
   timestamp: Joi.number().integer().required().messages({
@@ -51,9 +50,10 @@ export const logInputSchema = Joi.object({
     "string.empty": "key cannot be empty",
   }),
 
-  value: Joi.object().required().messages({
-    "object.base": "value must be a valid JSON object",
+  value: Joi.string().required().messages({
+    "string.base": "value must be a string",
     "any.required": "value is required",
+    "string.empty": "value cannot be empty",
   }),
 }).options({ stripUnknown: true });
 
@@ -61,12 +61,12 @@ export const logInputSchema = Joi.object({
  * Schema for validating log query filters
  */
 export const logFiltersSchema = Joi.object({
-  deviceUuid: Joi.string().pattern(UUID_PATTERN).optional().messages({
-    "string.pattern.base": "deviceUuid must be a valid UUID v4 format",
+  deviceUuid: Joi.string().optional().messages({
+    "string.empty": "deviceUuid cannot be empty",
   }),
 
-  sessionUuid: Joi.string().pattern(UUID_PATTERN).optional().messages({
-    "string.pattern.base": "sessionUuid must be a valid UUID v4 format",
+  sessionUuid: Joi.string().optional().messages({
+    "string.empty": "sessionUuid cannot be empty",
   }),
 
   dataType: Joi.string()

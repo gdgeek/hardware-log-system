@@ -31,16 +31,16 @@ describe("Log Model", () => {
       expect(attributes.deviceUuid.type.constructor.name).toBe("STRING");
       expect(attributes.dataType.type.constructor.name).toBe("ENUM");
       expect(attributes.logKey.type.constructor.name).toBe("STRING");
-      expect(["JSON", "JSONTYPE"]).toContain(attributes.logValue.type.constructor.name);
+      expect(attributes.logValue.type.constructor.name).toBe("TEXT");
       expect(attributes.sessionUuid.type.constructor.name).toBe("STRING");
       expect(attributes.clientTimestamp.type.constructor.name).toBe("BIGINT");
       expect(attributes.createdAt.type.constructor.name).toBe("DATE");
     });
 
-    it("should have correct validation rules for deviceUuid", () => {
+    it("should not require UUID validation for deviceUuid", () => {
       const attributes = Log.getAttributes();
       expect(attributes.deviceUuid.allowNull).toBe(false);
-      expect(attributes.deviceUuid.validate).toBeDefined();
+      // No validate property since we removed UUID validation
     });
 
     it("should have correct validation rules for dataType", () => {

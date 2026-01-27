@@ -14,27 +14,18 @@ describe("LogService - Property-Based Tests", () => {
   let logService: LogService;
   let mockRepository: jest.Mocked<LogRepository>;
 
-  const uuidArbitrary = fc
-    .uuid()
-    .filter((uuid) =>
-      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(uuid),
-    );
+  const stringArbitrary = fc.string({ minLength: 1, maxLength: 100 });
   const dataTypeArbitrary = fc.constantFrom("record" as const, "warning" as const, "error" as const);
   const keyArbitrary = fc.string({ minLength: 1, maxLength: 255 }).filter((s) => s.trim().length > 0);
-  const jsonKeyArbitrary = fc.string({ minLength: 1, maxLength: 50 }).filter((s) => s.trim() === s && s.length > 0);
-  const jsonValueArbitrary = fc.dictionary(
-    jsonKeyArbitrary,
-    fc.oneof(fc.string(), fc.integer(), fc.double(), fc.boolean(), fc.constant(null)),
-    { minKeys: 1, maxKeys: 10 },
-  );
+  const valueArbitrary = fc.string({ minLength: 1, maxLength: 500 });
 
   const logInputArbitrary: fc.Arbitrary<LogInput> = fc.record({
-    deviceUuid: uuidArbitrary,
-    sessionUuid: uuidArbitrary,
+    deviceUuid: stringArbitrary,
+    sessionUuid: stringArbitrary,
     timestamp: fc.integer({ min: 1704067200000, max: 1735603200000 }),
     dataType: dataTypeArbitrary,
     key: keyArbitrary,
-    value: jsonValueArbitrary,
+    value: valueArbitrary,
   });
 
   beforeEach(() => {
@@ -209,7 +200,7 @@ describe("LogService - Property-Based Tests", () => {
       await fc.assert(
         fc.asyncProperty(
           fc.array(logInputArbitrary, { minLength: 5, maxLength: 20 }),
-          uuidArbitrary,
+          stringArbitrary,
           async (logInputs: LogInput[], filterUuid: string) => {
             const mockLogs = logInputs.map((input, index) => ({
               id: index + 1,
@@ -322,7 +313,7 @@ describe("LogService - Property-Based Tests", () => {
       await fc.assert(
         fc.asyncProperty(
           fc.array(logInputArbitrary, { minLength: 10, maxLength: 30 }),
-          uuidArbitrary,
+          stringArbitrary,
           dataTypeArbitrary,
           async (logInputs: LogInput[], filterUuid, filterDataType) => {
             const mockLogs = logInputs.map((input, index) => ({
