@@ -206,10 +206,10 @@ pnpm run lint
 
 ```json
 {
-  "deviceUuid": "550e8400-e29b-41d4-a716-446655440000",
+  "deviceUuid": "device-001",
   "dataType": "record",
   "key": "temperature",
-  "value": { "celsius": 25.5, "humidity": 60 },
+  "value": "25.5",
   "projectName": "smart-home",
   "version": "1.0.0"
 }
@@ -219,10 +219,10 @@ pnpm run lint
 
 | 字段        | 类型   | 必填 | 说明                                          |
 | ----------- | ------ | ---- | --------------------------------------------- |
-| deviceUuid  | string | 是   | 设备唯一标识（UUID 格式）                     |
+| deviceUuid  | string | 是   | 设备唯一标识（任意字符串）                    |
 | dataType    | string | 是   | 日志类型：record、warning、error              |
 | key         | string | 是   | 日志键名（最大 255 字符）                     |
-| value       | object | 是   | 日志数据（JSON 对象）                         |
+| value       | string | 是   | 日志数据（字符串）                            |
 | projectName | string | 否   | 项目名称（最大 100 字符）                     |
 | version     | string | 否   | 版本号（语义化版本格式，如 1.0.0）            |
 | clientIp    | string | 否   | 客户端 IP（自动从请求中获取，支持 IPv4/IPv6） |
