@@ -37,6 +37,7 @@ export class LogService {
     const log = await this.repository.create({
       deviceUuid: validatedData.deviceUuid,
       sessionUuid: validatedData.sessionUuid,
+      projectId: validatedData.projectId,
       clientIp: validatedData.clientIp || null,
       dataType: validatedData.dataType,
       logKey: validatedData.key,

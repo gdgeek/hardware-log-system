@@ -53,8 +53,8 @@ router.post(
   "/",
   validateBody(logInputSchema),
   asyncHandler(async (req: Request, res: Response) => {
-    // 获取客户端 IP（支持代理）
-    const clientIp = req.ip || req.socket.remoteAddress || null;
+    // 获取客户端 IP：优先使用请求体中的 clientIp（用户手动指定），否则从请求中提取
+    const clientIp = req.body.clientIp || req.ip || req.socket.remoteAddress || null;
 
     logger.info("收到创建日志请求", {
       deviceUuid: req.body.deviceUuid,

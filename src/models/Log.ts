@@ -23,7 +23,7 @@ export interface LogAttributes {
  */
 export interface LogCreationAttributes extends Optional<
   LogAttributes,
-  "id" | "createdAt" | "clientIp" | "clientTimestamp" | "projectId"
+  "id" | "createdAt" | "clientIp" | "clientTimestamp"
 > {}
 
 /**

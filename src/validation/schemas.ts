@@ -61,6 +61,10 @@ export const logInputSchema = Joi.object({
     "any.required": "value is required",
     "string.empty": "value cannot be empty",
   }),
+
+  clientIp: Joi.string().optional().allow(null).messages({
+    "string.base": "clientIp must be a string",
+  }),
 }).options({ stripUnknown: true });
 
 /**
