@@ -9,10 +9,10 @@
  * Requirements: 3.1, 3.2, 3.3, 3.4
  */
 
-import { DeviceReport, TimeRangeReport, ErrorReport } from '../types';
+import { DeviceReport, TimeRangeReport, ErrorReport, ProjectOrganizationReport } from '../types';
 import { logRepository, LogRepository } from '../repositories/LogRepository';
 import { validateOrThrow } from '../validation/validator';
-import { deviceUuidParamSchema, timeRangeQuerySchema } from '../validation/schemas';
+import { deviceUuidParamSchema, timeRangeQuerySchema, projectOrganizationQuerySchema } from '../validation/schemas';
 import { logger } from '../config/logger';
 import { cacheService } from '../config/redis';
 
@@ -21,6 +21,7 @@ const CACHE_TTL = {
   DEVICE_REPORT: 60,      // 设备报表缓存 1 分钟
   TIME_RANGE_REPORT: 120, // 时间段报表缓存 2 分钟
   ERROR_REPORT: 60,       // 错误报表缓存 1 分钟
+  PROJECT_ORGANIZATION: 300, // 项目整理报表缓存 5 分钟
 };
 
 export class ReportService {
@@ -137,6 +138,55 @@ export class ReportService {
     logger.info('Error report generated', {
       totalErrors: report.totalErrors,
       errorCount: report.errors.length,
+    });
+
+    return report;
+  }
+
+  /**
+   * Generates a project organization report
+   * Creates a matrix with devices as rows and keys as columns
+   * 
+   * @param projectId - Project ID
+   * @param date - Date in YYYY-MM-DD format
+   * @returns Promise resolving to project organization report
+   * @throws ValidationError if parameters are invalid
+   * @throws DatabaseError if database operation fails
+   */
+  async generateProjectOrganizationReport(projectId: number, date: string): Promise<ProjectOrganizationReport> {
+    // Validate parameters
+    const validated = validateOrThrow<{ projectId: number; date: string }>(
+      projectOrganizationQuerySchema,
+      { projectId, date }
+    );
+
+    // 尝试从缓存获取
+    const cacheKey = `report:project-org:${validated.projectId}:${validated.date}`;
+    const cached = await cacheService.get<ProjectOrganizationReport>(cacheKey);
+    if (cached) {
+      logger.debug('Project organization report from cache', { projectId, date });
+      return cached;
+    }
+
+    logger.info('Generating project organization report', {
+      projectId: validated.projectId,
+      date: validated.date,
+    });
+
+    const report = await this.repository.aggregateProjectOrganization(
+      validated.projectId,
+      validated.date
+    );
+
+    // 存入缓存
+    await cacheService.set(cacheKey, report, CACHE_TTL.PROJECT_ORGANIZATION);
+
+    logger.info('Project organization report generated', {
+      projectId: validated.projectId,
+      date: validated.date,
+      totalDevices: report.totalDevices,
+      totalKeys: report.totalKeys,
+      totalEntries: report.totalEntries,
     });
 
     return report;

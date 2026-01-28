@@ -21,6 +21,7 @@ import {
 import { logger } from "../config/logger";
 import { adminAuthMiddleware } from "../middleware/AdminAuthMiddleware";
 
+
 const router: IRouter = Router();
 
 /**
@@ -77,7 +78,7 @@ router.post(
  * @swagger
  * /logs:
  *   get:
- *     summary: 查询日志记录
+ *     summary: 查询日志记录（需要认证）
  *     tags: [Logs]
  *     security:
  *       - bearerAuth: []
@@ -163,7 +164,7 @@ router.get(
  * @swagger
  * /logs/{id}:
  *   get:
- *     summary: 获取单条日志
+ *     summary: 获取单条日志（需要认证）
  *     tags: [Logs]
  *     security:
  *       - bearerAuth: []
@@ -220,7 +221,7 @@ router.get(
  * @swagger
  * /logs/{id}:
  *   delete:
- *     summary: 删除单条日志
+ *     summary: 删除单条日志（需要认证）
  *     tags: [Logs]
  *     security:
  *       - bearerAuth: []

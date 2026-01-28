@@ -1,9 +1,19 @@
-import { Router, Request, Response } from "express";
-import { authService } from "../services/AuthService";
-import { asyncHandler } from "../middleware";
+/**
+ * AuthRoutes - 认证相关的 API 路由
+ *
+ * 端点：
+ * - POST /api/auth/login - 管理员登录
+ * - GET /api/auth/verify - 验证 token
+ */
 
-import type { Router as ExpressRouter } from "express";
-const router: ExpressRouter = Router();
+import { Router, Request, Response, IRouter } from "express";
+import { authService } from "../services/AuthService";
+import { adminAuthMiddleware } from "../middleware/AdminAuthMiddleware";
+import { validateBody, asyncHandler } from "../middleware";
+import { loginSchema } from "../validation/schemas";
+import { logger } from "../config/logger";
+
+const router: IRouter = Router();
 
 /**
  * @swagger
@@ -22,74 +32,114 @@ const router: ExpressRouter = Router();
  *             properties:
  *               password:
  *                 type: string
+ *                 description: 管理员密码
  *     responses:
  *       200:
  *         description: 登录成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *                   description: JWT token
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     username:
+ *                       type: string
+ *                     role:
+ *                       type: string
  *       401:
- *         description: 用户名或密码错误
+ *         description: 密码错误
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post(
   "/login",
+  validateBody(loginSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const { password } = req.body;
 
-    if (!password) {
-      res.status(400).json({
-        error: {
-          code: "BAD_REQUEST",
-          message: "密码不能为空",
-        },
+    logger.info("收到管理员登录请求", {
+      ip: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+
+    try {
+      const result = await authService.login(password);
+      
+      logger.info("管理员登录成功", {
+        username: result.user.username,
+        ip: req.ip
       });
-      return;
-    }
 
-    const result = await authService.login(password);
+      res.status(200).json(result);
+    } catch (error) {
+      logger.warn("管理员登录失败", {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        ip: req.ip
+      });
 
-    if (!result) {
       res.status(401).json({
         error: {
-          code: "UNAUTHORIZED",
-          message: "用户名或密码错误",
-        },
+          code: 'UNAUTHORIZED',
+          message: error instanceof Error ? error.message : '登录失败'
+        }
       });
-      return;
     }
-
-    res.status(200).json(result);
-  }),
+  })
 );
 
 /**
  * @swagger
  * /auth/verify:
  *   get:
- *     summary: 验证 Token 有效性
+ *     summary: 验证 token
  *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Token 有效
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 valid:
+ *                   type: boolean
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     username:
+ *                       type: string
+ *                     role:
+ *                       type: string
  *       401:
- *         description: Token 无效或过期
+ *         description: Token 无效
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.get(
   "/verify",
+  adminAuthMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      res.status(401).json({ valid: false });
-      return;
-    }
-
-    const token = authHeader.split(" ")[1];
-    const payload = await authService.verifyAdminToken(token);
-
-    if (!payload) {
-      res.status(401).json({ valid: false });
-      return;
-    }
-
-    res.status(200).json({ valid: true, user: payload });
-  }),
+    // 如果通过了中间件验证，说明 token 有效
+    res.status(200).json({
+      valid: true,
+      user: req.user
+    });
+  })
 );
 
 export default router;

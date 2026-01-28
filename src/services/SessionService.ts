@@ -30,7 +30,75 @@ export interface SessionDetail {
   logs: Log[];
 }
 
+export interface ProjectSummary {
+  projectId: number;
+  sessionCount: number;
+  logCount: number;
+  lastActivity: Date;
+}
+
+export interface ProjectOrganizationReport {
+  projectId: number;
+  date: string;
+  devices: string[];
+  keys: string[];
+  matrix: Record<string, Record<string, string | null>>;
+  totalDevices: number;
+  totalKeys: number;
+  totalEntries: number;
+}
+
 class SessionService {
+  /**
+   * 获取所有项目列表
+   */
+  async getAllProjects(): Promise<{
+    projects: ProjectSummary[];
+  }> {
+    // 获取所有日志（不分页，获取全部）
+    const logs = await logRepository.findByFilters(
+      {},
+      { page: 1, pageSize: 50000 }, // 使用大的 pageSize 获取所有日志
+    );
+
+    // 按 projectId 分组
+    const projectMap = new Map<number, Log[]>();
+    logs.forEach((log) => {
+      const projectId = log.projectId;
+      if (!projectMap.has(projectId)) {
+        projectMap.set(projectId, []);
+      }
+      projectMap.get(projectId)!.push(log);
+    });
+
+    // 生成项目汇总
+    const projects: ProjectSummary[] = [];
+    projectMap.forEach((projectLogs, projectId) => {
+      // 统计会话数量
+      const sessionUuids = new Set(projectLogs.map(log => log.sessionUuid));
+      const sessionCount = sessionUuids.size;
+
+      // 获取最后活动时间
+      const times = projectLogs.map((log) => log.createdAt.getTime());
+      const lastActivity = new Date(Math.max(...times));
+
+      projects.push({
+        projectId,
+        sessionCount,
+        logCount: projectLogs.length,
+        lastActivity,
+      });
+    });
+
+    // 按最后活动时间倒序排序
+    projects.sort(
+      (a, b) => b.lastActivity.getTime() - a.lastActivity.getTime(),
+    );
+
+    return {
+      projects,
+    };
+  }
   /**
    * 获取项目的所有会话列表
    */
@@ -144,6 +212,13 @@ class SessionService {
       lastLogTime,
       logs,
     };
+  }
+
+  /**
+   * 获取项目整理报表
+   */
+  async getProjectOrganizationReport(projectId: number, date: string): Promise<ProjectOrganizationReport> {
+    return await logRepository.aggregateProjectOrganization(projectId, date);
   }
 }
 

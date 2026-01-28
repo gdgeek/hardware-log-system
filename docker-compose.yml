@@ -24,6 +24,8 @@ services:
       - REDIS_ENABLED=true
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - JWT_SECRET=${JWT_SECRET:-hardware-log-system-jwt-secret-key-2026}
     depends_on:
       mysql:
         condition: service_healthy

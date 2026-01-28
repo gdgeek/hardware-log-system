@@ -106,6 +106,22 @@ export interface ErrorReport {
 }
 
 /**
+ * Project organization report - matrix format
+ * Rows: session UUIDs, Columns: keys, Values: values
+ */
+export interface ProjectOrganizationReport {
+  projectId: number;
+  date: string; // YYYY-MM-DD format
+  devices: string[]; // Array of session UUIDs (rows) - keeping 'devices' name for compatibility
+  keys: string[]; // Array of keys (columns)
+  matrix: Record<string, Record<string, string | null>>; // sessionUuid -> key -> value
+  sessionInfo: Record<string, { index: number; startTime: string; uuid: string }>; // Session timing and index info
+  totalDevices: number; // Actually total sessions - keeping name for compatibility
+  totalKeys: number;
+  totalEntries: number;
+}
+
+/**
  * Standard error response format
  */
 export interface ErrorResponse {

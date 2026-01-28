@@ -3,74 +3,560 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>会话日志查看 - 硬件日志管理系统</title>
-  <link rel="stylesheet" href="/css/styles.css">
+  <title>项目整理报表 - 硬件日志管理系统</title>
+  
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Excel导出库 -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  
+  <style>
+    :root {
+      --primary-color: #0d6efd;
+      --secondary-color: #6c757d;
+      --success-color: #198754;
+      --info-color: #0dcaf0;
+      --warning-color: #ffc107;
+      --danger-color: #dc3545;
+      --light-color: #f8f9fa;
+      --dark-color: #212529;
+    }
+
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .main-container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      margin: 20px auto;
+      max-width: 1400px;
+    }
+
+    .header-section {
+      background: linear-gradient(135deg, var(--primary-color), #0056b3);
+      color: white;
+      border-radius: 20px 20px 0 0;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .header-section h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .header-section p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+      margin-bottom: 0;
+    }
+
+    .content-section {
+      padding: 2rem;
+    }
+
+    .form-card {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      border: none;
+      margin-bottom: 2rem;
+    }
+
+    .form-card .card-header {
+      background: linear-gradient(135deg, var(--light-color), #e9ecef);
+      border-radius: 15px 15px 0 0;
+      border-bottom: 2px solid var(--primary-color);
+      padding: 1.5rem;
+    }
+
+    .form-card .card-header h5 {
+      color: var(--dark-color);
+      font-weight: 600;
+      margin-bottom: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .form-card .card-body {
+      padding: 2rem;
+    }
+
+    .form-control, .form-select {
+      border-radius: 10px;
+      border: 2px solid #e9ecef;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+    }
+
+    .btn {
+      border-radius: 10px;
+      padding: 0.75rem 1.5rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary-color), #0056b3);
+      border: none;
+      box-shadow: 0 4px 15px rgba(13, 110, 253, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(13, 110, 253, 0.4);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, var(--success-color), #146c43);
+      border: none;
+      box-shadow: 0 4px 15px rgba(25, 135, 84, 0.3);
+    }
+
+    .btn-success:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(25, 135, 84, 0.4);
+    }
+
+    .date-shortcuts {
+      margin-top: 0.5rem;
+    }
+
+    .btn-outline-secondary {
+      border-radius: 20px;
+      padding: 0.25rem 0.75rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .stats-row {
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 15px;
+      padding: 1.5rem;
+      text-align: center;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+      border: none;
+      transition: transform 0.3s ease;
+      height: 100%;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .stat-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+      font-size: 1.5rem;
+      color: white;
+    }
+
+    .stat-icon.sessions {
+      background: linear-gradient(135deg, var(--primary-color), #0056b3);
+    }
+
+    .stat-icon.keys {
+      background: linear-gradient(135deg, var(--info-color), #0aa2c0);
+    }
+
+    .stat-icon.entries {
+      background: linear-gradient(135deg, var(--success-color), #146c43);
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--dark-color);
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      color: var(--secondary-color);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-size: 0.875rem;
+    }
+
+    .matrix-card {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      border: none;
+    }
+
+    .matrix-card .card-header {
+      background: linear-gradient(135deg, var(--dark-color), #495057);
+      color: white;
+      border-radius: 15px 15px 0 0;
+      padding: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .matrix-card .card-header h5 {
+      margin-bottom: 0;
+      font-weight: 600;
+    }
+
+    .matrix-card .card-header small {
+      opacity: 0.8;
+    }
+
+    .table-container {
+      border-radius: 0 0 15px 15px;
+      overflow: hidden;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .table {
+      margin-bottom: 0;
+      font-size: 0.9rem;
+    }
+
+    .table th {
+      background: var(--light-color);
+      color: var(--dark-color);
+      font-weight: 600;
+      border: none;
+      padding: 1rem 0.75rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .table th:first-child {
+      background: var(--primary-color);
+      color: white;
+      position: sticky;
+      left: 0;
+      z-index: 11;
+      min-width: 80px;
+    }
+
+    /* 会话信息列的表头样式 */
+    .table th.session-info-header {
+      background: var(--primary-color);
+      color: white;
+      font-weight: 600;
+      padding: 1rem 0.75rem;
+      border: none;
+    }
+
+    .table th.session-info-header:nth-child(1) {
+      position: sticky;
+      left: 0;
+      z-index: 11;
+      min-width: 80px;
+    }
+
+    .table th.session-info-header:nth-child(2) {
+      position: sticky;
+      left: 80px;
+      z-index: 11;
+      min-width: 160px;
+    }
+
+    .table th.session-info-header:nth-child(3) {
+      position: sticky;
+      left: 240px;
+      z-index: 11;
+      min-width: 200px;
+    }
+
+    .table td {
+      padding: 0.75rem;
+      border: 1px solid #e9ecef;
+      vertical-align: middle;
+    }
+
+    .table td:first-child {
+      background: rgba(13, 110, 253, 0.05);
+      font-weight: 600;
+      position: sticky;
+      left: 0;
+      z-index: 9;
+      border-right: 2px solid var(--primary-color);
+      min-width: 80px;
+      text-align: center;
+    }
+
+    /* 会话信息列的单元格样式 */
+    .table td.session-info-cell {
+      background: rgba(13, 110, 253, 0.05);
+      font-weight: 600;
+      border-right: 2px solid var(--primary-color);
+    }
+
+    .table td.session-info-cell:nth-child(1) {
+      position: sticky;
+      left: 0;
+      z-index: 9;
+      min-width: 80px;
+      text-align: center;
+    }
+
+    .table td.session-info-cell:nth-child(2) {
+      position: sticky;
+      left: 80px;
+      z-index: 9;
+      min-width: 160px;
+      font-size: 0.85rem;
+    }
+
+    .table td.session-info-cell:nth-child(3) {
+      position: sticky;
+      left: 240px;
+      z-index: 9;
+      min-width: 200px;
+      font-size: 0.85rem;
+    }
+
+    .table td.has-value {
+      background: rgba(25, 135, 84, 0.1);
+      color: var(--dark-color);
+      font-weight: 500;
+    }
+
+    .table td.no-value {
+      background: rgba(108, 117, 125, 0.1);
+      color: var(--secondary-color);
+      font-style: italic;
+      text-align: center;
+    }
+
+    .loading-spinner {
+      text-align: center;
+      padding: 3rem;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--secondary-color);
+    }
+
+    .empty-state i {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      .main-container {
+        margin: 10px;
+        border-radius: 15px;
+      }
+
+      .header-section {
+        padding: 1.5rem;
+        border-radius: 15px 15px 0 0;
+      }
+
+      .header-section h1 {
+        font-size: 2rem;
+      }
+
+      .content-section {
+        padding: 1rem;
+      }
+
+      .form-card .card-body {
+        padding: 1.5rem;
+      }
+
+      .stat-card {
+        margin-bottom: 1rem;
+      }
+
+      .table-container {
+        max-height: 400px;
+      }
+
+      .table {
+        font-size: 0.8rem;
+      }
+
+      .table th, .table td {
+        padding: 0.5rem 0.25rem;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .header-section h1 {
+        font-size: 1.75rem;
+      }
+
+      .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+      }
+
+      .date-shortcuts .btn {
+        width: auto;
+        margin-right: 0.25rem;
+        margin-bottom: 0.25rem;
+      }
+    }
+  </style>
 </head>
 <body>
-  <div class="session-viewer">
-    <header class="session-header">
-      <h1>会话日志查看</h1>
-      <p class="subtitle">选择项目和会话查看详细日志信息</p>
-    </header>
+  <div class="container-fluid">
+    <div class="main-container">
+      <!-- 页面头部 -->
+      <div class="header-section">
+        <h1><i class="bi bi-graph-up-arrow me-3"></i>项目整理报表</h1>
+        <p>查看项目中会话和数据的矩阵报表，支持Excel导出</p>
+      </div>
 
-    <main class="session-main">
-      <!-- 项目选择区域 -->
-      <section class="selection-section">
-        <div class="card">
-          <h2>选择项目</h2>
-          <div class="form-group">
-            <label for="project-id-input">项目 ID</label>
-            <input type="number" id="project-id-input" placeholder="输入项目 ID">
-            <button id="load-sessions-btn" class="btn btn-primary">加载会话列表</button>
+      <!-- 主要内容 -->
+      <div class="content-section">
+        <!-- 参数设置卡片 -->
+        <div class="card form-card">
+          <div class="card-header">
+            <h5><i class="bi bi-gear-fill"></i>报表参数设置</h5>
           </div>
-        </div>
-      </section>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="org-project-id" class="form-label fw-bold">
+                  <i class="bi bi-folder-fill me-2"></i>项目 ID
+                </label>
+                <input type="number" class="form-control" id="org-project-id" min="1" value="1" required>
+                <!-- 占位空间，保持与日期选择部分高度一致 -->
+                <div style="height: 42px;"></div>
+              </div>
+              <div class="col-md-4">
+                <label for="org-date" class="form-label fw-bold">
+                  <i class="bi bi-calendar-fill me-2"></i>选择日期
+                </label>
+                <input type="date" class="form-control" id="org-date" required>
+                <div class="date-shortcuts mt-2">
+                  <button type="button" class="btn btn-outline-secondary btn-sm me-1" data-days="0">今天</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm me-1" data-days="-1">昨天</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm" data-days="-7">一周前</button>
+                </div>
+              </div>
+              <div class="col-md-4 d-flex flex-column justify-content-end">
+                <button id="generate-organization-btn" class="btn btn-primary btn-lg w-100" style="height: 50px;">
+                  <i class="bi bi-play-circle-fill me-2"></i>生成报表
+                </button>
+                <!-- 占位空间，保持与日期选择部分高度一致 -->
+                <div style="height: 42px;"></div>
+              </div>
+            </div>
 
-      <!-- 会话列表区域 -->
-      <section class="sessions-section" id="sessions-section" style="display: none;">
-        <div class="card">
-          <h2>会话列表</h2>
-          <div id="sessions-loading" class="loading" style="display: none;">加载中...</div>
-          <div id="sessions-list" class="sessions-list"></div>
-        </div>
-      </section>
-
-      <!-- 会话详情区域 -->
-      <section class="session-detail-section" id="session-detail-section" style="display: none;">
-        <div class="card">
-          <div class="detail-header">
-            <h2>会话详情</h2>
-            <div class="detail-actions">
-              <button id="export-excel-btn" class="btn btn-success">导出 Excel</button>
-              <button id="back-to-sessions-btn" class="btn btn-secondary">返回会话列表</button>
+            <!-- 加载状态 -->
+            <div id="organization-loading" class="loading-spinner" style="display: none;">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">正在生成报表...</span>
+              </div>
+              <p class="mt-3 text-muted">正在生成报表，请稍候...</p>
             </div>
           </div>
-          
-          <div id="session-summary" class="session-summary"></div>
-          
-          <h3>日志记录</h3>
-          <div class="table-container">
-            <table id="session-logs-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>类型</th>
-                  <th>Key</th>
-                  <th>Value</th>
-                  <th>设备UUID</th>
-                  <th>客户端IP</th>
-                  <th>时间</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
+        </div>
+
+        <!-- 统计信息 -->
+        <div id="organization-result" style="display: none;">
+          <div class="row stats-row g-3">
+            <div class="col-md-4">
+              <div class="card stat-card">
+                <div class="stat-icon sessions">
+                  <i class="bi bi-people-fill"></i>
+                </div>
+                <div class="stat-value" id="org-total-devices">0</div>
+                <div class="stat-label">会话数量</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card stat-card">
+                <div class="stat-icon keys">
+                  <i class="bi bi-key-fill"></i>
+                </div>
+                <div class="stat-value" id="org-total-keys">0</div>
+                <div class="stat-label">数据类型</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card stat-card">
+                <div class="stat-icon entries">
+                  <i class="bi bi-database-fill"></i>
+                </div>
+                <div class="stat-value" id="org-total-entries">0</div>
+                <div class="stat-label">总记录数</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 矩阵表格 -->
+          <div class="card matrix-card">
+            <div class="card-header">
+              <div>
+                <h5><i class="bi bi-table me-2"></i>会话-数据矩阵</h5>
+                <small>行：会话信息，列：数据Key，值：数据Value</small>
+              </div>
+              <button id="export-excel-btn" class="btn btn-success" style="display: none;">
+                <i class="bi bi-file-earmark-excel-fill me-2"></i>导出 Excel
+              </button>
+            </div>
+            <div class="table-container">
+              <table class="table table-hover" id="organization-matrix-table">
+                <thead>
+                  <tr id="org-table-header">
+                    <th class="session-info-header">会话索引</th>
+                    <th class="session-info-header">启动时间</th>
+                    <th class="session-info-header">会话UUID</th>
+                  </tr>
+                </thead>
+                <tbody id="org-table-body">
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-      </section>
-    </main>
+
+        <!-- 空数据状态 -->
+        <div id="organization-empty" class="empty-state" style="display: none;">
+          <i class="bi bi-inbox"></i>
+          <h4>暂无数据</h4>
+          <p class="text-muted">该项目在指定日期没有数据记录</p>
+        </div>
+      </div>
+    </div>
   </div>
 
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/js/session.js"></script>
 </body>
 </html>

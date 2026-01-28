@@ -15,9 +15,11 @@ import { validateParams, validateQuery, asyncHandler } from "../middleware";
 import {
   deviceUuidParamSchema,
   timeRangeQuerySchema,
+  projectOrganizationQuerySchema,
 } from "../validation/schemas";
 import { logger } from "../config/logger";
 import { adminAuthMiddleware } from "../middleware/AdminAuthMiddleware";
+
 
 const router: IRouter = Router();
 
@@ -25,7 +27,7 @@ const router: IRouter = Router();
  * @swagger
  * /reports/device/{uuid}:
  *   get:
- *     summary: 获取设备统计报表
+ *     summary: 获取设备统计报表（需要认证）
  *     tags: [Reports]
  *     security:
  *       - bearerAuth: []
@@ -71,7 +73,7 @@ router.get(
  * @swagger
  * /reports/timerange:
  *   get:
- *     summary: 获取时间段统计报表
+ *     summary: 获取时间段统计报表（需要认证）
  *     tags: [Reports]
  *     security:
  *       - bearerAuth: []
@@ -127,7 +129,7 @@ router.get(
  * @swagger
  * /reports/errors:
  *   get:
- *     summary: 获取错误统计报表
+ *     summary: 获取错误统计报表（需要认证）
  *     tags: [Reports]
  *     security:
  *       - bearerAuth: []
@@ -150,6 +152,65 @@ router.get(
     logger.info("错误报表生成成功", {
       totalErrors: report.totalErrors,
       errorCount: report.errors.length,
+    });
+
+    res.status(200).json(report);
+  }),
+);
+
+/**
+ * @swagger
+ * /reports/project-organization:
+ *   get:
+ *     summary: 获取项目整理报表（需要认证）
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: projectId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: 项目 ID
+ *       - in: query
+ *         name: date
+ *         required: true
+ *         schema:
+ *           type: string
+ *           pattern: '^\d{4}-\d{2}-\d{2}$'
+ *         description: 日期 (YYYY-MM-DD 格式)
+ *     responses:
+ *       200:
+ *         description: 获取成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ProjectOrganizationReport'
+ *       400:
+ *         description: 无效的参数
+ */
+router.get(
+  "/project-organization",
+  adminAuthMiddleware,
+  validateQuery(projectOrganizationQuerySchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { projectId, date } = req.query;
+
+    logger.info("收到项目整理报表请求", { projectId, date });
+
+    const report = await reportService.generateProjectOrganizationReport(
+      parseInt(projectId as string, 10),
+      date as string,
+    );
+
+    logger.info("项目整理报表生成成功", {
+      projectId,
+      date,
+      totalDevices: report.totalDevices,
+      totalKeys: report.totalKeys,
+      totalEntries: report.totalEntries,
     });
 
     res.status(200).json(report);

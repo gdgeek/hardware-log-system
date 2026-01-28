@@ -6,6 +6,7 @@ import {
   DeviceReport,
   TimeRangeReport,
   ErrorReport,
+  ProjectOrganizationReport,
   DatabaseError,
 } from "../types";
 import { logger } from "../config/logger";
@@ -86,7 +87,7 @@ export class LogRepository {
         where: whereClause,
         limit: pageSize,
         offset: offset,
-        order: [["createdAt", "DESC"]], // Most recent first
+        order: [["created_at", "DESC"]], // Most recent first
       });
 
       logger.debug("Logs queried by filters", {
@@ -151,8 +152,8 @@ export class LogRepository {
         attributes: [
           "dataType",
           [fn("COUNT", col("id")), "count"],
-          [fn("MIN", col("createdAt")), "firstLogTime"],
-          [fn("MAX", col("createdAt")), "lastLogTime"],
+          [fn("MIN", col("created_at")), "firstLogTime"],
+          [fn("MAX", col("created_at")), "lastLogTime"],
         ],
         group: ["dataType"],
         raw: true,
@@ -266,7 +267,7 @@ export class LogRepository {
           },
         },
         attributes: [
-          [fn("COUNT", fn("DISTINCT", col("deviceUuid"))), "deviceCount"],
+          [fn("COUNT", fn("DISTINCT", col("device_uuid"))), "deviceCount"],
         ],
         raw: true,
       })) as unknown as Array<{ deviceCount: string }>;
@@ -340,9 +341,9 @@ export class LogRepository {
           "deviceUuid",
           "logKey",
           [fn("COUNT", col("id")), "count"],
-          [fn("MAX", col("createdAt")), "lastOccurrence"],
+          [fn("MAX", col("created_at")), "lastOccurrence"],
         ],
-        group: ["deviceUuid", "logKey"],
+        group: ["device_uuid", "log_key"],
         order: [[literal("count"), "DESC"]], // Most frequent errors first
         raw: true,
       })) as unknown as Array<{
@@ -378,6 +379,145 @@ export class LogRepository {
       });
       throw new DatabaseError(
         "Failed to aggregate error statistics",
+        "DATABASE_ERROR",
+        error instanceof Error ? error : undefined,
+      );
+    }
+  }
+
+  /**
+   * Aggregates project organization report for a specific project and date
+   * Creates a matrix with sessions as rows and keys as columns
+   * @param projectId - The project ID to aggregate for
+   * @param date - The date to aggregate for (YYYY-MM-DD format)
+   * @returns Promise resolving to project organization report
+   * @throws DatabaseError if the operation fails
+   */
+  async aggregateProjectOrganization(projectId: number, date: string): Promise<ProjectOrganizationReport> {
+    try {
+      // Parse date and create date range for the entire day
+      const startDate = new Date(date + 'T00:00:00.000Z');
+      const endDate = new Date(date + 'T23:59:59.999Z');
+
+      // Get all logs for the project on the specified date
+      const logs = await Log.findAll({
+        where: {
+          projectId,
+          createdAt: {
+            [Op.gte]: startDate,
+            [Op.lte]: endDate,
+          },
+        },
+        attributes: ['sessionUuid', 'logKey', 'logValue', 'createdAt'],
+        order: [['session_uuid', 'ASC'], ['created_at', 'ASC'], ['log_key', 'ASC']],
+        raw: true,
+      }) as unknown as Array<{
+        sessionUuid: string;
+        logKey: string;
+        logValue: string;
+        createdAt: string;
+      }>;
+
+      // If no logs found, return empty report
+      if (logs.length === 0) {
+        return {
+          projectId,
+          date,
+          devices: [],
+          keys: [],
+          matrix: {},
+          sessionInfo: {},
+          totalDevices: 0,
+          totalKeys: 0,
+          totalEntries: 0,
+        };
+      }
+
+      // Extract unique sessions and keys, track session start times
+      const sessionSet = new Set<string>();
+      const keySet = new Set<string>();
+      const matrix: Record<string, Record<string, string | null>> = {};
+      const sessionStartTimes: Record<string, string> = {};
+
+      // Process logs to build matrix and track session start times
+      for (const log of logs) {
+        sessionSet.add(log.sessionUuid);
+        keySet.add(log.logKey);
+
+        // Track the earliest time for each session
+        if (!sessionStartTimes[log.sessionUuid] || log.createdAt < sessionStartTimes[log.sessionUuid]) {
+          sessionStartTimes[log.sessionUuid] = log.createdAt;
+        }
+
+        // Initialize session row if not exists
+        if (!matrix[log.sessionUuid]) {
+          matrix[log.sessionUuid] = {};
+        }
+
+        // Set the value (if multiple values for same session+key, use the last one)
+        matrix[log.sessionUuid][log.logKey] = log.logValue;
+      }
+
+      // Sort sessions by their first appearance time
+      const sessions = Array.from(sessionSet).sort((a, b) => {
+        const timeA = new Date(sessionStartTimes[a]).getTime();
+        const timeB = new Date(sessionStartTimes[b]).getTime();
+        return timeA - timeB;
+      });
+
+      const keys = Array.from(keySet).sort();
+
+      // Create session info with index and timing
+      const sessionInfo: Record<string, { index: number; startTime: string; uuid: string }> = {};
+      sessions.forEach((sessionUuid, index) => {
+        sessionInfo[sessionUuid] = {
+          index: index + 1, // 1-based index
+          startTime: sessionStartTimes[sessionUuid],
+          uuid: sessionUuid,
+        };
+      });
+
+      // Fill in null values for missing combinations
+      for (const session of sessions) {
+        if (!matrix[session]) {
+          matrix[session] = {};
+        }
+        for (const key of keys) {
+          if (!(key in matrix[session])) {
+            matrix[session][key] = null;
+          }
+        }
+      }
+
+      const report: ProjectOrganizationReport = {
+        projectId,
+        date,
+        devices: sessions, // Now contains session UUIDs sorted by start time
+        keys,
+        matrix,
+        sessionInfo, // New field with session timing and index info
+        totalDevices: sessions.length, // Now represents session count
+        totalKeys: keys.length,
+        totalEntries: logs.length,
+      };
+
+      logger.debug("Project organization aggregation completed", {
+        projectId,
+        date,
+        totalSessions: sessions.length,
+        totalKeys: keys.length,
+        totalEntries: logs.length,
+      });
+
+      return report;
+    } catch (error) {
+      logger.error("Failed to aggregate project organization", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        projectId,
+        date,
+      });
+      throw new DatabaseError(
+        "Failed to aggregate project organization",
         "DATABASE_ERROR",
         error instanceof Error ? error : undefined,
       );

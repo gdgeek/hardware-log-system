@@ -151,6 +151,17 @@ export const timeRangeQuerySchema = Joi.object({
 });
 
 /**
+ * Schema for validating login request
+ */
+export const loginSchema = Joi.object({
+  password: Joi.string().min(1).required().messages({
+    "string.min": "password must be at least 1 character long",
+    "any.required": "password is required",
+    "string.empty": "password cannot be empty",
+  }),
+}).options({ stripUnknown: true });
+
+/**
  * Schema for validating log ID parameter
  */
 export const logIdParamSchema = Joi.object({
@@ -161,3 +172,20 @@ export const logIdParamSchema = Joi.object({
     "any.required": "id is required",
   }),
 });
+
+/**
+ * Schema for validating project organization report parameters
+ */
+export const projectOrganizationQuerySchema = Joi.object({
+  projectId: Joi.number().integer().positive().required().messages({
+    "number.base": "projectId must be a number",
+    "number.integer": "projectId must be an integer",
+    "number.positive": "projectId must be a positive number",
+    "any.required": "projectId is required",
+  }),
+
+  date: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).required().messages({
+    "string.pattern.base": "date must be in YYYY-MM-DD format",
+    "any.required": "date is required",
+  }),
+}).options({ stripUnknown: true });

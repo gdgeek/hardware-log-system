@@ -103,7 +103,7 @@ describe('Environment Configuration', () => {
       const { config } = require('./env');
 
       expect(config.nodeEnv).toBe('development');
-      expect(config.port).toBe(3000);
+      expect(config.port).toBe(8080);
       expect(config.logLevel).toBe('info');
     });
 

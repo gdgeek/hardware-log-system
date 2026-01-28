@@ -11,6 +11,47 @@ const router: IRouter = Router();
 
 /**
  * @swagger
+ * /sessions/projects:
+ *   get:
+ *     summary: 获取所有项目列表（公开接口）
+ *     tags: [Sessions]
+ *     responses:
+ *       200:
+ *         description: 获取成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 projects:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       projectId:
+ *                         type: integer
+ *                       sessionCount:
+ *                         type: integer
+ *                       logCount:
+ *                         type: integer
+ */
+router.get(
+  "/projects",
+  asyncHandler(async (_req: Request, res: Response) => {
+    logger.info("获取所有项目列表");
+
+    const result = await sessionService.getAllProjects();
+
+    logger.info("项目列表获取成功", {
+      projectCount: result.projects.length,
+    });
+
+    res.status(200).json(result);
+  }),
+);
+
+/**
+ * @swagger
  * /sessions/project/{projectId}:
  *   get:
  *     summary: 获取项目的所有会话列表（公开接口）
@@ -128,6 +169,79 @@ router.get(
     });
 
     res.status(200).json(detail);
+  }),
+);
+
+/**
+ * @swagger
+ * /sessions/reports/project-organization:
+ *   get:
+ *     summary: 获取项目整理报表（公开接口）
+ *     tags: [Sessions]
+ *     parameters:
+ *       - in: query
+ *         name: projectId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: 项目 ID
+ *       - in: query
+ *         name: date
+ *         required: true
+ *         schema:
+ *           type: string
+ *           pattern: '^\d{4}-\d{2}-\d{2}$'
+ *         description: 日期 (YYYY-MM-DD 格式)
+ *     responses:
+ *       200:
+ *         description: 获取成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       400:
+ *         description: 无效的参数
+ */
+router.get(
+  "/reports/project-organization",
+  asyncHandler(async (req: Request, res: Response) => {
+    const projectId = parseInt(req.query.projectId as string, 10);
+    const date = req.query.date as string;
+
+    if (isNaN(projectId) || projectId < 1) {
+      res.status(400).json({
+        error: {
+          code: "INVALID_PARAMETER",
+          message: "Invalid project ID",
+        },
+      });
+      return;
+    }
+
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      res.status(400).json({
+        error: {
+          code: "INVALID_PARAMETER",
+          message: "Invalid date format, expected YYYY-MM-DD",
+        },
+      });
+      return;
+    }
+
+    logger.info("获取项目整理报表", { projectId, date });
+
+    const report = await sessionService.getProjectOrganizationReport(projectId, date);
+
+    logger.info("项目整理报表获取成功", {
+      projectId,
+      date,
+      totalDevices: report.totalDevices,
+      totalKeys: report.totalKeys,
+      totalEntries: report.totalEntries,
+    });
+
+    res.status(200).json(report);
   }),
 );
 
