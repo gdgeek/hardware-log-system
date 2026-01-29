@@ -7,11 +7,16 @@
  */
 
 import { Router, Request, Response, IRouter } from "express";
-import { authService } from "../services/AuthService";
+import { authService, AuthUser } from "../services/AuthService";
 import { adminAuthMiddleware } from "../middleware/AdminAuthMiddleware";
 import { validateBody, asyncHandler } from "../middleware";
 import { loginSchema } from "../validation/schemas";
 import { logger } from "../config/logger";
+
+// 扩展Request接口
+interface AuthenticatedRequest extends Request {
+  user?: AuthUser;
+}
 
 const router: IRouter = Router();
 
@@ -133,7 +138,7 @@ router.post(
 router.get(
   "/verify",
   adminAuthMiddleware,
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     // 如果通过了中间件验证，说明 token 有效
     res.status(200).json({
       valid: true,

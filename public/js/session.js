@@ -93,38 +93,98 @@ const state = {
 };
 
 // 初始化项目整理报表
-function initOrganizationReport() {
+async function initOrganizationReport() {
   // 检查URL参数中是否有projectId
   const urlProjectId = getUrlParameter('projectId');
   const projectIdInput = document.getElementById('org-project-id');
   const projectIdContainer = projectIdInput.closest('.col-md-4');
   
   if (urlProjectId && !isNaN(parseInt(urlProjectId, 10))) {
-    // 如果URL中有有效的projectId参数，隐藏项目ID字段
+    // 如果URL中有有效的projectId参数，完全移除项目ID字段
     const projectId = parseInt(urlProjectId, 10);
     projectIdInput.value = projectId;
     
-    // 隐藏整个项目ID容器
-    projectIdContainer.style.display = 'none';
-    
-    // 调整布局：将日期范围和按钮容器改为合适的宽度
-    const startDateContainer = document.querySelector('#org-start-date').closest('.col-md-6');
-    const endDateContainer = document.querySelector('#org-end-date').closest('.col-md-6');
-    const buttonContainer = document.querySelector('#generate-organization-btn').closest('.col-md-3');
-    
-    if (startDateContainer && endDateContainer) {
-      startDateContainer.className = 'col-md-4';
-      endDateContainer.className = 'col-md-4';
+    try {
+      // 获取项目信息
+      const projectInfo = await getProjectInfo(projectId);
+      
+      // 完全移除项目ID容器
+      projectIdContainer.remove();
+      
+      // 重新调整布局：将日期范围容器改为更宽的布局
+      const startDateContainer = document.querySelector('#org-start-date').closest('.col-md-6');
+      const endDateContainer = document.querySelector('#org-end-date').closest('.col-md-6');
+      const buttonContainer = document.querySelector('#generate-organization-btn').closest('.col-md-3');
+      
+      if (startDateContainer && endDateContainer && buttonContainer) {
+        // 调整为三列等宽布局
+        startDateContainer.className = 'col-md-4';
+        endDateContainer.className = 'col-md-4';
+        buttonContainer.className = 'col-md-4 d-flex flex-column justify-content-end';
+      }
+      
+      // 更新页面标题显示项目名称
+      const headerTitle = document.querySelector('.header-section h1');
+      const headerDesc = document.querySelector('.header-section p');
+      headerTitle.innerHTML = `<i class="bi bi-graph-up-arrow me-3"></i>项目整理报表 - ${escapeHtml(projectInfo.name)}`;
+      headerDesc.textContent = `查看项目"${projectInfo.name}"中会话和数据的矩阵报表，支持Excel导出`;
+      
+      // 在表单区域顶部显示项目信息
+      const formContainer = document.querySelector('.form-container .row');
+      const projectInfoDiv = document.createElement('div');
+      projectInfoDiv.className = 'col-md-12 mb-4';
+      projectInfoDiv.innerHTML = `
+        <div class="alert alert-info d-flex align-items-center">
+          <i class="bi bi-info-circle-fill me-2"></i>
+          <div>
+            <strong>当前项目：</strong>${escapeHtml(projectInfo.name)} 
+            <span class="text-muted">(ID: ${projectId})</span>
+            ${projectInfo.description ? `<br><small class="text-muted">${escapeHtml(projectInfo.description)}</small>` : ''}
+          </div>
+        </div>
+      `;
+      
+      // 插入到表单行的开头
+      formContainer.insertBefore(projectInfoDiv, formContainer.firstChild);
+      
+    } catch (error) {
+      console.error('获取项目信息失败:', error);
+      
+      // 如果获取项目信息失败，仍然移除项目ID字段，但显示错误信息
+      projectIdContainer.remove();
+      
+      // 重新调整布局
+      const startDateContainer = document.querySelector('#org-start-date').closest('.col-md-6');
+      const endDateContainer = document.querySelector('#org-end-date').closest('.col-md-6');
+      const buttonContainer = document.querySelector('#generate-organization-btn').closest('.col-md-3');
+      
+      if (startDateContainer && endDateContainer && buttonContainer) {
+        startDateContainer.className = 'col-md-4';
+        endDateContainer.className = 'col-md-4';
+        buttonContainer.className = 'col-md-4 d-flex flex-column justify-content-end';
+      }
+      
+      // 显示错误信息
+      const formContainer = document.querySelector('.form-container .row');
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'col-md-12 mb-4';
+      errorDiv.innerHTML = `
+        <div class="alert alert-warning d-flex align-items-center">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          <div>
+            <strong>项目 ${projectId}</strong> - 无法获取项目详细信息
+            <br><small class="text-muted">错误: ${error.message}</small>
+          </div>
+        </div>
+      `;
+      formContainer.insertBefore(errorDiv, formContainer.firstChild);
+      
+      // 更新页面标题显示项目ID
+      const headerTitle = document.querySelector('.header-section h1');
+      const headerDesc = document.querySelector('.header-section p');
+      headerTitle.innerHTML = `<i class="bi bi-graph-up-arrow me-3"></i>项目整理报表 - 项目 ${projectId}`;
+      headerDesc.textContent = `查看项目 ${projectId} 中会话和数据的矩阵报表，支持Excel导出`;
     }
-    if (buttonContainer) {
-      buttonContainer.className = 'col-md-4 d-flex flex-column justify-content-end';
-    }
-    
-    // 更新页面标题显示当前项目
-    const headerTitle = document.querySelector('.header-section h1');
-    const headerDesc = document.querySelector('.header-section p');
-    headerTitle.innerHTML = `<i class="bi bi-graph-up-arrow me-3"></i>项目整理报表 - 项目 ${projectId}`;
-    headerDesc.textContent = `查看项目 ${projectId} 中会话和数据的矩阵报表，支持Excel导出`;
   } else {
     // 如果没有URL参数，使用默认值和原始布局
     if (!projectIdInput.value) {
@@ -289,7 +349,19 @@ function showPasswordModal(projectId) {
   };
 }
 async function generateOrganizationReport() {
-  const projectId = parseInt(document.getElementById('org-project-id').value, 10);
+  // 优先从URL参数获取projectId，如果没有则从输入框获取
+  const urlProjectId = getUrlParameter('projectId');
+  let projectId;
+  
+  if (urlProjectId && !isNaN(parseInt(urlProjectId, 10))) {
+    projectId = parseInt(urlProjectId, 10);
+  } else {
+    const projectIdInput = document.getElementById('org-project-id');
+    if (projectIdInput) {
+      projectId = parseInt(projectIdInput.value, 10);
+    }
+  }
+  
   const startDate = document.getElementById('org-start-date').value;
   const endDate = document.getElementById('org-end-date').value;
 
@@ -775,9 +847,9 @@ function createWorkbookFromReport(report) {
 }
 
 // 事件绑定
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   // 初始化
-  initOrganizationReport();
+  await initOrganizationReport();
 
   // 生成报表按钮
   document.getElementById('generate-organization-btn').addEventListener('click', generateOrganizationReport);

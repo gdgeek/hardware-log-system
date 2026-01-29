@@ -5,13 +5,18 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { authService } from '../services/AuthService';
+import { authService, AuthUser } from '../services/AuthService';
 import { logger } from '../config/logger';
+
+// 扩展Request接口
+interface AuthenticatedRequest extends Request {
+  user?: AuthUser;
+}
 
 /**
  * 管理员认证中间件
  */
-export function adminAuthMiddleware(req: Request, res: Response, next: NextFunction): void {
+export function adminAuthMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
   try {
     const authHeader = req.headers.authorization;
     
