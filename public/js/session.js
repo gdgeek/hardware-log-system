@@ -63,7 +63,9 @@ async function getProjectInfo(projectId) {
     const error = await res.json();
     throw new Error(error.error?.message || '获取项目信息失败');
   }
-  return res.json();
+  const result = await res.json();
+  // API返回格式是 {success: true, data: {...}}，我们需要返回data部分
+  return result.success ? result.data : result;
 }
 
 // 项目认证
