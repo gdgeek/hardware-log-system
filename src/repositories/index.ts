@@ -4,3 +4,4 @@
  */
 
 export { LogRepository, logRepository } from './LogRepository';
+export { ProjectRepository, projectRepository } from './ProjectRepository';

@@ -111,7 +111,10 @@ export interface ErrorReport {
  */
 export interface ProjectOrganizationReport {
   projectId: number;
-  date: string; // YYYY-MM-DD format
+  startDate: string; // YYYY-MM-DD format
+  endDate: string; // YYYY-MM-DD format
+  // 保持向后兼容
+  date?: string; // 兼容旧版本，等于startDate
   devices: string[]; // Array of session UUIDs (rows) - keeping 'devices' name for compatibility
   keys: string[]; // Array of keys (columns)
   matrix: Record<string, Record<string, string | null>>; // sessionUuid -> key -> value

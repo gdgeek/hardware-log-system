@@ -448,7 +448,7 @@
           </div>
           <div class="card-body">
             <div class="row g-3">
-              <div class="col-md-4">
+              <div class="col-md-3">
                 <label for="org-project-id" class="form-label fw-bold">
                   <i class="bi bi-folder-fill me-2"></i>项目 ID
                 </label>
@@ -456,18 +456,31 @@
                 <!-- 占位空间，保持与日期选择部分高度一致 -->
                 <div style="height: 42px;"></div>
               </div>
-              <div class="col-md-4">
-                <label for="org-date" class="form-label fw-bold">
-                  <i class="bi bi-calendar-fill me-2"></i>选择日期
+              <div class="col-md-6">
+                <label for="org-start-date" class="form-label fw-bold">
+                  <i class="bi bi-calendar-fill me-2"></i>开始日期
                 </label>
-                <input type="date" class="form-control" id="org-date" required>
+                <input type="date" class="form-control" id="org-start-date" required>
                 <div class="date-shortcuts mt-2">
-                  <button type="button" class="btn btn-outline-secondary btn-sm me-1" data-days="0">今天</button>
-                  <button type="button" class="btn btn-outline-secondary btn-sm me-1" data-days="-1">昨天</button>
-                  <button type="button" class="btn btn-outline-secondary btn-sm" data-days="-7">一周前</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm me-1" data-range="today">今天</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm me-1" data-range="yesterday">昨天</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm me-1" data-range="week">最近7天</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm" data-range="month">最近30天</button>
                 </div>
               </div>
-              <div class="col-md-4 d-flex flex-column justify-content-end">
+              <div class="col-md-6">
+                <label for="org-end-date" class="form-label fw-bold">
+                  <i class="bi bi-calendar-event-fill me-2"></i>结束日期
+                </label>
+                <input type="date" class="form-control" id="org-end-date" required>
+                <div class="mt-2" style="height: 42px; display: flex; align-items: center;">
+                  <small class="text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    选择日期范围可以生成多天的综合报表
+                  </small>
+                </div>
+              </div>
+              <div class="col-md-3 d-flex flex-column justify-content-end">
                 <button id="generate-organization-btn" class="btn btn-primary btn-lg w-100" style="height: 50px;">
                   <i class="bi bi-play-circle-fill me-2"></i>生成报表
                 </button>
@@ -550,6 +563,38 @@
           <i class="bi bi-inbox"></i>
           <h4>暂无数据</h4>
           <p class="text-muted">该项目在指定日期没有数据记录</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 项目密码认证模态框 -->
+  <div class="modal fade" id="projectPasswordModal" tabindex="-1" aria-labelledby="projectPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="projectPasswordModalLabel">
+            <i class="bi bi-shield-lock-fill me-2"></i>项目访问认证
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted mb-3">该项目需要密码才能访问，请输入密码：</p>
+          <div class="mb-3">
+            <label for="project-password" class="form-label fw-bold">
+              <i class="bi bi-key-fill me-2"></i>项目密码
+            </label>
+            <input type="password" class="form-control" id="project-password" placeholder="请输入项目密码" required>
+            <div class="invalid-feedback" id="password-error">
+              密码错误，请重试
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="button" class="btn btn-primary" id="authenticate-btn">
+            <i class="bi bi-unlock-fill me-2"></i>验证
+          </button>
         </div>
       </div>
     </div>

@@ -393,19 +393,22 @@ export class LogRepository {
    * @returns Promise resolving to project organization report
    * @throws DatabaseError if the operation fails
    */
-  async aggregateProjectOrganization(projectId: number, date: string): Promise<ProjectOrganizationReport> {
+  async aggregateProjectOrganization(projectId: number, startDate: string, endDate?: string): Promise<ProjectOrganizationReport> {
+    // 如果没有提供结束日期，使用开始日期
+    const finalEndDate = endDate || startDate;
+    
     try {
-      // Parse date and create date range for the entire day
-      const startDate = new Date(date + 'T00:00:00.000Z');
-      const endDate = new Date(date + 'T23:59:59.999Z');
+      // Parse dates and create date range
+      const startDateTime = new Date(startDate + 'T00:00:00.000Z');
+      const endDateTime = new Date(finalEndDate + 'T23:59:59.999Z');
 
-      // Get all logs for the project on the specified date
+      // Get all logs for the project in the specified date range
       const logs = await Log.findAll({
         where: {
           projectId,
           createdAt: {
-            [Op.gte]: startDate,
-            [Op.lte]: endDate,
+            [Op.gte]: startDateTime,
+            [Op.lte]: endDateTime,
           },
         },
         attributes: ['sessionUuid', 'logKey', 'logValue', 'createdAt'],
@@ -422,7 +425,8 @@ export class LogRepository {
       if (logs.length === 0) {
         return {
           projectId,
-          date,
+          startDate,
+          endDate: finalEndDate,
           devices: [],
           keys: [],
           matrix: {},
@@ -491,7 +495,8 @@ export class LogRepository {
 
       const report: ProjectOrganizationReport = {
         projectId,
-        date,
+        startDate,
+        endDate: finalEndDate,
         devices: sessions, // Now contains session UUIDs sorted by start time
         keys,
         matrix,
@@ -503,7 +508,8 @@ export class LogRepository {
 
       logger.debug("Project organization aggregation completed", {
         projectId,
-        date,
+        startDate,
+        endDate: finalEndDate,
         totalSessions: sessions.length,
         totalKeys: keys.length,
         totalEntries: logs.length,
@@ -514,7 +520,8 @@ export class LogRepository {
       logger.error("Failed to aggregate project organization", {
         error: error instanceof Error ? error.message : "Unknown error",
         projectId,
-        date,
+        startDate,
+        endDate: finalEndDate,
       });
       throw new DatabaseError(
         "Failed to aggregate project organization",

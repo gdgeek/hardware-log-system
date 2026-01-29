@@ -130,6 +130,69 @@ const api = {
     });
     if (res.status === 401) handleUnauthorized();
     return res.json();
+  },
+
+  // 项目管理相关
+  async getAllProjects() {
+    const res = await fetch(`${API_BASE}/projects`);
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error?.message || '获取项目列表失败');
+    }
+    return res.json();
+  },
+
+  async getProjectById(id) {
+    const res = await fetch(`${API_BASE}/projects/${id}`, {
+      headers: auth.getHeaders()
+    });
+    if (res.status === 401) handleUnauthorized();
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error?.message || '获取项目信息失败');
+    }
+    return res.json();
+  },
+
+  async createProject(projectData) {
+    const res = await fetch(`${API_BASE}/projects`, {
+      method: 'POST',
+      headers: auth.getHeaders(),
+      body: JSON.stringify(projectData)
+    });
+    if (res.status === 401) handleUnauthorized();
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error?.message || '创建项目失败');
+    }
+    return res.json();
+  },
+
+  async updateProject(id, projectData) {
+    const res = await fetch(`${API_BASE}/projects/${id}`, {
+      method: 'PUT',
+      headers: auth.getHeaders(),
+      body: JSON.stringify(projectData)
+    });
+    if (res.status === 401) handleUnauthorized();
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error?.message || '更新项目失败');
+    }
+    return res.json();
+  },
+
+  async deleteProject(id) {
+    const res = await fetch(`${API_BASE}/projects/${id}`, {
+      method: 'DELETE',
+      headers: auth.getHeaders()
+    });
+    if (res.status === 401) handleUnauthorized();
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error?.message || '删除项目失败');
+    }
+    return res.json();
   }
 };
 
@@ -222,7 +285,12 @@ const state = {
     pagination: { page: 1, pageSize: 20, total: 0 }
   },
   filters: {},
-  charts: {}
+  charts: {},
+  projects: {
+    data: [],
+    currentProject: null,
+    isEditing: false
+  }
 };
 
 // ===== 认证页面切换 =====
@@ -258,6 +326,9 @@ function navigateTo(page) {
       break;
     case 'logs':
       loadLogs();
+      break;
+    case 'projects':
+      loadProjects();
       break;
     case 'reports':
       // 报表页面按需加载
@@ -507,45 +578,125 @@ async function showLogDetail(logId) {
 
     content.innerHTML = `
       <div class="detail-grid">
-        <span class="detail-label">ID</span>
+        <span class="detail-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 12l2 2 4-4"/>
+            <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
+            <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"/>
+            <path d="M3 12h6m6 0h6"/>
+          </svg>
+          ID
+        </span>
         <span class="detail-value">${log.id}</span>
         
-        <span class="detail-label">设备 UUID</span>
+        <span class="detail-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+            <line x1="8" y1="21" x2="16" y2="21"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+          设备 UUID
+        </span>
         <span class="detail-value">${log.deviceUuid}</span>
         
-        <span class="detail-label">类型</span>
+        <span class="detail-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14,2 14,8 20,8"/>
+          </svg>
+          类型
+        </span>
         <span class="detail-value">${getDataTypeBadge(log.dataType)}</span>
         
-        <span class="detail-label">Key</span>
+        <span class="detail-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <circle cx="12" cy="16" r="1"/>
+            <path d="M7 11V7a5 5 0 0110 0v4"/>
+          </svg>
+          Key
+        </span>
         <span class="detail-value">${escapeHtml(log.key || '-')}</span>
         
-        <span class="detail-label">项目 ID</span>
+        <span class="detail-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+          </svg>
+          项目 ID
+        </span>
         <span class="detail-value">${log.projectId || '-'}</span>
         
-        <span class="detail-label">会话 UUID</span>
+        <span class="detail-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+          </svg>
+          会话 UUID
+        </span>
         <span class="detail-value">${log.sessionUuid || '-'}</span>
         
-        <span class="detail-label">客户端 IP</span>
+        <span class="detail-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+          </svg>
+          客户端 IP
+        </span>
         <span class="detail-value">${escapeHtml(log.clientIp || '-')}</span>
 
-        <span class="detail-label">客户端时间戳</span>
+        <span class="detail-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12,6 12,12 16,14"/>
+          </svg>
+          客户端时间戳
+        </span>
         <span class="detail-value">${log.clientTimestamp || '-'}</span>
         
-        <span class="detail-label">服务器时间</span>
+        <span class="detail-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12,6 12,12 16,14"/>
+          </svg>
+          服务器时间
+        </span>
         <span class="detail-value">${formatDate(log.createdAt)}</span>
         
-        <span class="detail-label">Value</span>
+        <span class="detail-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="16 18 22 12 16 6"/>
+            <polyline points="8 6 2 12 8 18"/>
+          </svg>
+          Value
+        </span>
         <pre class="detail-value json">${escapeHtml(log.value || '')}</pre>
       </div>
-      <div class="modal-actions">
-        <button class="btn btn-danger" onclick="deleteLogConfirm(${log.id})">删除此日志</button>
+      <div class="enhanced-modal-actions">
+        <button class="btn btn-danger" onclick="deleteLogConfirm(${log.id})">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3,6 5,6 21,6"/>
+            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+            <line x1="10" y1="11" x2="10" y2="17"/>
+            <line x1="14" y1="11" x2="14" y2="17"/>
+          </svg>
+          删除此日志
+        </button>
       </div>
     `;
 
     modal.classList.add('active');
   } catch (error) {
     console.error('获取日志详情失败:', error);
-    content.innerHTML = '<p>获取日志详情失败</p>';
+    content.innerHTML = `
+      <div style="padding: 2rem; text-align: center; color: #6c757d;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 1rem; opacity: 0.5;">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="15" y1="9" x2="9" y2="15"/>
+          <line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+        <p>获取日志详情失败</p>
+      </div>
+    `;
     modal.classList.add('active');
   }
 }
@@ -701,6 +852,262 @@ async function loadErrorReport() {
   }
 }
 
+// ===== 项目管理 =====
+async function loadProjects() {
+  const loadingEl = document.getElementById('projects-loading');
+  const containerEl = document.getElementById('projects-container');
+  const emptyEl = document.getElementById('projects-empty');
+  
+  try {
+    loadingEl.style.display = 'block';
+    containerEl.style.display = 'none';
+    emptyEl.style.display = 'none';
+    
+    const response = await api.getAllProjects();
+    state.projects.data = response.data || [];
+    
+    updateProjectsTable();
+    updateProjectsStats();
+  } catch (error) {
+    console.error('加载项目列表失败:', error);
+    showProjectError(`加载项目列表失败: ${error.message}`);
+    emptyEl.style.display = 'block';
+  } finally {
+    loadingEl.style.display = 'none';
+  }
+}
+
+function updateProjectsTable() {
+  const tbody = document.getElementById('projects-tbody');
+  const containerEl = document.getElementById('projects-container');
+  const emptyEl = document.getElementById('projects-empty');
+  const projects = state.projects.data;
+
+  if (!projects || projects.length === 0) {
+    containerEl.style.display = 'none';
+    emptyEl.style.display = 'block';
+    return;
+  }
+
+  containerEl.style.display = 'block';
+  emptyEl.style.display = 'none';
+
+  tbody.innerHTML = projects.map(project => `
+    <tr>
+      <td><strong>${project.id}</strong></td>
+      <td>
+        <div style="font-weight: 600;">${escapeHtml(project.name)}</div>
+        <small style="color: #6c757d;">${escapeHtml(project.uuid)}</small>
+      </td>
+      <td>
+        <code style="font-size: 0.875rem; background: #f8f9fa; padding: 0.25rem 0.5rem; border-radius: 4px;">${escapeHtml(project.uuid)}</code>
+      </td>
+      <td>
+        ${project.hasPassword 
+          ? '<span class="badge badge-warning">🔒 受保护</span>'
+          : '<span class="badge badge-record">✓ 公开</span>'
+        }
+      </td>
+      <td>
+        <div style="max-width: 200px; max-height: 80px; overflow-y: auto; font-size: 0.875rem;">
+          ${renderColumnMapping(project.columnMapping)}
+        </div>
+      </td>
+      <td>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn btn-sm" style="background: #ffc107; color: #000; padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="editProject(${project.id})" title="编辑">
+            ✏️
+          </button>
+          <button class="btn btn-sm" style="background: #dc3545; color: white; padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="confirmDeleteProject(${project.id}, '${escapeHtml(project.name)}')" title="删除">
+            🗑️
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function renderColumnMapping(mapping) {
+  if (!mapping || Object.keys(mapping).length === 0) {
+    return '<span style="color: #6c757d;">无映射</span>';
+  }
+  
+  return Object.entries(mapping).map(([key, value]) => `
+    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+      <span style="font-weight: 500; color: #0d6efd;">${escapeHtml(key)}</span>
+      <span style="color: #212529;">${escapeHtml(value)}</span>
+    </div>
+  `).join('');
+}
+
+function updateProjectsStats() {
+  const projects = state.projects.data;
+  const totalProjects = projects.length;
+  const protectedProjects = projects.filter(p => p.hasPassword).length;
+  
+  document.getElementById('total-projects').textContent = totalProjects;
+  document.getElementById('protected-projects').textContent = protectedProjects;
+}
+
+function showProjectError(message) {
+  // 创建错误提示
+  const errorDiv = document.createElement('div');
+  errorDiv.className = 'alert alert-danger';
+  errorDiv.style.cssText = 'background: rgba(220, 53, 69, 0.1); color: #dc3545; padding: 1rem; border-radius: 10px; margin-bottom: 1rem;';
+  errorDiv.textContent = message;
+  
+  // 插入到项目管理页面顶部
+  const pageContent = document.getElementById('page-projects');
+  const pageHeader = pageContent.querySelector('.page-header');
+  pageContent.insertBefore(errorDiv, pageHeader.nextSibling);
+  
+  // 5秒后自动消失
+  setTimeout(() => {
+    if (errorDiv.parentNode) {
+      errorDiv.remove();
+    }
+  }, 5000);
+}
+
+function showProjectSuccess(message) {
+  // 创建成功提示
+  const successDiv = document.createElement('div');
+  successDiv.className = 'alert alert-success';
+  successDiv.style.cssText = 'background: rgba(25, 135, 84, 0.1); color: #198754; padding: 1rem; border-radius: 10px; margin-bottom: 1rem;';
+  successDiv.textContent = message;
+  
+  // 插入到项目管理页面顶部
+  const pageContent = document.getElementById('page-projects');
+  const pageHeader = pageContent.querySelector('.page-header');
+  pageContent.insertBefore(successDiv, pageHeader.nextSibling);
+  
+  // 3秒后自动消失
+  setTimeout(() => {
+    if (successDiv.parentNode) {
+      successDiv.remove();
+    }
+  }, 3000);
+}
+
+function openCreateProjectModal() {
+  state.projects.isEditing = false;
+  state.projects.currentProject = null;
+  
+  document.getElementById('project-modal-title').textContent = '新建项目';
+  document.querySelector('.modal-subtitle').textContent = '创建一个新的硬件日志项目';
+  document.getElementById('project-uuid').value = '';
+  document.getElementById('project-name').value = '';
+  document.getElementById('project-password').value = '';
+  document.getElementById('project-column-mapping').value = JSON.stringify({
+    "temperature": "温度",
+    "humidity": "湿度", 
+    "pressure": "压力",
+    "battery": "电池"
+  }, null, 2);
+  
+  document.getElementById('project-form-error').textContent = '';
+  document.getElementById('project-form-error').classList.remove('active');
+  document.getElementById('project-modal').classList.add('active');
+}
+
+async function editProject(id) {
+  try {
+    state.projects.isEditing = true;
+    state.projects.currentProject = state.projects.data.find(p => p.id === id);
+    
+    if (!state.projects.currentProject) {
+      throw new Error('项目不存在');
+    }
+    
+    document.getElementById('project-modal-title').textContent = '编辑项目';
+    document.querySelector('.modal-subtitle').textContent = `编辑项目：${state.projects.currentProject.name}`;
+    document.getElementById('project-uuid').value = state.projects.currentProject.uuid;
+    document.getElementById('project-name').value = state.projects.currentProject.name;
+    document.getElementById('project-password').value = ''; // 不显示现有密码
+    document.getElementById('project-column-mapping').value = JSON.stringify(state.projects.currentProject.columnMapping || {}, null, 2);
+    
+    document.getElementById('project-form-error').textContent = '';
+    document.getElementById('project-form-error').classList.remove('active');
+    document.getElementById('project-modal').classList.add('active');
+  } catch (error) {
+    showProjectError(`编辑项目失败: ${error.message}`);
+  }
+}
+
+async function saveProject() {
+  const form = document.getElementById('project-form');
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const errorEl = document.getElementById('project-form-error');
+  const originalText = submitBtn.textContent;
+  
+  try {
+    submitBtn.disabled = true;
+    submitBtn.textContent = '保存中...';
+    errorEl.textContent = '';
+    errorEl.classList.remove('active');
+    
+    const uuid = document.getElementById('project-uuid').value.trim();
+    const name = document.getElementById('project-name').value.trim();
+    const password = document.getElementById('project-password').value.trim();
+    const columnMappingText = document.getElementById('project-column-mapping').value.trim();
+    
+    // 验证输入
+    if (!uuid || !name) {
+      throw new Error('项目UUID和名称不能为空');
+    }
+    
+    let columnMapping = {};
+    if (columnMappingText) {
+      try {
+        columnMapping = JSON.parse(columnMappingText);
+      } catch (e) {
+        throw new Error('列名映射格式错误，请输入有效的JSON格式');
+      }
+    }
+    
+    const projectData = {
+      uuid,
+      name,
+      password: password || null,
+      columnMapping: Object.keys(columnMapping).length > 0 ? columnMapping : null
+    };
+    
+    if (state.projects.isEditing && state.projects.currentProject) {
+      await api.updateProject(state.projects.currentProject.id, projectData);
+      showProjectSuccess('项目更新成功');
+    } else {
+      await api.createProject(projectData);
+      showProjectSuccess('项目创建成功');
+    }
+    
+    // 关闭模态框并刷新列表
+    closeModal();
+    await loadProjects();
+  } catch (error) {
+    errorEl.classList.add('active');
+    errorEl.textContent = `保存项目失败: ${error.message}`;
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalText;
+  }
+}
+
+function confirmDeleteProject(id, name) {
+  if (confirm(`确定要删除项目"${name}"吗？\n\n此操作不可撤销，请谨慎操作。`)) {
+    deleteProjectById(id);
+  }
+}
+
+async function deleteProjectById(id) {
+  try {
+    await api.deleteProject(id);
+    showProjectSuccess('项目删除成功');
+    await loadProjects();
+  } catch (error) {
+    showProjectError(`删除项目失败: ${error.message}`);
+  }
+}
+
 // ===== 健康检查 =====
 async function checkHealth() {
   const healthEl = document.getElementById('health-status');
@@ -722,7 +1129,10 @@ function bindEvents() {
   document.querySelectorAll('.nav-item[data-page]').forEach(item => {
     item.addEventListener('click', (e) => {
       e.preventDefault();
-      navigateTo(item.dataset.page);
+      const page = item.dataset.page;
+      // 更新URL hash
+      window.location.hash = page;
+      navigateTo(page);
     });
   });
 
@@ -730,7 +1140,10 @@ function bindEvents() {
   document.querySelectorAll('.btn-link[data-page]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
-      navigateTo(btn.dataset.page);
+      const page = btn.dataset.page;
+      // 更新URL hash
+      window.location.hash = page;
+      navigateTo(page);
     });
   });
 
@@ -776,8 +1189,15 @@ function bindEvents() {
   });
 
   // 模态框关闭
-  document.querySelectorAll('.modal-close, .modal-backdrop').forEach(el => {
-    el.addEventListener('click', closeModal);
+  document.addEventListener('click', (e) => {
+    // 关闭按钮点击
+    if (e.target.classList.contains('modal-close')) {
+      closeModal();
+    }
+    // 点击模态框外部关闭
+    if (e.target.classList.contains('modal')) {
+      closeModal();
+    }
   });
 
   // ESC 关闭模态框
@@ -916,8 +1336,26 @@ function bindEvents() {
   // Hash 路由
   window.addEventListener('hashchange', () => {
     const page = window.location.hash.slice(1) || 'dashboard';
-    if (['dashboard', 'logs', 'reports'].includes(page)) {
+    if (['dashboard', 'logs', 'projects', 'reports'].includes(page)) {
       navigateTo(page);
+    }
+  });
+
+  // 项目管理事件
+  document.getElementById('btn-add-project')?.addEventListener('click', openCreateProjectModal);
+  document.getElementById('btn-refresh-projects')?.addEventListener('click', loadProjects);
+  
+  // 项目表单提交
+  document.getElementById('project-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await saveProject();
+  });
+  
+  // 项目表单回车键提交
+  document.getElementById('project-form')?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      saveProject();
     }
   });
 }
@@ -935,7 +1373,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // 初始页面
       const initialPage = window.location.hash.slice(1) || 'dashboard';
-      navigateTo(['dashboard', 'logs', 'reports'].includes(initialPage) ? initialPage : 'dashboard');
+      navigateTo(['dashboard', 'logs', 'projects', 'reports'].includes(initialPage) ? initialPage : 'dashboard');
     } else {
       auth.clear();
       showLoginPage();

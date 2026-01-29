@@ -85,6 +85,7 @@ services:
       - ./src/models/migrations/004_add_session_uuid.sql:/docker-entrypoint-initdb.d/004_add_session_uuid.sql
       - ./src/models/migrations/005_change_value_to_text.sql:/docker-entrypoint-initdb.d/005_change_value_to_text.sql
       - ./src/models/migrations/006_add_project_id.sql:/docker-entrypoint-initdb.d/006_add_project_id.sql
+      - ./src/models/migrations/007_create_projects_table.sql:/docker-entrypoint-initdb.d/007_create_projects_table.sql
     networks:
       - app-network
     restart: unless-stopped

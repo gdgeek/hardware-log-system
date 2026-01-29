@@ -37,8 +37,8 @@ function escapeHtml(text) {
 }
 
 // API 调用
-async function getProjectOrganizationReport(projectId, date) {
-  const res = await fetch(`${API_BASE}/sessions/reports/project-organization?projectId=${projectId}&date=${date}`);
+async function getProjectOrganizationReport(projectId, startDate, endDate) {
+  const res = await fetch(`${API_BASE}/sessions/reports/project-organization?projectId=${projectId}&startDate=${startDate}&endDate=${endDate}`);
   if (!res.ok) {
     const error = await res.json();
     throw new Error(error.error?.message || '获取项目整理报表失败');
@@ -46,9 +46,38 @@ async function getProjectOrganizationReport(projectId, date) {
   return res.json();
 }
 
+// 获取项目信息
+async function getProjectInfo(projectId) {
+  const res = await fetch(`${API_BASE}/projects/${projectId}`);
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error?.message || '获取项目信息失败');
+  }
+  return res.json();
+}
+
+// 项目认证
+async function authenticateProject(projectId, password) {
+  const res = await fetch(`${API_BASE}/projects/auth`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      projectId: parseInt(projectId, 10),
+      password: password || '',
+    }),
+  });
+  
+  const result = await res.json();
+  return result;
+}
+
 // 状态管理
 const state = {
-  organizationReport: null
+  organizationReport: null,
+  currentProject: null,
+  isAuthenticated: false
 };
 
 // 初始化项目整理报表
@@ -66,12 +95,18 @@ function initOrganizationReport() {
     // 隐藏整个项目ID容器
     projectIdContainer.style.display = 'none';
     
-    // 调整布局：将日期和按钮容器改为各占一半宽度
-    const dateContainer = document.querySelector('#org-date').closest('.col-md-4');
-    const buttonContainer = document.querySelector('#generate-organization-btn').closest('.col-md-4');
+    // 调整布局：将日期范围和按钮容器改为合适的宽度
+    const startDateContainer = document.querySelector('#org-start-date').closest('.col-md-6');
+    const endDateContainer = document.querySelector('#org-end-date').closest('.col-md-6');
+    const buttonContainer = document.querySelector('#generate-organization-btn').closest('.col-md-3');
     
-    dateContainer.className = 'col-md-6';
-    buttonContainer.className = 'col-md-6 d-flex flex-column justify-content-end';
+    if (startDateContainer && endDateContainer) {
+      startDateContainer.className = 'col-md-4';
+      endDateContainer.className = 'col-md-4';
+    }
+    if (buttonContainer) {
+      buttonContainer.className = 'col-md-4 d-flex flex-column justify-content-end';
+    }
     
     // 更新页面标题显示当前项目
     const headerTitle = document.querySelector('.header-section h1');
@@ -101,16 +136,41 @@ function initOrganizationReport() {
   
   // 设置默认日期为今天
   const today = new Date().toISOString().split('T')[0];
-  document.getElementById('org-date').value = today;
+  document.getElementById('org-start-date').value = today;
+  document.getElementById('org-end-date').value = today;
   
-  // 绑定日期快捷按钮事件
-  document.querySelectorAll('[data-days]').forEach(btn => {
+  // 绑定日期范围快捷按钮事件
+  document.querySelectorAll('[data-range]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const days = parseInt(btn.dataset.days, 10);
-      const targetDate = new Date();
-      targetDate.setDate(targetDate.getDate() + days);
-      const dateStr = targetDate.toISOString().split('T')[0];
-      document.getElementById('org-date').value = dateStr;
+      const range = btn.dataset.range;
+      const today = new Date();
+      let startDate = new Date(today);
+      let endDate = new Date(today);
+      
+      switch (range) {
+        case 'today':
+          // 今天：开始和结束都是今天
+          break;
+        case 'yesterday':
+          // 昨天：开始和结束都是昨天
+          startDate.setDate(today.getDate() - 1);
+          endDate.setDate(today.getDate() - 1);
+          break;
+        case 'week':
+          // 最近7天：从7天前到今天
+          startDate.setDate(today.getDate() - 6);
+          break;
+        case 'month':
+          // 最近30天：从30天前到今天
+          startDate.setDate(today.getDate() - 29);
+          break;
+      }
+      
+      const startDateStr = startDate.toISOString().split('T')[0];
+      const endDateStr = endDate.toISOString().split('T')[0];
+      
+      document.getElementById('org-start-date').value = startDateStr;
+      document.getElementById('org-end-date').value = endDateStr;
       
       // 添加视觉反馈
       btn.classList.add('active');
@@ -121,10 +181,105 @@ function initOrganizationReport() {
   });
 }
 
-// 生成项目整理报表
+// 检查项目是否需要密码认证
+async function checkProjectAuthentication(projectId) {
+  try {
+    // 尝试获取项目信息（这个接口需要管理员权限，但我们可以通过认证接口来检查）
+    const authResult = await authenticateProject(projectId, '');
+    
+    if (authResult.success) {
+      // 项目不需要密码或密码为空
+      state.currentProject = authResult.project;
+      state.isAuthenticated = true;
+      return true;
+    } else if (authResult.message && authResult.message.includes('需要密码')) {
+      // 项目需要密码
+      return false;
+    } else {
+      // 项目不存在或其他错误
+      throw new Error(authResult.message || '项目验证失败');
+    }
+  } catch (error) {
+    throw error;
+  }
+}
+
+// 显示密码认证模态框
+function showPasswordModal(projectId) {
+  const modal = new bootstrap.Modal(document.getElementById('projectPasswordModal'));
+  const passwordInput = document.getElementById('project-password');
+  const errorDiv = document.getElementById('password-error');
+  const authenticateBtn = document.getElementById('authenticate-btn');
+  
+  // 重置状态
+  passwordInput.value = '';
+  passwordInput.classList.remove('is-invalid');
+  errorDiv.style.display = 'none';
+  
+  // 设置项目ID到模态框
+  modal._element.dataset.projectId = projectId;
+  
+  // 显示模态框
+  modal.show();
+  
+  // 聚焦到密码输入框
+  modal._element.addEventListener('shown.bs.modal', () => {
+    passwordInput.focus();
+  });
+  
+  // 处理认证按钮点击
+  authenticateBtn.onclick = async () => {
+    const password = passwordInput.value.trim();
+    if (!password) {
+      passwordInput.classList.add('is-invalid');
+      errorDiv.textContent = '请输入密码';
+      errorDiv.style.display = 'block';
+      return;
+    }
+    
+    try {
+      authenticateBtn.disabled = true;
+      authenticateBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>验证中...';
+      
+      const authResult = await authenticateProject(projectId, password);
+      
+      if (authResult.success) {
+        state.currentProject = authResult.project;
+        state.isAuthenticated = true;
+        modal.hide();
+        
+        // 认证成功后，可以继续生成报表
+        const startDate = document.getElementById('org-start-date').value;
+        const endDate = document.getElementById('org-end-date').value;
+        if (startDate && endDate) {
+          generateOrganizationReport();
+        }
+      } else {
+        passwordInput.classList.add('is-invalid');
+        errorDiv.textContent = authResult.message || '密码错误';
+        errorDiv.style.display = 'block';
+      }
+    } catch (error) {
+      passwordInput.classList.add('is-invalid');
+      errorDiv.textContent = error.message || '认证失败';
+      errorDiv.style.display = 'block';
+    } finally {
+      authenticateBtn.disabled = false;
+      authenticateBtn.innerHTML = '<i class="bi bi-unlock-fill me-2"></i>验证';
+    }
+  };
+  
+  // 处理回车键
+  passwordInput.onkeypress = (e) => {
+    if (e.key === 'Enter') {
+      authenticateBtn.click();
+    }
+  };
+}
 async function generateOrganizationReport() {
   const projectId = parseInt(document.getElementById('org-project-id').value, 10);
-  const date = document.getElementById('org-date').value;
+  const startDate = document.getElementById('org-start-date').value;
+  const endDate = document.getElementById('org-end-date').value;
 
   // 验证输入
   if (!projectId || projectId < 1) {
@@ -132,9 +287,29 @@ async function generateOrganizationReport() {
     return;
   }
 
-  if (!date) {
-    alert('请选择日期');
+  if (!startDate || !endDate) {
+    alert('请选择日期范围');
     return;
+  }
+
+  // 验证日期范围
+  if (new Date(startDate) > new Date(endDate)) {
+    alert('开始日期不能晚于结束日期');
+    return;
+  }
+
+  // 检查项目认证状态
+  if (!state.isAuthenticated || !state.currentProject || state.currentProject.id !== projectId) {
+    try {
+      const needsAuth = !(await checkProjectAuthentication(projectId));
+      if (needsAuth) {
+        showPasswordModal(projectId);
+        return;
+      }
+    } catch (error) {
+      alert('项目验证失败: ' + error.message);
+      return;
+    }
   }
 
   const loadingEl = document.getElementById('organization-loading');
@@ -146,7 +321,7 @@ async function generateOrganizationReport() {
     resultEl.style.display = 'none';
     emptyEl.style.display = 'none';
 
-    const report = await getProjectOrganizationReport(projectId, date);
+    const report = await getProjectOrganizationReport(projectId, startDate, endDate);
     state.organizationReport = report;
 
     loadingEl.style.display = 'none';
@@ -254,7 +429,7 @@ function exportToExcel() {
   }
 
   const report = state.organizationReport;
-  const { projectId, date, devices: sessions, keys, matrix, sessionInfo } = report;
+  const { projectId, startDate, endDate, devices: sessions, keys, matrix, sessionInfo } = report;
   
   // 如果没有数据，提示用户
   if (sessions.length === 0 || keys.length === 0) {
@@ -327,7 +502,8 @@ function exportToExcel() {
 
   // 生成文件名
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-  const filename = `项目整理报表_项目${projectId}_${date}_${timestamp}.xlsx`;
+  const dateRange = startDate === endDate ? startDate : `${startDate}_至_${endDate}`;
+  const filename = `项目整理报表_项目${projectId}_${dateRange}_${timestamp}.xlsx`;
 
   // 导出文件
   XLSX.writeFile(wb, filename);
@@ -353,7 +529,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  document.getElementById('org-date').addEventListener('keypress', (e) => {
+  document.getElementById('org-start-date').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      generateOrganizationReport();
+    }
+  });
+
+  document.getElementById('org-end-date').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
       generateOrganizationReport();
     }

@@ -3,7 +3,9 @@
  */
 
 import { logRepository } from "../repositories/LogRepository";
+import { projectService } from "./ProjectService";
 import { Log } from "../models/Log";
+import { ProjectOrganizationReport } from "../types/index";
 
 export interface SessionSummary {
   sessionUuid: string;
@@ -35,17 +37,6 @@ export interface ProjectSummary {
   sessionCount: number;
   logCount: number;
   lastActivity: Date;
-}
-
-export interface ProjectOrganizationReport {
-  projectId: number;
-  date: string;
-  devices: string[];
-  keys: string[];
-  matrix: Record<string, Record<string, string | null>>;
-  totalDevices: number;
-  totalKeys: number;
-  totalEntries: number;
 }
 
 class SessionService {
@@ -217,8 +208,41 @@ class SessionService {
   /**
    * 获取项目整理报表
    */
-  async getProjectOrganizationReport(projectId: number, date: string): Promise<ProjectOrganizationReport> {
-    return await logRepository.aggregateProjectOrganization(projectId, date);
+  async getProjectOrganizationReport(projectId: number, startDate: string, endDate?: string): Promise<ProjectOrganizationReport> {
+    // 如果没有提供结束日期，使用开始日期作为结束日期（兼容旧接口）
+    const finalEndDate = endDate || startDate;
+    
+    const report = await logRepository.aggregateProjectOrganization(projectId, startDate, finalEndDate);
+    
+    // 应用项目的列名映射
+    try {
+      const project = await projectService.getProjectById(projectId);
+      if (project && project.columnMapping) {
+        // 映射 keys 数组
+        const mappedKeys = report.keys.map(key => project.columnMapping[key] || key);
+        
+        // 映射 matrix 中的键
+        const mappedMatrix: Record<string, Record<string, string | null>> = {};
+        for (const [sessionUuid, sessionData] of Object.entries(report.matrix)) {
+          mappedMatrix[sessionUuid] = {};
+          for (const [originalKey, value] of Object.entries(sessionData)) {
+            const mappedKey = project.columnMapping[originalKey] || originalKey;
+            mappedMatrix[sessionUuid][mappedKey] = value;
+          }
+        }
+        
+        return {
+          ...report,
+          keys: mappedKeys,
+          matrix: mappedMatrix,
+        };
+      }
+    } catch (error) {
+      // 如果映射失败，返回原始报表
+      console.warn('Failed to apply column mapping:', error);
+    }
+    
+    return report;
   }
 }
 

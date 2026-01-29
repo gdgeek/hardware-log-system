@@ -207,6 +207,10 @@ router.get(
   "/reports/project-organization",
   asyncHandler(async (req: Request, res: Response) => {
     const projectId = parseInt(req.query.projectId as string, 10);
+    const startDate = req.query.startDate as string;
+    const endDate = req.query.endDate as string;
+    
+    // 兼容旧的单日期参数
     const date = req.query.date as string;
 
     if (isNaN(projectId) || projectId < 1) {
@@ -219,23 +223,65 @@ router.get(
       return;
     }
 
-    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    let finalStartDate: string;
+    let finalEndDate: string;
+
+    // 如果提供了新的日期范围参数
+    if (startDate && endDate) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
+        res.status(400).json({
+          error: {
+            code: "INVALID_PARAMETER",
+            message: "Invalid date format, expected YYYY-MM-DD",
+          },
+        });
+        return;
+      }
+      
+      if (new Date(startDate) > new Date(endDate)) {
+        res.status(400).json({
+          error: {
+            code: "INVALID_PARAMETER",
+            message: "Start date cannot be later than end date",
+          },
+        });
+        return;
+      }
+      
+      finalStartDate = startDate;
+      finalEndDate = endDate;
+    } 
+    // 兼容旧的单日期参数
+    else if (date) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        res.status(400).json({
+          error: {
+            code: "INVALID_PARAMETER",
+            message: "Invalid date format, expected YYYY-MM-DD",
+          },
+        });
+        return;
+      }
+      finalStartDate = date;
+      finalEndDate = date;
+    } else {
       res.status(400).json({
         error: {
           code: "INVALID_PARAMETER",
-          message: "Invalid date format, expected YYYY-MM-DD",
+          message: "Missing date parameters. Provide either 'date' or 'startDate' and 'endDate'",
         },
       });
       return;
     }
 
-    logger.info("获取项目整理报表", { projectId, date });
+    logger.info("获取项目整理报表", { projectId, startDate: finalStartDate, endDate: finalEndDate });
 
-    const report = await sessionService.getProjectOrganizationReport(projectId, date);
+    const report = await sessionService.getProjectOrganizationReport(projectId, finalStartDate, finalEndDate);
 
     logger.info("项目整理报表获取成功", {
       projectId,
-      date,
+      startDate: finalStartDate,
+      endDate: finalEndDate,
       totalDevices: report.totalDevices,
       totalKeys: report.totalKeys,
       totalEntries: report.totalEntries,

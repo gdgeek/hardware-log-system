@@ -618,6 +618,352 @@
       color: var(--danger-color);
     }
 
+    /* 通用增强模态框样式 */
+    .enhanced-modal-content {
+      max-width: 700px;
+      width: 95%;
+      max-height: 90vh;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    }
+
+    .enhanced-modal-wide {
+      max-width: 900px;
+      max-height: 95vh;
+    }
+
+    .enhanced-modal-header {
+      background: linear-gradient(135deg, var(--primary-color), #0056b3);
+      color: white;
+      padding: 2rem;
+      border-bottom: none;
+    }
+
+    .modal-title-section {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .modal-icon {
+      width: 50px;
+      height: 50px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .modal-icon svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .enhanced-modal-header h3 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .modal-subtitle {
+      margin: 0.25rem 0 0 0;
+      opacity: 0.9;
+      font-size: 0.9rem;
+    }
+
+    .enhanced-modal-header .modal-close {
+      color: white;
+      font-size: 1.8rem;
+      opacity: 0.8;
+      transition: opacity 0.2s ease;
+    }
+
+    .enhanced-modal-header .modal-close:hover {
+      opacity: 1;
+    }
+
+    .enhanced-modal-body {
+      padding: 2rem;
+      background: #fafbfc;
+      max-height: calc(95vh - 120px);
+      overflow-y: auto;
+    }
+
+    .enhanced-form {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .form-section {
+      background: white;
+      border-radius: 15px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e9ecef;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0 0 1.5rem 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--dark-color);
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid #f8f9fa;
+    }
+
+    .section-title svg {
+      color: var(--primary-color);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+      font-weight: 600;
+      color: var(--dark-color);
+      font-size: 0.9rem;
+    }
+
+    .form-label svg {
+      color: var(--primary-color);
+      flex-shrink: 0;
+    }
+
+    .form-label .required {
+      color: var(--danger-color);
+      font-weight: 700;
+    }
+
+    .form-input, .form-textarea {
+      width: 100%;
+      padding: 0.875rem 1rem;
+      border: 2px solid #e9ecef;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+      background: white;
+      font-family: inherit;
+    }
+
+    .form-input:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+      transform: translateY(-1px);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 120px;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+
+    .form-help {
+      display: block;
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+      color: #6c757d;
+      line-height: 1.4;
+    }
+
+    .form-help code {
+      background: #f8f9fa;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      color: var(--primary-color);
+    }
+
+    .enhanced-modal-actions {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #e9ecef;
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+    }
+
+    .enhanced-modal-actions .btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.875rem 1.5rem;
+      font-weight: 600;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .enhanced-modal-actions .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .enhanced-modal-actions .btn-primary {
+      background: linear-gradient(135deg, var(--primary-color), #0056b3);
+      border: none;
+      color: white;
+    }
+
+    .enhanced-modal-actions .btn-secondary {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      color: #6c757d;
+    }
+
+    .enhanced-modal-actions .btn-secondary:hover {
+      background: #e9ecef;
+      color: #495057;
+    }
+
+    /* 日志详情模态框特殊样式 */
+    #log-detail-modal .enhanced-modal-body {
+      padding: 0;
+      background: white;
+      max-height: calc(90vh - 120px);
+      overflow-y: auto;
+    }
+
+    /* 添加日志模态框特殊样式 */
+    #add-log-modal .enhanced-modal-body {
+      max-height: calc(95vh - 140px);
+      overflow-y: auto;
+    }
+
+    /* 确保表单区域有足够的滚动空间 */
+    .enhanced-form {
+      min-height: fit-content;
+    }
+
+    /* 优化滚动条样式 */
+    .enhanced-modal-body::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .enhanced-modal-body::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+
+    .enhanced-modal-body::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 4px;
+    }
+
+    .enhanced-modal-body::-webkit-scrollbar-thumb:hover {
+      background: #a8a8a8;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 1rem;
+      padding: 2rem;
+    }
+
+    .detail-label {
+      font-weight: 600;
+      color: var(--dark-color);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .detail-value {
+      color: #495057;
+      word-break: break-all;
+    }
+
+    .detail-value.json {
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 8px;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      grid-column: 1 / -1;
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      .enhanced-modal-content {
+        width: 98%;
+        max-height: 98vh;
+        border-radius: 15px;
+      }
+
+      .enhanced-modal-header {
+        padding: 1.5rem;
+      }
+
+      .enhanced-modal-body {
+        padding: 1.5rem;
+        max-height: calc(98vh - 100px);
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .modal-title-section {
+        gap: 0.75rem;
+      }
+
+      .modal-icon {
+        width: 40px;
+        height: 40px;
+      }
+
+      .enhanced-modal-header h3 {
+        font-size: 1.25rem;
+      }
+
+      .enhanced-modal-actions {
+        flex-direction: column-reverse;
+      }
+
+      .enhanced-modal-actions .btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .detail-grid {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+        padding: 1.5rem;
+      }
+
+      .detail-label {
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+      }
+    }
+
     .add-log-form input,
     .add-log-form select,
     .add-log-form textarea {
@@ -909,6 +1255,37 @@
         flex-direction: column;
       }
     }
+
+    /* 项目管理样式 */
+    .alert {
+      border-radius: 10px;
+      border: none;
+      font-weight: 500;
+    }
+
+    .alert-danger {
+      background: rgba(220, 53, 69, 0.1);
+      color: var(--danger-color);
+    }
+
+    .alert-success {
+      background: rgba(25, 135, 84, 0.1);
+      color: var(--success-color);
+    }
+
+    .btn-sm {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-sm:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
   </style>
 </head>
 
@@ -968,6 +1345,12 @@
         </svg>
         <span>日志管理</span>
       </a>
+      <a href="#projects" class="nav-item" data-page="projects">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+        </svg>
+        <span>项目管理</span>
+      </a>
       <a href="#reports" class="nav-item" data-page="reports">
         <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
           <path
@@ -1022,8 +1405,18 @@
       <!-- 仪表盘页面 -->
       <section id="page-dashboard" class="page active">
         <div class="page-header">
-          <h1>仪表盘</h1>
-          <p>系统概览和关键指标</p>
+          <div class="page-header-content">
+            <div>
+              <h1>仪表盘</h1>
+              <p>系统概览和关键指标</p>
+            </div>
+            <a href="/session.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary" title="在新标签页中打开项目整理报表">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" style="margin-right: 8px;">
+                <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+              </svg>
+              打开报表
+            </a>
+          </div>
         </div>
 
         <div class="stats-grid">
@@ -1370,81 +1763,418 @@
           </div>
         </div>
       </section>
+
+      <!-- 项目管理页面 -->
+      <section id="page-projects" class="page">
+        <div class="page-header">
+          <div class="page-header-content">
+            <div>
+              <h1>项目管理</h1>
+              <p>管理系统中的所有项目，包括创建、编辑、删除和配置列名映射</p>
+            </div>
+            <button id="btn-add-project" class="btn btn-primary">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" style="margin-right: 8px;">
+                <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
+              </svg>
+              新建项目
+            </button>
+          </div>
+        </div>
+
+        <!-- 操作栏 -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+          <div class="card-body" style="padding: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <button id="btn-refresh-projects" class="btn btn-secondary">
+                  <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" style="margin-right: 6px;">
+                    <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                  </svg>
+                  刷新
+                </button>
+              </div>
+              <div id="projects-stats" style="display: flex; gap: 2rem; font-size: 0.9rem; color: #6c757d;">
+                <span>总项目数: <strong id="total-projects">0</strong></span>
+                <span>受保护项目: <strong id="protected-projects">0</strong></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 加载状态 -->
+        <div id="projects-loading" class="card" style="display: none;">
+          <div class="card-body" style="text-align: center; padding: 3rem;">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">正在加载...</span>
+            </div>
+            <p style="margin-top: 1rem; color: #6c757d;">正在加载项目列表...</p>
+          </div>
+        </div>
+
+        <!-- 项目列表 -->
+        <div id="projects-container" class="card">
+          <div class="card-header">
+            <h3>项目列表</h3>
+          </div>
+          <div class="card-body" style="padding: 0;">
+            <div class="table-container">
+              <table class="data-table" id="projects-table">
+                <thead>
+                  <tr>
+                    <th style="width: 8%;">ID</th>
+                    <th style="width: 20%;">项目名称</th>
+                    <th style="width: 25%;">UUID</th>
+                    <th style="width: 12%;">密码保护</th>
+                    <th style="width: 20%;">列名映射</th>
+                    <th style="width: 15%;">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="projects-tbody">
+                  <tr class="loading-row">
+                    <td colspan="6">加载中...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 空数据状态 -->
+        <div id="projects-empty" class="card" style="display: none;">
+          <div class="card-body" style="text-align: center; padding: 3rem; color: #6c757d;">
+            <svg width="64" height="64" viewBox="0 0 20 20" fill="currentColor" style="opacity: 0.3; margin-bottom: 1rem;">
+              <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+            </svg>
+            <h4>暂无项目</h4>
+            <p>点击"新建项目"按钮创建第一个项目</p>
+          </div>
+        </div>
+      </section>
     </div>
   </main>
 </div>
 
 <!-- 日志详情模态框 -->
 <div class="modal" id="log-detail-modal">
-  <div class="modal-backdrop"></div>
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3>日志详情</h3>
+  <div class="modal-content enhanced-modal-content">
+    <div class="modal-header enhanced-modal-header">
+      <div class="modal-title-section">
+        <div class="modal-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14,2 14,8 20,8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <polyline points="10,9 9,9 8,9"/>
+          </svg>
+        </div>
+        <div>
+          <h3>日志详情</h3>
+          <p class="modal-subtitle">查看日志记录的详细信息</p>
+        </div>
+      </div>
       <button class="modal-close">&times;</button>
     </div>
-    <div class="modal-body" id="log-detail-content"></div>
+    <div class="modal-body enhanced-modal-body" id="log-detail-content"></div>
   </div>
 </div>
 
 <!-- 添加日志模态框 -->
 <div class="modal" id="add-log-modal">
-  <div class="modal-backdrop"></div>
-  <div class="modal-content modal-wide">
-    <div class="modal-header">
-      <h3>添加日志</h3>
+  <div class="modal-content enhanced-modal-content enhanced-modal-wide">
+    <div class="modal-header enhanced-modal-header">
+      <div class="modal-title-section">
+        <div class="modal-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="16"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+          </svg>
+        </div>
+        <div>
+          <h3>添加日志</h3>
+          <p class="modal-subtitle">创建一条新的硬件日志记录</p>
+        </div>
+      </div>
       <button class="modal-close">&times;</button>
     </div>
-    <div class="modal-body">
-      <form id="add-log-form" class="add-log-form">
-        <div class="form-row">
-          <div class="form-group">
-            <label for="add-device-uuid">设备 UUID <span class="required">*</span></label>
-            <input type="text" id="add-device-uuid" placeholder="输入设备 UUID" required>
-          </div>
-          <div class="form-group">
-            <label for="add-session-uuid">会话 UUID <span class="required">*</span></label>
-            <input type="text" id="add-session-uuid" placeholder="输入会话 UUID" required>
+    <div class="modal-body enhanced-modal-body">
+      <form id="add-log-form" class="enhanced-form">
+        <div class="form-section">
+          <h4 class="section-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            设备信息
+          </h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="add-device-uuid" class="form-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                  <line x1="8" y1="21" x2="16" y2="21"/>
+                  <line x1="12" y1="17" x2="12" y2="21"/>
+                </svg>
+                设备 UUID
+                <span class="required">*</span>
+              </label>
+              <input type="text" id="add-device-uuid" class="form-input" placeholder="例如：device-001" required>
+            </div>
+            <div class="form-group">
+              <label for="add-session-uuid" class="form-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                </svg>
+                会话 UUID
+                <span class="required">*</span>
+              </label>
+              <input type="text" id="add-session-uuid" class="form-input" placeholder="例如：session-001" required>
+            </div>
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="add-project-id">项目 ID <span class="required">*</span></label>
-            <input type="number" id="add-project-id" placeholder="输入项目 ID" required>
-          </div>
-          <div class="form-group">
-            <label for="add-data-type">日志类型 <span class="required">*</span></label>
-            <select id="add-data-type" required>
-              <option value="record">记录</option>
-              <option value="warning">警告</option>
-              <option value="error">错误</option>
-            </select>
+
+        <div class="form-section">
+          <h4 class="section-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 12l2 2 4-4"/>
+              <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
+              <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"/>
+              <path d="M3 12h6m6 0h6"/>
+            </svg>
+            日志配置
+          </h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="add-project-id" class="form-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+                </svg>
+                项目 ID
+                <span class="required">*</span>
+              </label>
+              <input type="number" id="add-project-id" class="form-input" placeholder="例如：1" required>
+            </div>
+            <div class="form-group">
+              <label for="add-data-type" class="form-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                  <polyline points="14,2 14,8 20,8"/>
+                </svg>
+                日志类型
+                <span class="required">*</span>
+              </label>
+              <select id="add-data-type" class="form-input" required>
+                <option value="record">📝 记录</option>
+                <option value="warning">⚠️ 警告</option>
+                <option value="error">❌ 错误</option>
+              </select>
+            </div>
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="add-key">Key <span class="required">*</span></label>
-            <input type="text" id="add-key" placeholder="输入 Key" required>
+
+        <div class="form-section">
+          <h4 class="section-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9"/>
+              <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+            </svg>
+            数据内容
+          </h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="add-key" class="form-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <circle cx="12" cy="16" r="1"/>
+                  <path d="M7 11V7a5 5 0 0110 0v4"/>
+                </svg>
+                Key
+                <span class="required">*</span>
+              </label>
+              <input type="text" id="add-key" class="form-input" placeholder="例如：temperature" required>
+            </div>
+            <div class="form-group">
+              <label for="add-timestamp" class="form-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12,6 12,12 16,14"/>
+                </svg>
+                时间戳
+              </label>
+              <input type="number" id="add-timestamp" class="form-input" placeholder="留空使用当前时间">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="add-client-ip" class="form-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="2" y1="12" x2="22" y2="12"/>
+                  <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+                </svg>
+                客户端 IP
+              </label>
+              <input type="text" id="add-client-ip" class="form-input" placeholder="例如：192.168.1.1">
+            </div>
+            <div class="form-group"></div>
           </div>
           <div class="form-group">
-            <label for="add-timestamp">时间戳</label>
-            <input type="number" id="add-timestamp" placeholder="留空使用当前时间">
+            <label for="add-value" class="form-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="16 18 22 12 16 6"/>
+                <polyline points="8 6 2 12 8 18"/>
+              </svg>
+              Value
+              <span class="required">*</span>
+            </label>
+            <textarea id="add-value" class="form-textarea" placeholder="输入数据值，支持JSON格式" rows="4" required></textarea>
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="add-client-ip">客户端 IP</label>
-            <input type="text" id="add-client-ip" placeholder="可选，如 192.168.1.1">
-          </div>
-          <div class="form-group"></div>
-        </div>
-        <div class="form-group">
-          <label for="add-value">Value <span class="required">*</span></label>
-          <textarea id="add-value" placeholder="输入 Value" rows="4" required></textarea>
-        </div>
+
         <div id="add-log-error" class="form-error"></div>
-        <div class="modal-actions">
-          <button type="button" class="btn btn-secondary modal-close">取消</button>
-          <button type="submit" class="btn btn-primary">添加日志</button>
+        <div class="modal-actions enhanced-modal-actions">
+          <button type="button" class="btn btn-secondary modal-close">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+            取消
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20,6 9,17 4,12"/>
+            </svg>
+            添加日志
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 项目编辑模态框 -->
+<div class="modal" id="project-modal">
+  <div class="modal-content enhanced-modal-content">
+    <div class="modal-header enhanced-modal-header">
+      <div class="modal-title-section">
+        <div class="modal-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+          </svg>
+        </div>
+        <div>
+          <h3 id="project-modal-title">新建项目</h3>
+          <p class="modal-subtitle">创建一个新的硬件日志项目</p>
+        </div>
+      </div>
+      <button class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body enhanced-modal-body">
+      <form id="project-form" class="enhanced-form">
+        <div class="form-section">
+          <h4 class="section-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"/>
+            </svg>
+            基本信息
+          </h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="project-uuid" class="form-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 12l2 2 4-4"/>
+                  <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
+                  <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"/>
+                  <path d="M3 12h6m6 0h6"/>
+                </svg>
+                项目 UUID
+                <span class="required">*</span>
+              </label>
+              <input type="text" id="project-uuid" class="form-input" placeholder="例如：sensor-project-001" required>
+              <small class="form-help">项目的唯一标识符，用于系统内部识别</small>
+            </div>
+            <div class="form-group">
+              <label for="project-name" class="form-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+                </svg>
+                项目名称
+                <span class="required">*</span>
+              </label>
+              <input type="text" id="project-name" class="form-input" placeholder="例如：温湿度传感器项目" required>
+              <small class="form-help">项目的显示名称，用于界面展示</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h4 class="section-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <circle cx="12" cy="16" r="1"/>
+              <path d="M7 11V7a5 5 0 0110 0v4"/>
+            </svg>
+            安全设置
+          </h4>
+          <div class="form-group">
+            <label for="project-password" class="form-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <circle cx="12" cy="16" r="1"/>
+                <path d="M7 11V7a5 5 0 0110 0v4"/>
+              </svg>
+              访问密码
+            </label>
+            <input type="password" id="project-password" class="form-input" placeholder="留空表示无密码保护">
+            <small class="form-help">设置密码后，访问项目报表需要输入密码验证</small>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h4 class="section-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+              <polyline points="14,2 14,8 20,8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10,9 9,9 8,9"/>
+            </svg>
+            数据映射配置
+          </h4>
+          <div class="form-group">
+            <label for="project-column-mapping" class="form-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="16 18 22 12 16 6"/>
+                <polyline points="8 6 2 12 8 18"/>
+              </svg>
+              列名映射 (JSON格式)
+            </label>
+            <textarea id="project-column-mapping" class="form-textarea" rows="6" placeholder='{"temperature": "温度", "humidity": "湿度", "pressure": "压力", "battery": "电池电量"}'></textarea>
+            <small class="form-help">
+              <strong>格式说明：</strong>将英文字段名映射为中文显示名称<br>
+              <code>{"原字段名": "显示名称", "field_name": "中文名称"}</code>
+            </small>
+          </div>
+        </div>
+
+        <div id="project-form-error" class="form-error"></div>
+        <div class="modal-actions enhanced-modal-actions">
+          <button type="button" class="btn btn-secondary modal-close">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+            取消
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20,6 9,17 4,12"/>
+            </svg>
+            保存项目
+          </button>
         </div>
       </form>
     </div>
