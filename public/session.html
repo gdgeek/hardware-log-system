@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>项目整理报表 - 硬件日志管理系统</title>
-  
+
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Bootstrap Icons -->
@@ -13,7 +14,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <!-- ZIP压缩库 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  
+
   <style>
     :root {
       --primary-color: #0d6efd;
@@ -94,7 +95,8 @@
       padding: 2rem;
     }
 
-    .form-control, .form-select {
+    .form-control,
+    .form-select {
       border-radius: 10px;
       border: 2px solid #e9ecef;
       padding: 0.75rem 1rem;
@@ -102,7 +104,8 @@
       transition: all 0.3s ease;
     }
 
-    .form-control:focus, .form-select:focus {
+    .form-control:focus,
+    .form-select:focus {
       border-color: var(--primary-color);
       box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
     }
@@ -409,7 +412,8 @@
         font-size: 0.8rem;
       }
 
-      .table th, .table td {
+      .table th,
+      .table td {
         padding: 0.5rem 0.25rem;
       }
     }
@@ -432,6 +436,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="container-fluid">
     <div class="main-container">
@@ -449,6 +454,18 @@
             <h5><i class="bi bi-gear-fill"></i>报表参数设置</h5>
           </div>
           <div class="card-body">
+            <!-- 错误提示区域 -->
+            <div id="error-message-container" class="alert alert-danger d-none align-items-center mb-3">
+              <i class="bi bi-exclamation-triangle-fill me-2" style="font-size: 1.2rem;"></i>
+              <div>
+                <strong id="error-message-title">错误：</strong>
+                <span id="error-message-text"></span>
+              </div>
+              <button type="button" class="btn-close ms-auto"
+                onclick="document.getElementById('error-message-container').style.display='none'"
+                aria-label="Close"></button>
+            </div>
+
             <div class="row g-3">
               <div class="col-md-3">
                 <label for="org-project-id" class="form-label fw-bold">
@@ -458,7 +475,7 @@
                 <!-- 占位空间，保持与日期选择部分高度一致 -->
                 <div style="height: 42px;"></div>
               </div>
-              <div class="col-md-6">
+              <div class="col-md-3">
                 <label for="org-start-date" class="form-label fw-bold">
                   <i class="bi bi-calendar-fill me-2"></i>开始日期
                 </label>
@@ -466,11 +483,11 @@
                 <div class="date-shortcuts mt-2">
                   <button type="button" class="btn btn-outline-secondary btn-sm me-1" data-range="today">今天</button>
                   <button type="button" class="btn btn-outline-secondary btn-sm me-1" data-range="yesterday">昨天</button>
-                  <button type="button" class="btn btn-outline-secondary btn-sm me-1" data-range="week">最近7天</button>
-                  <button type="button" class="btn btn-outline-secondary btn-sm" data-range="month">最近30天</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm me-1" data-range="week">7天</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm" data-range="month">30天</button>
                 </div>
               </div>
-              <div class="col-md-6">
+              <div class="col-md-3">
                 <label for="org-end-date" class="form-label fw-bold">
                   <i class="bi bi-calendar-event-fill me-2"></i>结束日期
                 </label>
@@ -478,7 +495,7 @@
                 <div class="mt-2" style="height: 42px; display: flex; align-items: center;">
                   <small class="text-muted">
                     <i class="bi bi-info-circle me-1"></i>
-                    选择日期范围可以生成多天的综合报表
+                    多天范围生成综合报表
                   </small>
                 </div>
               </div>
@@ -540,9 +557,6 @@
                 <h5><i class="bi bi-table me-2"></i>会话-数据矩阵</h5>
                 <small>行：会话信息，列：数据Key，值：数据Value</small>
               </div>
-              <button id="export-excel-btn" class="btn btn-success" style="display: none;">
-                <i class="bi bi-file-earmark-excel-fill me-2"></i>导出 Excel
-              </button>
             </div>
             <div class="table-container">
               <table class="table table-hover" id="organization-matrix-table">
@@ -571,7 +585,8 @@
   </div>
 
   <!-- 项目密码认证模态框 -->
-  <div class="modal fade" id="projectPasswordModal" tabindex="-1" aria-labelledby="projectPasswordModalLabel" aria-hidden="true">
+  <div class="modal fade" id="projectPasswordModal" tabindex="-1" aria-labelledby="projectPasswordModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
@@ -606,4 +621,5 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/js/session.js"></script>
 </body>
+
 </html>
