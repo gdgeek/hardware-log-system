@@ -10,7 +10,7 @@ import express, { Application } from "express";
 import path from "path";
 import cors from "cors";
 import swaggerUi from "swagger-ui-express";
-import { logRoutes, reportRoutes, authRoutes } from "./routes";
+import { logRoutes, reportRoutes, authRoutes, sessionRoutes } from "./routes";
 import {
   loggingMiddleware,
   errorHandler,
@@ -171,6 +171,7 @@ export function createApp(): Application {
   app.use("/api/v1/logs", logRoutes);
   app.use("/api/v1/reports", reportRoutes);
   app.use("/api/v1/auth", authRoutes);
+  app.use("/api/v1/sessions", sessionRoutes); // 公开接口，无需认证
 
   // 兼容旧路由（重定向到 v1）
   app.use("/api/logs", logRoutes);

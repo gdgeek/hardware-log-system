@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>会话日志查看 - 硬件日志管理系统</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="session-viewer">
+    <header class="session-header">
+      <h1>会话日志查看</h1>
+      <p class="subtitle">选择项目和会话查看详细日志信息</p>
+    </header>
+
+    <main class="session-main">
+      <!-- 项目选择区域 -->
+      <section class="selection-section">
+        <div class="card">
+          <h2>选择项目</h2>
+          <div class="form-group">
+            <label for="project-id-input">项目 ID</label>
+            <input type="number" id="project-id-input" placeholder="输入项目 ID">
+            <button id="load-sessions-btn" class="btn btn-primary">加载会话列表</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 会话列表区域 -->
+      <section class="sessions-section" id="sessions-section" style="display: none;">
+        <div class="card">
+          <h2>会话列表</h2>
+          <div id="sessions-loading" class="loading" style="display: none;">加载中...</div>
+          <div id="sessions-list" class="sessions-list"></div>
+        </div>
+      </section>
+
+      <!-- 会话详情区域 -->
+      <section class="session-detail-section" id="session-detail-section" style="display: none;">
+        <div class="card">
+          <div class="detail-header">
+            <h2>会话详情</h2>
+            <button id="back-to-sessions-btn" class="btn btn-secondary">返回会话列表</button>
+          </div>
+          
+          <div id="session-summary" class="session-summary"></div>
+          
+          <h3>日志记录</h3>
+          <div class="table-container">
+            <table id="session-logs-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>类型</th>
+                  <th>Key</th>
+                  <th>Value</th>
+                  <th>设备UUID</th>
+                  <th>客户端IP</th>
+                  <th>时间</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/js/session.js"></script>
+</body>
+</html>
