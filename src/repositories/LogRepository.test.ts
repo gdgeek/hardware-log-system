@@ -279,4 +279,68 @@ describe("LogRepository", () => {
       await expect(repository.deleteById(1)).rejects.toThrow(DatabaseError);
     });
   });
+
+  describe("aggregateProjectOrganizationByDays", () => {
+    it("should aggregate project organization by days", async () => {
+      const mockLogs = [
+        {
+          sessionUuid: "session-1",
+          logKey: "temperature",
+          logValue: "25.5",
+          createdAt: "2024-01-01T10:00:00Z",
+        },
+        {
+          sessionUuid: "session-1",
+          logKey: "humidity",
+          logValue: "60",
+          createdAt: "2024-01-01T10:01:00Z",
+        },
+        {
+          sessionUuid: "session-2",
+          logKey: "temperature",
+          logValue: "26.0",
+          createdAt: "2024-01-02T11:00:00Z",
+        },
+      ];
+
+      mockLog.findAll = jest.fn().mockResolvedValue(mockLogs);
+
+      const result = await repository.aggregateProjectOrganizationByDays(1, "2024-01-01", "2024-01-02");
+
+      expect(result.dailyReports).toHaveLength(2);
+      expect(result.dailyReports[0].date).toBe("2024-01-01");
+      expect(result.dailyReports[1].date).toBe("2024-01-02");
+      expect(result.combinedReport.totalDevices).toBe(2);
+      expect(result.combinedReport.totalKeys).toBe(2);
+    });
+
+    it("should return empty reports when no logs exist", async () => {
+      mockLog.findAll = jest.fn().mockResolvedValue([]);
+
+      const result = await repository.aggregateProjectOrganizationByDays(1, "2024-01-01", "2024-01-02");
+
+      expect(result.dailyReports).toHaveLength(0);
+      expect(result.combinedReport.totalDevices).toBe(0);
+      expect(result.combinedReport.totalKeys).toBe(0);
+    });
+
+    it("should handle single day range", async () => {
+      const mockLogs = [
+        {
+          sessionUuid: "session-1",
+          logKey: "temperature",
+          logValue: "25.5",
+          createdAt: "2024-01-01T10:00:00Z",
+        },
+      ];
+
+      mockLog.findAll = jest.fn().mockResolvedValue(mockLogs);
+
+      const result = await repository.aggregateProjectOrganizationByDays(1, "2024-01-01");
+
+      expect(result.dailyReports).toHaveLength(1);
+      expect(result.dailyReports[0].date).toBe("2024-01-01");
+      expect(result.combinedReport.totalDevices).toBe(1);
+    });
+  });
 });

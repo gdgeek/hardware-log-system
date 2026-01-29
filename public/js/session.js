@@ -46,6 +46,16 @@ async function getProjectOrganizationReport(projectId, startDate, endDate) {
   return res.json();
 }
 
+// 获取按天分组的项目整理报表
+async function getProjectOrganizationReportByDays(projectId, startDate, endDate) {
+  const res = await fetch(`${API_BASE}/sessions/reports/project-organization-by-days?projectId=${projectId}&startDate=${startDate}&endDate=${endDate}`);
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error?.message || '获取项目整理报表失败');
+  }
+  return res.json();
+}
+
 // 获取项目信息
 async function getProjectInfo(projectId) {
   const res = await fetch(`${API_BASE}/projects/${projectId}`);
@@ -76,6 +86,8 @@ async function authenticateProject(projectId, password) {
 // 状态管理
 const state = {
   organizationReport: null,
+  dailyReports: null,
+  combinedReport: null,
   currentProject: null,
   isAuthenticated: false
 };
@@ -321,20 +333,46 @@ async function generateOrganizationReport() {
     resultEl.style.display = 'none';
     emptyEl.style.display = 'none';
 
-    const report = await getProjectOrganizationReport(projectId, startDate, endDate);
-    state.organizationReport = report;
+    // 检查是否是多天范围
+    const isMultipleDays = startDate !== endDate;
+    
+    if (isMultipleDays) {
+      // 获取按天分组的报表
+      const result = await getProjectOrganizationReportByDays(projectId, startDate, endDate);
+      state.dailyReports = result.dailyReports;
+      state.combinedReport = result.combinedReport;
+      state.organizationReport = result.combinedReport; // 保持兼容性
+      
+      loadingEl.style.display = 'none';
 
-    loadingEl.style.display = 'none';
+      // 如果没有数据，显示空消息
+      if (result.dailyReports.length === 0) {
+        emptyEl.style.display = 'block';
+        return;
+      }
 
-    // 如果没有数据，显示空消息
-    if (report.totalDevices === 0 || report.totalKeys === 0) {
-      emptyEl.style.display = 'block';
-      return;
+      // 显示多天报表结果
+      renderMultipleDaysReport(result);
+      resultEl.style.display = 'block';
+    } else {
+      // 单天报表，使用原有逻辑
+      const report = await getProjectOrganizationReport(projectId, startDate, endDate);
+      state.organizationReport = report;
+      state.dailyReports = null;
+      state.combinedReport = null;
+
+      loadingEl.style.display = 'none';
+
+      // 如果没有数据，显示空消息
+      if (report.totalDevices === 0 || report.totalKeys === 0) {
+        emptyEl.style.display = 'block';
+        return;
+      }
+
+      // 显示单天报表结果
+      renderOrganizationReport(report);
+      resultEl.style.display = 'block';
     }
-
-    // 显示报表结果
-    renderOrganizationReport(report);
-    resultEl.style.display = 'block';
 
   } catch (error) {
     loadingEl.style.display = 'none';
@@ -421,7 +459,7 @@ function renderOrganizationReport(report) {
   document.getElementById('export-excel-btn').style.display = 'inline-block';
 }
 
-// 导出Excel
+// 导出Excel（兼容原有的单报表导出）
 function exportToExcel() {
   if (!state.organizationReport) {
     alert('没有可导出的数据');
@@ -429,23 +467,257 @@ function exportToExcel() {
   }
 
   const report = state.organizationReport;
-  const { projectId, startDate, endDate, devices: sessions, keys, matrix, sessionInfo } = report;
+  const { projectId, startDate, endDate } = report;
   
   // 如果没有数据，提示用户
-  if (sessions.length === 0 || keys.length === 0) {
+  if (report.devices.length === 0 || report.keys.length === 0) {
     alert('没有可导出的矩阵数据');
     return;
   }
 
+  // 使用通用导出函数
+  const dateRange = startDate === endDate ? startDate : `${startDate}_至_${endDate}`;
+  exportReportToExcel(report, `项目整理报表_项目${projectId}_${dateRange}`);
+}
+
+// 渲染多天报表
+function renderMultipleDaysReport(result) {
+  const { dailyReports, combinedReport } = result;
+  
+  // 更新汇总信息（使用合并报表的数据）
+  document.getElementById('org-total-devices').textContent = combinedReport.totalDevices;
+  document.getElementById('org-total-keys').textContent = combinedReport.totalKeys;
+  document.getElementById('org-total-entries').textContent = combinedReport.totalEntries;
+
+  // 构建表头（使用合并报表的keys）
+  const tableHeader = document.getElementById('org-table-header');
+  tableHeader.innerHTML = '<th class="session-info-header">会话索引</th><th class="session-info-header">启动时间</th><th class="session-info-header">会话UUID</th>';
+  combinedReport.keys.forEach(key => {
+    const th = document.createElement('th');
+    th.textContent = key;
+    tableHeader.appendChild(th);
+  });
+
+  // 构建表格内容（显示合并报表）
+  const tableBody = document.getElementById('org-table-body');
+  tableBody.innerHTML = '';
+
+  combinedReport.devices.forEach(session => {
+    const row = document.createElement('tr');
+    
+    // 会话索引列（只显示数字）
+    const sessionIndexCell = document.createElement('td');
+    const sessionData = combinedReport.sessionInfo[session];
+    sessionIndexCell.textContent = sessionData.index;
+    sessionIndexCell.className = 'session-info-cell';
+    row.appendChild(sessionIndexCell);
+    
+    // 启动时间列
+    const startTimeCell = document.createElement('td');
+    const startTime = new Date(sessionData.startTime).toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+    startTimeCell.textContent = startTime;
+    startTimeCell.className = 'session-info-cell';
+    row.appendChild(startTimeCell);
+    
+    // 会话UUID列
+    const sessionUuidCell = document.createElement('td');
+    sessionUuidCell.textContent = truncateText(sessionData.uuid, 20);
+    sessionUuidCell.title = sessionData.uuid; // 完整UUID作为tooltip
+    sessionUuidCell.className = 'session-info-cell';
+    row.appendChild(sessionUuidCell);
+
+    // 数据列
+    combinedReport.keys.forEach(key => {
+      const cell = document.createElement('td');
+      const value = combinedReport.matrix[session][key];
+      
+      if (value !== null && value !== undefined) {
+        cell.textContent = truncateText(value, 15);
+        cell.className = 'has-value';
+        cell.title = `${key}: ${value}`;
+      } else {
+        cell.textContent = '-';
+        cell.className = 'no-value';
+        cell.title = `${key}: 无数据`;
+      }
+      
+      row.appendChild(cell);
+    });
+
+    tableBody.appendChild(row);
+  });
+
+  // 显示多天报表的下载选项
+  renderMultipleDaysDownloadOptions(dailyReports, combinedReport);
+}
+
+// 渲染多天报表的下载选项
+function renderMultipleDaysDownloadOptions(dailyReports, combinedReport) {
+  // 隐藏原有的单个导出按钮
+  document.getElementById('export-excel-btn').style.display = 'none';
+  
+  // 创建或更新多天下载区域
+  let downloadArea = document.getElementById('multiple-days-download-area');
+  if (!downloadArea) {
+    downloadArea = document.createElement('div');
+    downloadArea.id = 'multiple-days-download-area';
+    downloadArea.className = 'mt-3';
+    
+    // 插入到导出按钮的位置
+    const exportBtn = document.getElementById('export-excel-btn');
+    exportBtn.parentNode.insertBefore(downloadArea, exportBtn);
+  }
+  
+  downloadArea.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <h6 class="mb-0"><i class="bi bi-download me-2"></i>报表下载选项</h6>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <h6>按日期分别下载</h6>
+            <div id="daily-download-buttons" class="d-flex flex-wrap gap-2">
+              ${dailyReports.map(report => `
+                <button class="btn btn-outline-primary btn-sm" onclick="exportDailyReport('${report.date}')">
+                  <i class="bi bi-file-earmark-excel me-1"></i>${report.date}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+          <div class="col-md-6">
+            <h6>统一下载</h6>
+            <div class="d-flex flex-wrap gap-2">
+              <button class="btn btn-success" onclick="exportCombinedReport()">
+                <i class="bi bi-file-earmark-excel me-2"></i>合并报表
+              </button>
+              <button class="btn btn-info" onclick="exportAllReports()">
+                <i class="bi bi-archive me-2"></i>全部报表 (ZIP)
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// 导出单日报表
+function exportDailyReport(date) {
+  if (!state.dailyReports) {
+    alert('没有可导出的数据');
+    return;
+  }
+  
+  const dailyReport = state.dailyReports.find(report => report.date === date);
+  if (!dailyReport) {
+    alert('找不到指定日期的报表');
+    return;
+  }
+  
+  exportReportToExcel(dailyReport, `项目整理报表_项目${dailyReport.projectId}_${date}`);
+}
+
+// 导出合并报表
+function exportCombinedReport() {
+  if (!state.combinedReport) {
+    alert('没有可导出的数据');
+    return;
+  }
+  
+  const { projectId, startDate, endDate } = state.combinedReport;
+  const dateRange = startDate === endDate ? startDate : `${startDate}_至_${endDate}`;
+  exportReportToExcel(state.combinedReport, `项目整理报表_项目${projectId}_${dateRange}_合并`);
+}
+
+// 导出所有报表（ZIP格式）
+async function exportAllReports() {
+  if (!state.dailyReports || !state.combinedReport) {
+    alert('没有可导出的数据');
+    return;
+  }
+  
+  try {
+    // 动态加载JSZip库
+    if (typeof JSZip === 'undefined') {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+      document.head.appendChild(script);
+      
+      await new Promise((resolve, reject) => {
+        script.onload = resolve;
+        script.onerror = reject;
+      });
+    }
+    
+    const zip = new JSZip();
+    
+    // 添加每日报表
+    for (const dailyReport of state.dailyReports) {
+      const wb = createWorkbookFromReport(dailyReport);
+      const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      zip.file(`${dailyReport.date}.xlsx`, excelBuffer);
+    }
+    
+    // 添加合并报表
+    const combinedWb = createWorkbookFromReport(state.combinedReport);
+    const combinedBuffer = XLSX.write(combinedWb, { bookType: 'xlsx', type: 'array' });
+    const { projectId, startDate, endDate } = state.combinedReport;
+    const dateRange = startDate === endDate ? startDate : `${startDate}_至_${endDate}`;
+    zip.file(`合并报表_${dateRange}.xlsx`, combinedBuffer);
+    
+    // 生成ZIP文件
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    
+    // 下载ZIP文件
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+    const filename = `项目整理报表_项目${projectId}_${dateRange}_全部_${timestamp}.zip`;
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(zipBlob);
+    link.download = filename;
+    link.click();
+    
+    console.log('ZIP文件已导出:', filename);
+  } catch (error) {
+    console.error('导出ZIP文件失败:', error);
+    alert('导出ZIP文件失败: ' + error.message);
+  }
+}
+
+// 通用的报表导出函数
+function exportReportToExcel(report, baseFilename) {
+  const wb = createWorkbookFromReport(report);
+  
+  // 生成文件名
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+  const filename = `${baseFilename}_${timestamp}.xlsx`;
+  
+  // 导出文件
+  XLSX.writeFile(wb, filename);
+  console.log('Excel文件已导出:', filename);
+}
+
+// 从报表数据创建工作簿
+function createWorkbookFromReport(report) {
+  const { devices: sessions, keys, matrix, sessionInfo } = report;
+  
   // 创建工作簿
   const wb = XLSX.utils.book_new();
-
-  // 创建矩阵数据 - 这是主要的报表内容
+  
+  // 创建矩阵数据
   const matrixData = [
-    ['会话索引', '启动时间', '会话UUID', ...keys] // 表头：会话索引、启动时间、会话UUID，然后是所有的数据Key
+    ['会话索引', '启动时间', '会话UUID', ...keys] // 表头
   ];
   
-  // 添加数据行：每行包含会话索引、启动时间、UUID及其对应的所有Key的值
+  // 添加数据行
   sessions.forEach(session => {
     const sessionData = sessionInfo[session];
     const startTime = new Date(sessionData.startTime).toLocaleString('zh-CN', {
@@ -499,16 +771,7 @@ function exportToExcel() {
   }
   
   XLSX.utils.book_append_sheet(wb, wsMatrix, '项目整理报表');
-
-  // 生成文件名
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-  const dateRange = startDate === endDate ? startDate : `${startDate}_至_${endDate}`;
-  const filename = `项目整理报表_项目${projectId}_${dateRange}_${timestamp}.xlsx`;
-
-  // 导出文件
-  XLSX.writeFile(wb, filename);
-  
-  console.log('Excel文件已导出:', filename);
+  return wb;
 }
 
 // 事件绑定

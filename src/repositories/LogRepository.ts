@@ -386,6 +386,203 @@ export class LogRepository {
   }
 
   /**
+   * Aggregates project organization report for multiple days
+   * Creates daily reports and a combined report
+   * @param projectId - The project ID to aggregate for
+   * @param startDate - The start date (YYYY-MM-DD format)
+   * @param endDate - The end date (YYYY-MM-DD format)
+   * @returns Promise resolving to daily and combined project organization reports
+   * @throws DatabaseError if the operation fails
+   */
+  async aggregateProjectOrganizationByDays(projectId: number, startDate: string, endDate?: string): Promise<{
+    dailyReports: Array<ProjectOrganizationReport & { date: string }>;
+    combinedReport: ProjectOrganizationReport;
+  }> {
+    const finalEndDate = endDate || startDate;
+    
+    try {
+      // Parse dates and create date range
+      const startDateTime = new Date(startDate + 'T00:00:00.000Z');
+      const endDateTime = new Date(finalEndDate + 'T23:59:59.999Z');
+
+      // Get all logs for the project in the specified date range
+      const logs = await Log.findAll({
+        where: {
+          projectId,
+          createdAt: {
+            [Op.gte]: startDateTime,
+            [Op.lte]: endDateTime,
+          },
+        },
+        attributes: ['sessionUuid', 'logKey', 'logValue', 'createdAt'],
+        order: [['created_at', 'ASC'], ['session_uuid', 'ASC'], ['log_key', 'ASC']],
+        raw: true,
+      }) as unknown as Array<{
+        sessionUuid: string;
+        logKey: string;
+        logValue: string;
+        createdAt: string;
+      }>;
+
+      // If no logs found, return empty reports
+      if (logs.length === 0) {
+        const emptyReport = {
+          projectId,
+          startDate,
+          endDate: finalEndDate,
+          devices: [],
+          keys: [],
+          matrix: {},
+          sessionInfo: {},
+          totalDevices: 0,
+          totalKeys: 0,
+          totalEntries: 0,
+        };
+        
+        return {
+          dailyReports: [],
+          combinedReport: emptyReport,
+        };
+      }
+
+      // Group logs by date
+      const logsByDate = new Map<string, typeof logs>();
+      for (const log of logs) {
+        const logDate = new Date(log.createdAt).toISOString().split('T')[0];
+        if (!logsByDate.has(logDate)) {
+          logsByDate.set(logDate, []);
+        }
+        logsByDate.get(logDate)!.push(log);
+      }
+
+      // Generate daily reports
+      const dailyReports: Array<ProjectOrganizationReport & { date: string }> = [];
+      const sortedDates = Array.from(logsByDate.keys()).sort();
+
+      for (const date of sortedDates) {
+        const dayLogs = logsByDate.get(date)!;
+        const dayReport = await this.generateReportFromLogs(projectId, date, date, dayLogs);
+        dailyReports.push({
+          ...dayReport,
+          date,
+        });
+      }
+
+      // Generate combined report from all logs
+      const combinedReport = await this.generateReportFromLogs(projectId, startDate, finalEndDate, logs);
+
+      logger.debug("Project organization by days aggregation completed", {
+        projectId,
+        startDate,
+        endDate: finalEndDate,
+        dailyReportsCount: dailyReports.length,
+        totalLogs: logs.length,
+      });
+
+      return {
+        dailyReports,
+        combinedReport,
+      };
+    } catch (error) {
+      logger.error("Failed to aggregate project organization by days", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        projectId,
+        startDate,
+        endDate: finalEndDate,
+      });
+      throw new DatabaseError(
+        "Failed to aggregate project organization by days",
+        "DATABASE_ERROR",
+        error instanceof Error ? error : undefined,
+      );
+    }
+  }
+
+  /**
+   * Helper method to generate report from logs array
+   */
+  private async generateReportFromLogs(
+    projectId: number, 
+    startDate: string, 
+    endDate: string, 
+    logs: Array<{
+      sessionUuid: string;
+      logKey: string;
+      logValue: string;
+      createdAt: string;
+    }>
+  ): Promise<ProjectOrganizationReport> {
+    // Extract unique sessions and keys, track session start times
+    const sessionSet = new Set<string>();
+    const keySet = new Set<string>();
+    const matrix: Record<string, Record<string, string | null>> = {};
+    const sessionStartTimes: Record<string, string> = {};
+
+    // Process logs to build matrix and track session start times
+    for (const log of logs) {
+      sessionSet.add(log.sessionUuid);
+      keySet.add(log.logKey);
+
+      // Track the earliest time for each session
+      if (!sessionStartTimes[log.sessionUuid] || log.createdAt < sessionStartTimes[log.sessionUuid]) {
+        sessionStartTimes[log.sessionUuid] = log.createdAt;
+      }
+
+      // Initialize session row if not exists
+      if (!matrix[log.sessionUuid]) {
+        matrix[log.sessionUuid] = {};
+      }
+
+      // Set the value (if multiple values for same session+key, use the last one)
+      matrix[log.sessionUuid][log.logKey] = log.logValue;
+    }
+
+    // Sort sessions by their first appearance time
+    const sessions = Array.from(sessionSet).sort((a, b) => {
+      const timeA = new Date(sessionStartTimes[a]).getTime();
+      const timeB = new Date(sessionStartTimes[b]).getTime();
+      return timeA - timeB;
+    });
+
+    const keys = Array.from(keySet).sort();
+
+    // Create session info with index and timing
+    const sessionInfo: Record<string, { index: number; startTime: string; uuid: string }> = {};
+    sessions.forEach((sessionUuid, index) => {
+      sessionInfo[sessionUuid] = {
+        index: index + 1, // 1-based index
+        startTime: sessionStartTimes[sessionUuid],
+        uuid: sessionUuid,
+      };
+    });
+
+    // Fill in null values for missing combinations
+    for (const session of sessions) {
+      if (!matrix[session]) {
+        matrix[session] = {};
+      }
+      for (const key of keys) {
+        if (!(key in matrix[session])) {
+          matrix[session][key] = null;
+        }
+      }
+    }
+
+    return {
+      projectId,
+      startDate,
+      endDate,
+      devices: sessions, // Now contains session UUIDs sorted by start time
+      keys,
+      matrix,
+      sessionInfo, // New field with session timing and index info
+      totalDevices: sessions.length, // Now represents session count
+      totalKeys: keys.length,
+      totalEntries: logs.length,
+    };
+  }
+
+  /**
    * Aggregates project organization report for a specific project and date
    * Creates a matrix with sessions as rows and keys as columns
    * @param projectId - The project ID to aggregate for

@@ -206,6 +206,70 @@ class SessionService {
   }
 
   /**
+   * 获取项目整理报表（按天分组）
+   */
+  async getProjectOrganizationReportByDays(projectId: number, startDate: string, endDate?: string): Promise<{
+    dailyReports: Array<ProjectOrganizationReport & { date: string }>;
+    combinedReport: ProjectOrganizationReport;
+  }> {
+    // 如果没有提供结束日期，使用开始日期作为结束日期（兼容旧接口）
+    const finalEndDate = endDate || startDate;
+    
+    const result = await logRepository.aggregateProjectOrganizationByDays(projectId, startDate, finalEndDate);
+    
+    // 应用项目的列名映射
+    try {
+      const project = await projectService.getProjectById(projectId);
+      if (project && project.columnMapping) {
+        // 映射每日报表
+        const mappedDailyReports = result.dailyReports.map(report => {
+          const mappedKeys = report.keys.map(key => project.columnMapping[key] || key);
+          
+          const mappedMatrix: Record<string, Record<string, string | null>> = {};
+          for (const [sessionUuid, sessionData] of Object.entries(report.matrix)) {
+            mappedMatrix[sessionUuid] = {};
+            for (const [originalKey, value] of Object.entries(sessionData)) {
+              const mappedKey = project.columnMapping[originalKey] || originalKey;
+              mappedMatrix[sessionUuid][mappedKey] = value;
+            }
+          }
+          
+          return {
+            ...report,
+            keys: mappedKeys,
+            matrix: mappedMatrix,
+          };
+        });
+
+        // 映射合并报表
+        const mappedCombinedKeys = result.combinedReport.keys.map(key => project.columnMapping[key] || key);
+        const mappedCombinedMatrix: Record<string, Record<string, string | null>> = {};
+        for (const [sessionUuid, sessionData] of Object.entries(result.combinedReport.matrix)) {
+          mappedCombinedMatrix[sessionUuid] = {};
+          for (const [originalKey, value] of Object.entries(sessionData)) {
+            const mappedKey = project.columnMapping[originalKey] || originalKey;
+            mappedCombinedMatrix[sessionUuid][mappedKey] = value;
+          }
+        }
+        
+        return {
+          dailyReports: mappedDailyReports,
+          combinedReport: {
+            ...result.combinedReport,
+            keys: mappedCombinedKeys,
+            matrix: mappedCombinedMatrix,
+          },
+        };
+      }
+    } catch (error) {
+      // 如果映射失败，返回原始报表
+      // logger.warn('Failed to apply column mapping:', error);
+    }
+    
+    return result;
+  }
+
+  /**
    * 获取项目整理报表
    */
   async getProjectOrganizationReport(projectId: number, startDate: string, endDate?: string): Promise<ProjectOrganizationReport> {
