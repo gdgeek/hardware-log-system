@@ -1600,6 +1600,11 @@ a:hover {
   margin-bottom: 1.5rem;
 }
 
+.detail-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 .session-summary {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -1684,5 +1689,20 @@ a:hover {
 
   .selection-section .form-group input {
     max-width: 100%;
+  }
+
+  .detail-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .detail-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .detail-actions button {
+    width: 100%;
   }
 }

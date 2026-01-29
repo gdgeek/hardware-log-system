@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>会话日志查看 - 硬件日志管理系统</title>
   <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
   <div class="session-viewer">
@@ -40,7 +41,10 @@
         <div class="card">
           <div class="detail-header">
             <h2>会话详情</h2>
-            <button id="back-to-sessions-btn" class="btn btn-secondary">返回会话列表</button>
+            <div class="detail-actions">
+              <button id="export-excel-btn" class="btn btn-success">导出 Excel</button>
+              <button id="back-to-sessions-btn" class="btn btn-secondary">返回会话列表</button>
+            </div>
           </div>
           
           <div id="session-summary" class="session-summary"></div>

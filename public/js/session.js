@@ -224,6 +224,114 @@ function backToSessions() {
   document.getElementById('sessions-section').scrollIntoView({ behavior: 'smooth' });
 }
 
+// 导出Excel
+function exportToExcel() {
+  if (!state.sessionDetail) {
+    alert('没有可导出的数据');
+    return;
+  }
+
+  const detail = state.sessionDetail;
+  
+  // 创建工作簿
+  const wb = XLSX.utils.book_new();
+
+  // 1. 创建会话汇总工作表
+  const summaryData = [
+    ['会话信息汇总'],
+    [],
+    ['会话 UUID', detail.sessionUuid],
+    ['项目 ID', detail.projectId],
+    ['设备 UUID', detail.deviceUuid || '-'],
+    ['总日志数', detail.totalLogs],
+    ['记录数', detail.recordCount],
+    ['警告数', detail.warningCount],
+    ['错误数', detail.errorCount],
+    ['首次记录时间', formatDate(detail.firstLogTime)],
+    ['最后记录时间', formatDate(detail.lastLogTime)]
+  ];
+  
+  const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+  
+  // 设置列宽
+  wsSummary['!cols'] = [
+    { wch: 20 },
+    { wch: 40 }
+  ];
+  
+  XLSX.utils.book_append_sheet(wb, wsSummary, '会话汇总');
+
+  // 2. 创建日志详情工作表
+  const logs = detail.logs || [];
+  
+  if (logs.length > 0) {
+    const logsData = [
+      ['ID', '类型', 'Key', 'Value', '设备UUID', '客户端IP', '时间戳', '创建时间']
+    ];
+    
+    logs.forEach(log => {
+      logsData.push([
+        log.id,
+        log.dataType,
+        log.key || '-',
+        log.value || '-',
+        log.deviceUuid,
+        log.clientIp || '-',
+        log.clientTimestamp || '-',
+        formatDate(log.createdAt)
+      ]);
+    });
+    
+    const wsLogs = XLSX.utils.aoa_to_sheet(logsData);
+    
+    // 设置列宽
+    wsLogs['!cols'] = [
+      { wch: 8 },   // ID
+      { wch: 10 },  // 类型
+      { wch: 20 },  // Key
+      { wch: 40 },  // Value
+      { wch: 25 },  // 设备UUID
+      { wch: 15 },  // 客户端IP
+      { wch: 15 },  // 时间戳
+      { wch: 20 }   // 创建时间
+    ];
+    
+    XLSX.utils.book_append_sheet(wb, wsLogs, '日志详情');
+  }
+
+  // 3. 创建统计分析工作表
+  const statsData = [
+    ['日志类型统计'],
+    [],
+    ['类型', '数量', '占比'],
+    ['记录', detail.recordCount, `${((detail.recordCount / detail.totalLogs) * 100).toFixed(2)}%`],
+    ['警告', detail.warningCount, `${((detail.warningCount / detail.totalLogs) * 100).toFixed(2)}%`],
+    ['错误', detail.errorCount, `${((detail.errorCount / detail.totalLogs) * 100).toFixed(2)}%`],
+    [],
+    ['总计', detail.totalLogs, '100%']
+  ];
+  
+  const wsStats = XLSX.utils.aoa_to_sheet(statsData);
+  
+  // 设置列宽
+  wsStats['!cols'] = [
+    { wch: 15 },
+    { wch: 10 },
+    { wch: 10 }
+  ];
+  
+  XLSX.utils.book_append_sheet(wb, wsStats, '统计分析');
+
+  // 生成文件名
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+  const filename = `会话日志_${detail.sessionUuid}_${timestamp}.xlsx`;
+
+  // 导出文件
+  XLSX.writeFile(wb, filename);
+  
+  console.log('Excel文件已导出:', filename);
+}
+
 // 事件绑定
 document.addEventListener('DOMContentLoaded', () => {
   // 加载会话列表按钮
@@ -238,4 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 返回会话列表按钮
   document.getElementById('back-to-sessions-btn').addEventListener('click', backToSessions);
+
+  // 导出Excel按钮
+  document.getElementById('export-excel-btn').addEventListener('click', exportToExcel);
 });
