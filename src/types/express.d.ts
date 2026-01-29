@@ -4,9 +4,11 @@
 
 import { AuthUser } from '../services/AuthService';
 
-declare namespace Express {
-  interface Request {
-    requestId: string;
-    user?: AuthUser;
+declare global {
+  namespace Express {
+    interface Request {
+      requestId: string;
+      user?: AuthUser;
+    }
   }
 }

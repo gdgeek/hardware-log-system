@@ -29,21 +29,23 @@ describe("AdminAuthMiddleware", () => {
     jest.clearAllMocks();
   });
 
-  it("should allow access with a valid token", async () => {
+  it("should allow access with a valid token", () => {
     req.headers!.authorization = "Bearer valid-token";
-    const payload = { id: 1, username: "admin" };
-    (authService.verifyAdminToken as jest.Mock).mockResolvedValue(payload);
+    const payload = { id: "admin", username: "admin", role: "admin" };
+    (authService.verifyToken as jest.Mock).mockReturnValue(payload);
+    (authService.isAdmin as jest.Mock).mockReturnValue(true);
 
-    await adminAuthMiddleware(req as Request, res as Response, next);
+    adminAuthMiddleware(req as Request, res as Response, next);
 
-    expect(authService.verifyAdminToken).toHaveBeenCalledWith("valid-token");
+    expect(authService.verifyToken).toHaveBeenCalledWith("valid-token");
+    expect(authService.isAdmin).toHaveBeenCalledWith(payload);
     expect((req as any).user).toEqual(payload);
     expect(next).toHaveBeenCalled();
     expect(res.status).not.toHaveBeenCalled();
   });
 
-  it("should deny access if Authorization header is missing", async () => {
-    await adminAuthMiddleware(req as Request, res as Response, next);
+  it("should deny access if Authorization header is missing", () => {
+    adminAuthMiddleware(req as Request, res as Response, next);
 
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.json).toHaveBeenCalledWith(
@@ -54,27 +56,29 @@ describe("AdminAuthMiddleware", () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it("should deny access if Authorization header is not Bearer", async () => {
+  it("should deny access if Authorization header is not Bearer", () => {
     req.headers!.authorization = "Basic dXNlcjpwYXNz";
 
-    await adminAuthMiddleware(req as Request, res as Response, next);
+    adminAuthMiddleware(req as Request, res as Response, next);
 
     expect(res.status).toHaveBeenCalledWith(401);
     expect(next).not.toHaveBeenCalled();
   });
 
-  it("should deny access if token is invalid or expired", async () => {
+  it("should deny access if token is invalid or expired", () => {
     req.headers!.authorization = "Bearer invalid-token";
-    (authService.verifyAdminToken as jest.Mock).mockResolvedValue(null);
+    (authService.verifyToken as jest.Mock).mockImplementation(() => {
+      throw new Error("无效的 token");
+    });
 
-    await adminAuthMiddleware(req as Request, res as Response, next);
+    adminAuthMiddleware(req as Request, res as Response, next);
 
-    expect(authService.verifyAdminToken).toHaveBeenCalledWith("invalid-token");
+    expect(authService.verifyToken).toHaveBeenCalledWith("invalid-token");
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
         error: expect.objectContaining({
-          message: expect.stringContaining("过期"),
+          message: "认证失败",
         }),
       }),
     );

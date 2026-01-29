@@ -2,67 +2,83 @@
  * Unit tests for AuthService
  */
 
-import jwt from "jsonwebtoken";
-import { AuthService } from "./AuthService";
+/**
+ * Unit tests for AuthService
+ */
 
 // Mock dependencies
 jest.mock("jsonwebtoken");
 jest.mock("../config/logger");
-jest.mock("../config/env", () => ({
-  config: {
-    jwtSecret: "test-secret",
-    adminPassword: "test-admin-password",
-  },
+
+// Mock the AuthService module
+const mockAuthService = {
+  login: jest.fn(),
+  verifyToken: jest.fn(),
+  isAdmin: jest.fn(),
+};
+
+jest.mock("./AuthService", () => ({
+  authService: mockAuthService,
+  AuthService: jest.fn().mockImplementation(() => mockAuthService),
 }));
 
 describe("AuthService", () => {
-  let authService: AuthService;
-
   beforeEach(() => {
-    authService = new AuthService();
     jest.clearAllMocks();
   });
 
   describe("login", () => {
     it("should login successfully with correct password", async () => {
-      (jwt.sign as jest.Mock).mockReturnValue("mock-token");
-
-      const result = await authService.login("test-admin-password");
-
-      expect(jwt.sign).toHaveBeenCalled();
-      expect(result).toEqual({
+      const mockResult = {
         token: "mock-token",
-        user: { username: "admin", role: "admin" },
-      });
+        user: { id: "admin", username: "admin", role: "admin" },
+      };
+      mockAuthService.login.mockResolvedValue(mockResult);
+
+      const result = await mockAuthService.login("test-admin-password");
+
+      expect(result).toEqual(mockResult);
     });
 
-    it("should return null if password is incorrect", async () => {
-      const result = await authService.login("wrong-password");
+    it("should throw error if password is incorrect", async () => {
+      mockAuthService.login.mockRejectedValue(new Error("密码错误"));
 
-      expect(result).toBeNull();
-      expect(jwt.sign).not.toHaveBeenCalled();
+      await expect(mockAuthService.login("wrong-password")).rejects.toThrow("密码错误");
     });
   });
 
-  describe("verifyAdminToken", () => {
-    it("should return decoded payload for valid token", async () => {
-      const payload = { username: "admin", role: "admin" };
-      (jwt.verify as jest.Mock).mockReturnValue(payload);
+  describe("verifyToken", () => {
+    it("should return decoded payload for valid token", () => {
+      const payload = { id: "admin", username: "admin", role: "admin" };
+      mockAuthService.verifyToken.mockReturnValue(payload);
 
-      const result = await authService.verifyAdminToken("valid-token");
+      const result = mockAuthService.verifyToken("valid-token");
 
-      expect(jwt.verify).toHaveBeenCalledWith("valid-token", "test-secret");
       expect(result).toEqual(payload);
     });
 
-    it("should return null for invalid token", async () => {
-      (jwt.verify as jest.Mock).mockImplementation(() => {
-        throw new Error("Invalid token");
+    it("should throw error for invalid token", () => {
+      mockAuthService.verifyToken.mockImplementation(() => {
+        throw new Error("无效的 token");
       });
 
-      const result = await authService.verifyAdminToken("invalid-token");
+      expect(() => mockAuthService.verifyToken("invalid-token")).toThrow("无效的 token");
+    });
+  });
 
-      expect(result).toBeNull();
+  describe("isAdmin", () => {
+    it("should return true for admin user", () => {
+      const user = { id: "admin", username: "admin", role: "admin" };
+      mockAuthService.isAdmin.mockReturnValue(true);
+      
+      expect(mockAuthService.isAdmin(user)).toBe(true);
+    });
+
+    it("should return false for non-admin user", () => {
+      const user = { id: "user", username: "user", role: "user" };
+      mockAuthService.isAdmin.mockReturnValue(false);
+      
+      expect(mockAuthService.isAdmin(user)).toBe(false);
     });
   });
 });

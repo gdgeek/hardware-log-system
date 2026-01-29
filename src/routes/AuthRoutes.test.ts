@@ -27,7 +27,7 @@ describe("AuthRoutes", () => {
     it("should return 200 and token on successful login", async () => {
       const mockResult = {
         token: "mock-token",
-        user: { id: 1, username: "admin" },
+        user: { id: "admin", username: "admin", role: "admin" },
       };
       (authService.login as jest.Mock).mockResolvedValue(mockResult);
 
@@ -44,12 +44,12 @@ describe("AuthRoutes", () => {
       const response = await request(app).post("/auth/login").send({});
 
       expect(response.status).toBe(400);
-      expect(response.body.error.code).toBe("BAD_REQUEST");
+      expect(response.body.error.code).toBe("VALIDATION_ERROR");
       expect(authService.login).not.toHaveBeenCalled();
     });
 
     it("should return 401 if credentials are invalid", async () => {
-      (authService.login as jest.Mock).mockResolvedValue(null);
+      (authService.login as jest.Mock).mockRejectedValue(new Error("密码错误"));
 
       const response = await request(app)
         .post("/auth/login")
@@ -62,8 +62,9 @@ describe("AuthRoutes", () => {
 
   describe("GET /auth/verify", () => {
     it("should return 200 and valid:true for a valid token", async () => {
-      const payload = { id: 1, username: "admin" };
-      (authService.verifyAdminToken as jest.Mock).mockResolvedValue(payload);
+      const payload = { id: "admin", username: "admin", role: "admin" };
+      (authService.verifyToken as jest.Mock).mockReturnValue(payload);
+      (authService.isAdmin as jest.Mock).mockReturnValue(true);
 
       const response = await request(app)
         .get("/auth/verify")
@@ -71,25 +72,27 @@ describe("AuthRoutes", () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({ valid: true, user: payload });
-      expect(authService.verifyAdminToken).toHaveBeenCalledWith("valid-token");
+      expect(authService.verifyToken).toHaveBeenCalledWith("valid-token");
     });
 
     it("should return 401 if Authorization header is missing", async () => {
       const response = await request(app).get("/auth/verify");
 
       expect(response.status).toBe(401);
-      expect(response.body.valid).toBe(false);
+      expect(response.body.error.code).toBe("UNAUTHORIZED");
     });
 
     it("should return 401 if token is invalid", async () => {
-      (authService.verifyAdminToken as jest.Mock).mockResolvedValue(null);
+      (authService.verifyToken as jest.Mock).mockImplementation(() => {
+        throw new Error("无效的 token");
+      });
 
       const response = await request(app)
         .get("/auth/verify")
         .set("Authorization", "Bearer invalid-token");
 
       expect(response.status).toBe(401);
-      expect(response.body.valid).toBe(false);
+      expect(response.body.error.code).toBe("UNAUTHORIZED");
     });
   });
 });
