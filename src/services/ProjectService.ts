@@ -238,14 +238,14 @@ export class ProjectService {
   /**
    * 应用列名映射到数据
    */
-  async applyColumnMapping(projectId: number, data: Record<string, any>): Promise<Record<string, any>> {
+  async applyColumnMapping(projectId: number, data: Record<string, unknown>): Promise<Record<string, unknown>> {
     try {
       const project = await projectRepository.findById(projectId);
       if (!project) {
         return data; // 项目不存在时返回原数据
       }
 
-      const mappedData: Record<string, any> = {};
+      const mappedData: Record<string, unknown> = {};
 
       for (const [key, value] of Object.entries(data)) {
         const mappedKey = project.mapColumnName(key);

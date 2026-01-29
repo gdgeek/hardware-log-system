@@ -5,17 +5,8 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { authService, AuthUser } from '../services/AuthService';
+import { authService } from '../services/AuthService';
 import { logger } from '../config/logger';
-
-// 扩展 Request 类型以包含用户信息
-declare global {
-  namespace Express {
-    interface Request {
-      user?: AuthUser;
-    }
-  }
-}
 
 /**
  * 管理员认证中间件

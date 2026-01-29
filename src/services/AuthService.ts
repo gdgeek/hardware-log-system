@@ -70,7 +70,11 @@ class AuthService {
    */
   verifyToken(token: string): AuthUser {
     try {
-      const decoded = jwt.verify(token, this.jwtSecret) as any;
+      const decoded = jwt.verify(token, this.jwtSecret) as jwt.JwtPayload & {
+        userId: string;
+        username: string;
+        role: string;
+      };
       
       return {
         id: decoded.userId,

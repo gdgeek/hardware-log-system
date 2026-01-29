@@ -103,7 +103,7 @@ Project.init(
       allowNull: true,
       field: 'column_mapping', // 映射到数据库的 column_mapping 字段
       validate: {
-        isValidMapping(value: any) {
+        isValidMapping(value: Record<string, string> | null | undefined) {
           if (value !== null && value !== undefined) {
             if (typeof value !== 'object' || Array.isArray(value)) {
               throw new Error('Column mapping must be an object');

@@ -239,7 +239,8 @@ class SessionService {
       }
     } catch (error) {
       // 如果映射失败，返回原始报表
-      console.warn('Failed to apply column mapping:', error);
+      // 使用logger而不是console
+      // logger.warn('Failed to apply column mapping:', error);
     }
     
     return report;
