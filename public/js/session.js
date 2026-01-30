@@ -812,26 +812,28 @@ async function autoAddProject() {
       uuid: data.uuid,
       name: data.name,
       password: null,
-      columnMapping: null
+      columnMapping: null,
+      authKey: data.uuid // 使用UUID作为auth_key
     };
 
-    // 调用本地API创建项目
-    const createResponse = await fetch(`${API_BASE}/projects`, {
+    // 调用本地API创建项目（使用公开接口）
+    const createResponse = await fetch(`${API_BASE}/projects/auto-add`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('admin_token') || ''}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(projectData)
     });
 
     if (!createResponse.ok) {
       const error = await createResponse.json();
+      console.error('创建项目失败，详细信息:', error);
+      
       // 如果项目已存在，也算成功
       if (createResponse.status === 409) {
         showSuccess(`项目已存在: ${data.name} (ID: ${data.verse_id})`);
       } else {
-        throw new Error(error.error?.message || '创建项目失败');
+        throw new Error(error.error?.message || `创建项目失败 (状态码: ${createResponse.status})`);
       }
     } else {
       const result = await createResponse.json();

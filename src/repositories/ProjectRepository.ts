@@ -88,12 +88,20 @@ export class ProjectRepository {
       });
       return project;
     } catch (error) {
+      // 记录详细的错误信息
+      const errorDetails = error instanceof Error ? {
+        message: error.message,
+        name: error.name,
+        stack: error.stack,
+      } : { error: String(error) };
+      
       logger.error('Failed to create project', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+        ...errorDetails,
         projectData: { ...projectData, password: projectData.password ? '[MASKED]' : undefined },
       });
+      
       throw new DatabaseError(
-        'Failed to create project',
+        error instanceof Error ? error.message : 'Failed to create project',
         'DATABASE_ERROR',
         error instanceof Error ? error : undefined,
       );

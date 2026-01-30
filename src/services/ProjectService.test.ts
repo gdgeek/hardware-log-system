@@ -145,7 +145,7 @@ describe("ProjectService", () => {
     it("should create project successfully", async () => {
       (projectRepository.findByUuid as jest.Mock).mockResolvedValue(null);
       (projectRepository.create as jest.Mock).mockResolvedValue(mockProject);
-      const data = { uuid: "new", name: "New" };
+      const data = { uuid: "new", name: "New", authKey: "new-key" };
       const result = await service.createProject(data);
       expect(result.id).toBe(mockProject.id);
     });
@@ -154,7 +154,7 @@ describe("ProjectService", () => {
       (projectRepository.findByUuid as jest.Mock).mockResolvedValue(null);
       const customProject = { ...mockProject, id: 100 };
       (projectRepository.create as jest.Mock).mockResolvedValue(customProject);
-      const data = { uuid: "new", name: "New", id: 100 };
+      const data = { uuid: "new", name: "New", id: 100, authKey: "new-key" };
       const result = await service.createProject(data);
       expect(result.id).toBe(100);
       expect(projectRepository.create).toHaveBeenCalledWith(
@@ -167,7 +167,7 @@ describe("ProjectService", () => {
         mockProject,
       );
       await expect(
-        service.createProject({ uuid: "uuid-123", name: "New" }),
+        service.createProject({ uuid: "uuid-123", name: "New", authKey: "key-123" }),
       ).rejects.toThrow(ValidationError);
     });
 
@@ -176,14 +176,14 @@ describe("ProjectService", () => {
       (projectRepository.create as jest.Mock).mockRejectedValue(
         new Error("DB Error"),
       );
-      const data = { uuid: "new", name: "New", password: "secret" };
+      const data = { uuid: "new", name: "New", password: "secret", authKey: "new-key" };
       await expect(service.createProject(data)).rejects.toThrow("DB Error");
     });
 
     it("should handle non-Error rejection", async () => {
       (projectRepository.findByUuid as jest.Mock).mockResolvedValue(null);
       (projectRepository.create as jest.Mock).mockRejectedValue("String Error");
-      const data = { uuid: "new", name: "New" };
+      const data = { uuid: "new", name: "New", authKey: "new-key" };
       await expect(service.createProject(data)).rejects.toBe("String Error");
     });
   });
