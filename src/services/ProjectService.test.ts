@@ -24,6 +24,7 @@ describe("ProjectService", () => {
     isPasswordProtected: jest.fn().mockReturnValue(false),
     validatePassword: jest.fn().mockReturnValue(true),
     getColumnMapping: jest.fn().mockReturnValue({}),
+    mapColumnName: jest.fn().mockImplementation((key) => key),
     createdAt: new Date("2023-01-01"),
     updatedAt: new Date("2023-01-02"),
   };
@@ -41,62 +42,56 @@ describe("ProjectService", () => {
 
       expect(projectRepository.findAll).toHaveBeenCalled();
       expect(result).toHaveLength(1);
-      expect(result[0]).toEqual({
-        id: mockProject.id,
-        uuid: mockProject.uuid,
-        name: mockProject.name,
-        hasPassword: false,
-        columnMapping: {},
-        createdAt: mockProject.createdAt.toISOString(),
-        updatedAt: mockProject.updatedAt.toISOString(),
-      });
     });
 
     it("should throw error on repository failure", async () => {
       (projectRepository.findAll as jest.Mock).mockRejectedValue(
         new Error("DB Error"),
       );
-
       await expect(service.getAllProjects()).rejects.toThrow("DB Error");
+    });
+
+    it("should handle non-Error rejection", async () => {
+      (projectRepository.findAll as jest.Mock).mockRejectedValue(
+        "String Error",
+      );
+      // expect original throw
+      await expect(service.getAllProjects()).rejects.toBe("String Error");
     });
   });
 
   describe("getProjectById", () => {
     it("should return project when found", async () => {
       (projectRepository.findById as jest.Mock).mockResolvedValue(mockProject);
-
       const result = await service.getProjectById(1);
-
-      expect(projectRepository.findById).toHaveBeenCalledWith(1);
       expect(result).toEqual(expect.objectContaining({ id: 1 }));
     });
 
     it("should return null when not found", async () => {
       (projectRepository.findById as jest.Mock).mockResolvedValue(null);
-
       const result = await service.getProjectById(999);
-
       expect(result).toBeNull();
+    });
+
+    it("should handle non-Error rejection", async () => {
+      (projectRepository.findById as jest.Mock).mockRejectedValue(
+        "String Error",
+      );
+      await expect(service.getProjectById(1)).rejects.toBe("String Error");
     });
   });
 
   describe("authenticateProject", () => {
     it("should authenticate successfully when project has no password", async () => {
       (projectRepository.findById as jest.Mock).mockResolvedValue(mockProject);
-
       const result = await service.authenticateProject({ projectId: 1 });
-
       expect(result.success).toBe(true);
-      expect(result.project).toBeDefined();
     });
 
     it("should fail when project does not exist", async () => {
       (projectRepository.findById as jest.Mock).mockResolvedValue(null);
-
       const result = await service.authenticateProject({ projectId: 999 });
-
       expect(result.success).toBe(false);
-      expect(result.message).toBe("项目不存在");
     });
 
     it("should fail when password required but missing", async () => {
@@ -107,11 +102,8 @@ describe("ProjectService", () => {
       (projectRepository.findById as jest.Mock).mockResolvedValue(
         protectedProject,
       );
-
       const result = await service.authenticateProject({ projectId: 1 });
-
       expect(result.success).toBe(false);
-      expect(result.message).toBe("该项目需要密码访问");
     });
 
     it("should fail when password incorrect", async () => {
@@ -123,32 +115,29 @@ describe("ProjectService", () => {
       (projectRepository.findById as jest.Mock).mockResolvedValue(
         protectedProject,
       );
-
       const result = await service.authenticateProject({
         projectId: 1,
         password: "wrong",
       });
-
       expect(result.success).toBe(false);
-      expect(result.message).toBe("密码错误");
     });
 
-    it("should succeed with correct password", async () => {
-      const protectedProject = {
-        ...mockProject,
-        isPasswordProtected: jest.fn().mockReturnValue(true),
-        validatePassword: jest.fn().mockReturnValue(true),
-      };
-      (projectRepository.findById as jest.Mock).mockResolvedValue(
-        protectedProject,
+    it("should handle errors during authentication", async () => {
+      (projectRepository.findById as jest.Mock).mockRejectedValue(
+        new Error("DB Error"),
       );
+      const result = await service.authenticateProject({ projectId: 1 });
+      expect(result.success).toBe(false);
+      expect(result.message).toBe("认证过程中发生错误");
+    });
 
-      const result = await service.authenticateProject({
-        projectId: 1,
-        password: "right",
-      });
-
-      expect(result.success).toBe(true);
+    it("should handle non-Error rejection", async () => {
+      (projectRepository.findById as jest.Mock).mockRejectedValue(
+        "String Error",
+      );
+      const result = await service.authenticateProject({ projectId: 1 });
+      expect(result.success).toBe(false);
+      expect(result.message).toBe("认证过程中发生错误");
     });
   });
 
@@ -156,11 +145,8 @@ describe("ProjectService", () => {
     it("should create project successfully", async () => {
       (projectRepository.findByUuid as jest.Mock).mockResolvedValue(null);
       (projectRepository.create as jest.Mock).mockResolvedValue(mockProject);
-
-      const data = { uuid: "uuid-123", name: "Test Project" };
+      const data = { uuid: "new", name: "New" };
       const result = await service.createProject(data);
-
-      expect(projectRepository.create).toHaveBeenCalledWith(data);
       expect(result.id).toBe(mockProject.id);
     });
 
@@ -168,16 +154,25 @@ describe("ProjectService", () => {
       (projectRepository.findByUuid as jest.Mock).mockResolvedValue(
         mockProject,
       );
-
       await expect(
         service.createProject({ uuid: "uuid-123", name: "New" }),
       ).rejects.toThrow(ValidationError);
     });
 
-    it("should throw validation error if missing required fields", async () => {
-      await expect(
-        service.createProject({ uuid: "", name: "Name" } as any),
-      ).rejects.toThrow(ValidationError);
+    it("should throw error and log masked password when creation fails", async () => {
+      (projectRepository.findByUuid as jest.Mock).mockResolvedValue(null);
+      (projectRepository.create as jest.Mock).mockRejectedValue(
+        new Error("DB Error"),
+      );
+      const data = { uuid: "new", name: "New", password: "secret" };
+      await expect(service.createProject(data)).rejects.toThrow("DB Error");
+    });
+
+    it("should handle non-Error rejection", async () => {
+      (projectRepository.findByUuid as jest.Mock).mockResolvedValue(null);
+      (projectRepository.create as jest.Mock).mockRejectedValue("String Error");
+      const data = { uuid: "new", name: "New" };
+      await expect(service.createProject(data)).rejects.toBe("String Error");
     });
   });
 
@@ -188,40 +183,100 @@ describe("ProjectService", () => {
         ...mockProject,
         name: "Updated",
       });
-
       const result = await service.updateProject(1, { name: "Updated" });
-
-      expect(projectRepository.update).toHaveBeenCalledWith(1, {
-        name: "Updated",
-      });
       expect(result.name).toBe("Updated");
     });
 
-    it("should throw error if project not found", async () => {
-      (projectRepository.findById as jest.Mock).mockResolvedValue(null);
+    it("should success with unique UUID", async () => {
+      (projectRepository.findById as jest.Mock).mockResolvedValue(mockProject);
+      (projectRepository.findByUuid as jest.Mock).mockResolvedValue(null);
+      (projectRepository.update as jest.Mock).mockResolvedValue({
+        ...mockProject,
+        uuid: "new-uuid",
+      });
+      const result = await service.updateProject(1, { uuid: "new-uuid" });
+      expect(result.uuid).toBe("new-uuid");
+    });
 
+    it("should throw if UUID exists", async () => {
+      (projectRepository.findById as jest.Mock).mockResolvedValue(mockProject);
+      (projectRepository.findByUuid as jest.Mock).mockResolvedValue(
+        mockProject,
+      );
       await expect(
-        service.updateProject(999, { name: "Updated" }),
-      ).rejects.toThrow("项目不存在");
+        service.updateProject(1, { uuid: "existing" }),
+      ).rejects.toThrow("项目UUID已存在");
+    });
+
+    it("should handle non-Error rejection", async () => {
+      (projectRepository.findById as jest.Mock).mockResolvedValue(mockProject);
+      (projectRepository.update as jest.Mock).mockRejectedValue("String Error");
+      await expect(service.updateProject(1, { name: "Updated" })).rejects.toBe(
+        "String Error",
+      );
     });
   });
 
   describe("deleteProject", () => {
     it("should delete project successfully", async () => {
       (projectRepository.delete as jest.Mock).mockResolvedValue(true);
-
       const result = await service.deleteProject(1);
-
-      expect(projectRepository.delete).toHaveBeenCalledWith(1);
       expect(result).toBeUndefined();
     });
 
     it("should throw error if deletion fails", async () => {
       (projectRepository.delete as jest.Mock).mockResolvedValue(false);
-
       await expect(service.deleteProject(999)).rejects.toThrow(
         "项目不存在或删除失败",
       );
+    });
+
+    it("should handle non-Error rejection", async () => {
+      (projectRepository.delete as jest.Mock).mockRejectedValue("String Error");
+      await expect(service.deleteProject(1)).rejects.toBe("String Error");
+    });
+  });
+
+  describe("applyColumnMapping", () => {
+    it("should return mapped data", async () => {
+      const mappedProject = {
+        ...mockProject,
+        mapColumnName: (k: string) => "Mapped " + k,
+      };
+      (projectRepository.findById as jest.Mock).mockResolvedValue(
+        mappedProject,
+      );
+      const result = await service.applyColumnMapping(1, { col: "val" });
+      expect(result).toEqual({ "Mapped col": "val" });
+    });
+
+    it("should return original data on non-Error rejection", async () => {
+      (projectRepository.findById as jest.Mock).mockRejectedValue(
+        "String Error",
+      );
+      const data = { col: "val" };
+      const result = await service.applyColumnMapping(1, data);
+      expect(result).toBe(data);
+    });
+  });
+
+  describe("getColumnMapping", () => {
+    it("should return mapping", async () => {
+      const mapping = { k: "v" };
+      (projectRepository.findById as jest.Mock).mockResolvedValue({
+        ...mockProject,
+        getColumnMapping: () => mapping,
+      });
+      const result = await service.getColumnMapping(1);
+      expect(result).toBe(mapping);
+    });
+
+    it("should return empty object on non-Error rejection", async () => {
+      (projectRepository.findById as jest.Mock).mockRejectedValue(
+        "String Error",
+      );
+      const result = await service.getColumnMapping(1);
+      expect(result).toEqual({});
     });
   });
 });

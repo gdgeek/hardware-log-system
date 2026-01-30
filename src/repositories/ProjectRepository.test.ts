@@ -50,6 +50,12 @@ describe("ProjectRepository", () => {
 
       await expect(repository.findById(1)).rejects.toThrow(DatabaseError);
     });
+
+    it("should handle non-Error rejection", async () => {
+      (Project.findByPk as jest.Mock).mockRejectedValue("String Error");
+
+      await expect(repository.findById(1)).rejects.toThrow(DatabaseError);
+    });
   });
 
   describe("findByUuid", () => {
@@ -79,6 +85,14 @@ describe("ProjectRepository", () => {
         DatabaseError,
       );
     });
+
+    it("should handle non-Error rejection", async () => {
+      (Project.findOne as jest.Mock).mockRejectedValue("String Error");
+
+      await expect(repository.findByUuid("uuid")).rejects.toThrow(
+        DatabaseError,
+      );
+    });
   });
 
   describe("findAll", () => {
@@ -97,6 +111,12 @@ describe("ProjectRepository", () => {
 
     it("should throw DatabaseError on DB error", async () => {
       (Project.findAll as jest.Mock).mockRejectedValue(new Error("DB Error"));
+
+      await expect(repository.findAll()).rejects.toThrow(DatabaseError);
+    });
+
+    it("should handle non-Error rejection", async () => {
+      (Project.findAll as jest.Mock).mockRejectedValue("String Error");
 
       await expect(repository.findAll()).rejects.toThrow(DatabaseError);
     });
@@ -122,6 +142,14 @@ describe("ProjectRepository", () => {
 
     it("should throw DatabaseError on DB error", async () => {
       (Project.create as jest.Mock).mockRejectedValue(new Error("DB Error"));
+
+      await expect(repository.create(newProjectData)).rejects.toThrow(
+        DatabaseError,
+      );
+    });
+
+    it("should handle non-Error rejection", async () => {
+      (Project.create as jest.Mock).mockRejectedValue("String Error");
 
       await expect(repository.create(newProjectData)).rejects.toThrow(
         DatabaseError,
@@ -164,6 +192,14 @@ describe("ProjectRepository", () => {
         DatabaseError,
       );
     });
+
+    it("should handle non-Error rejection", async () => {
+      (Project.update as jest.Mock).mockRejectedValue("String Error");
+
+      await expect(repository.update(1, updateData)).rejects.toThrow(
+        DatabaseError,
+      );
+    });
   });
 
   describe("delete", () => {
@@ -186,6 +222,12 @@ describe("ProjectRepository", () => {
 
     it("should throw DatabaseError on DB error", async () => {
       (Project.destroy as jest.Mock).mockRejectedValue(new Error("DB Error"));
+
+      await expect(repository.delete(1)).rejects.toThrow(DatabaseError);
+    });
+
+    it("should handle non-Error rejection", async () => {
+      (Project.destroy as jest.Mock).mockRejectedValue("String Error");
 
       await expect(repository.delete(1)).rejects.toThrow(DatabaseError);
     });
@@ -217,6 +259,24 @@ describe("ProjectRepository", () => {
       const result = await repository.validateProjectPassword(1, "password");
 
       expect(result).toBe(false);
+    });
+
+    it("should handle non-Error rejection", async () => {
+      (Project.findByPk as jest.Mock).mockRejectedValue("String Error");
+
+      const result = await repository.validateProjectPassword(1, "password");
+
+      expect(result).toBe(false);
+    });
+
+    it("should use empty string default if password undefined", async () => {
+      const projectMock = { ...mockProjectData };
+      projectMock.validatePassword.mockReturnValue(false);
+      (Project.findByPk as jest.Mock).mockResolvedValue(projectMock);
+
+      await repository.validateProjectPassword(1, undefined);
+
+      expect(projectMock.validatePassword).toHaveBeenCalledWith("");
     });
   });
 });
