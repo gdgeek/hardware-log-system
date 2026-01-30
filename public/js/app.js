@@ -1046,7 +1046,7 @@ async function fetchProjectFromVerse() {
     `;
     showAutoImportStatus('正在从服务器获取项目信息...', 'info');
 
-    const response = await fetch(`https://a1.voxel.cn/v1/server/snapshot?verse_id=${verseId}&expand=verse_id,name,uuid`);
+    const response = await fetch(`https://a1.bupingfan.com/v1/server/snapshot?verse_id=${verseId}&expand=verse_id,name,uuid`);
 
     if (!response.ok) {
       throw new Error(`请求失败: ${response.status}`);

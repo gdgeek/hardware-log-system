@@ -162,51 +162,6 @@ router.get(
 );
 
 /**
- * POST /api/v1/projects/auto-add
- * 自动添加项目（公开接口，无需管理员权限）
- * 用于从外部API自动创建项目
- */
-router.post(
-  "/auto-add",
-  validateBody(createProjectSchema),
-  async (req: Request, res: Response) => {
-    try {
-      const projectData = req.body;
-      const project = await projectService.createProject(projectData);
-
-      logger.info("Project auto-added", {
-        method: req.method,
-        path: req.path,
-        projectId: project.id,
-        projectUuid: project.uuid,
-      });
-
-      res.status(201).json({
-        success: true,
-        data: project,
-      });
-    } catch (error) {
-      const statusCode =
-        error instanceof Error && error.message.includes("已存在") ? 409 : 500;
-
-      logger.error("Failed to auto-add project", {
-        method: req.method,
-        path: req.path,
-        statusCode,
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
-
-      res.status(statusCode).json({
-        error: {
-          code: statusCode === 409 ? "PROJECT_EXISTS" : "INTERNAL_ERROR",
-          message: error instanceof Error ? error.message : "创建项目失败",
-        },
-      });
-    }
-  },
-);
-
-/**
  * POST /api/v1/projects
  * 创建新项目（需要管理员权限）
  */
