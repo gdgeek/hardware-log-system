@@ -13,7 +13,7 @@ export interface ProjectAttributes {
   id: number;
   uuid: string;
   name: string;
-  authKey: string;
+  authKey?: string | null;
   password?: string | null;
   columnMapping?: Record<string, string> | null; // JSON格式的列名映射
   createdAt: Date;
@@ -32,7 +32,7 @@ export class Project extends Model<ProjectAttributes, ProjectCreationAttributes>
   public id!: number;
   public uuid!: string;
   public name!: string;
-  public authKey!: string;
+  public authKey!: string | null;
   public password!: string | null;
   public columnMapping!: Record<string, string> | null;
   public readonly createdAt!: Date;
@@ -97,11 +97,8 @@ Project.init(
     },
     authKey: {
       type: DataTypes.STRING(255),
-      allowNull: false,
+      allowNull: true,
       field: 'auth_key', // 映射到数据库的 auth_key 字段
-      validate: {
-        notEmpty: true,
-      },
     },
     password: {
       type: DataTypes.STRING(255),

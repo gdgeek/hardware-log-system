@@ -28,7 +28,7 @@ const createProjectSchema = Joi.object({
   name: Joi.string().min(1).max(255).required(),
   password: Joi.string().optional().allow("").allow(null),
   columnMapping: Joi.object().pattern(Joi.string(), Joi.string()).optional(),
-  authKey: Joi.string().min(1).max(255).optional(), // 添加authKey字段
+  authKey: Joi.string().min(1).max(255).optional().allow(null), // authKey可选且可为null
 });
 
 // 项目ID参数验证模式

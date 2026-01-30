@@ -812,8 +812,8 @@ async function autoAddProject() {
       uuid: data.uuid,
       name: data.name,
       password: null,
-      columnMapping: null,
-      authKey: data.uuid // 使用UUID作为auth_key
+      columnMapping: null
+      // authKey 可选，不提供则为null
     };
 
     // 调用本地API创建项目（使用公开接口）
