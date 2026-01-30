@@ -43,6 +43,8 @@ Content-Type: application/json
 | `value`       | string | ✅ 是 | 日志内容，字符串格式                           |
 | `sessionUuid` | string | ✅ 是 | 会话标识（本次 App 运行的标识），任意字符串    |
 
+**注意：** `clientIp` 字段由服务器自动获取，客户端无需提交。
+
 **dataType 说明**
 
 - `record` - 普通记录（日常运行数据）
