@@ -126,7 +126,6 @@ describe("ProjectRepository", () => {
     const newProjectData = {
       uuid: "new-uuid",
       name: "New Project",
-      authKey: "new-auth-key",
     };
 
     it("should create a project", async () => {

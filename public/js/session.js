@@ -813,7 +813,6 @@ async function autoAddProject() {
       name: data.name,
       password: null,
       columnMapping: null
-      // authKey 可选，不提供则为null
     };
 
     // 调用本地API创建项目（使用公开接口）
