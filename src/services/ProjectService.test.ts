@@ -150,6 +150,18 @@ describe("ProjectService", () => {
       expect(result.id).toBe(mockProject.id);
     });
 
+    it("should create project with custom ID successfully", async () => {
+      (projectRepository.findByUuid as jest.Mock).mockResolvedValue(null);
+      const customProject = { ...mockProject, id: 100 };
+      (projectRepository.create as jest.Mock).mockResolvedValue(customProject);
+      const data = { uuid: "new", name: "New", id: 100 };
+      const result = await service.createProject(data);
+      expect(result.id).toBe(100);
+      expect(projectRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 100 }),
+      );
+    });
+
     it("should throw validation error if UUID exists", async () => {
       (projectRepository.findByUuid as jest.Mock).mockResolvedValue(
         mockProject,

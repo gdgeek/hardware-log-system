@@ -857,15 +857,15 @@ async function loadProjects() {
   const loadingEl = document.getElementById('projects-loading');
   const containerEl = document.getElementById('projects-container');
   const emptyEl = document.getElementById('projects-empty');
-  
+
   try {
     loadingEl.style.display = 'block';
     containerEl.style.display = 'none';
     emptyEl.style.display = 'none';
-    
+
     const response = await api.getAllProjects();
     state.projects.data = response.data || [];
-    
+
     updateProjectsTable();
     updateProjectsStats();
   } catch (error) {
@@ -903,10 +903,10 @@ function updateProjectsTable() {
         <code style="font-size: 0.875rem; background: #f8f9fa; padding: 0.25rem 0.5rem; border-radius: 4px;">${escapeHtml(project.uuid)}</code>
       </td>
       <td>
-        ${project.hasPassword 
-          ? '<span class="badge badge-warning">🔒 受保护</span>'
-          : '<span class="badge badge-record">✓ 公开</span>'
-        }
+        ${project.hasPassword
+      ? '<span class="badge badge-warning">🔒 受保护</span>'
+      : '<span class="badge badge-record">✓ 公开</span>'
+    }
       </td>
       <td>
         <div style="max-width: 200px; max-height: 80px; overflow-y: auto; font-size: 0.875rem;">
@@ -931,7 +931,7 @@ function renderColumnMapping(mapping) {
   if (!mapping || Object.keys(mapping).length === 0) {
     return '<span style="color: #6c757d;">无映射</span>';
   }
-  
+
   return Object.entries(mapping).map(([key, value]) => `
     <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
       <span style="font-weight: 500; color: #0d6efd;">${escapeHtml(key)}</span>
@@ -944,7 +944,7 @@ function updateProjectsStats() {
   const projects = state.projects.data;
   const totalProjects = projects.length;
   const protectedProjects = projects.filter(p => p.hasPassword).length;
-  
+
   document.getElementById('total-projects').textContent = totalProjects;
   document.getElementById('protected-projects').textContent = protectedProjects;
 }
@@ -955,12 +955,12 @@ function showProjectError(message) {
   errorDiv.className = 'alert alert-danger';
   errorDiv.style.cssText = 'background: rgba(220, 53, 69, 0.1); color: #dc3545; padding: 1rem; border-radius: 10px; margin-bottom: 1rem;';
   errorDiv.textContent = message;
-  
+
   // 插入到项目管理页面顶部
   const pageContent = document.getElementById('page-projects');
   const pageHeader = pageContent.querySelector('.page-header');
   pageContent.insertBefore(errorDiv, pageHeader.nextSibling);
-  
+
   // 5秒后自动消失
   setTimeout(() => {
     if (errorDiv.parentNode) {
@@ -975,12 +975,12 @@ function showProjectSuccess(message) {
   successDiv.className = 'alert alert-success';
   successDiv.style.cssText = 'background: rgba(25, 135, 84, 0.1); color: #198754; padding: 1rem; border-radius: 10px; margin-bottom: 1rem;';
   successDiv.textContent = message;
-  
+
   // 插入到项目管理页面顶部
   const pageContent = document.getElementById('page-projects');
   const pageHeader = pageContent.querySelector('.page-header');
   pageContent.insertBefore(successDiv, pageHeader.nextSibling);
-  
+
   // 3秒后自动消失
   setTimeout(() => {
     if (successDiv.parentNode) {
@@ -992,40 +992,131 @@ function showProjectSuccess(message) {
 function openCreateProjectModal() {
   state.projects.isEditing = false;
   state.projects.currentProject = null;
-  
+
   document.getElementById('project-modal-title').textContent = '新建项目';
   document.querySelector('.modal-subtitle').textContent = '创建一个新的硬件日志项目';
+  document.getElementById('project-id').value = '';
+  document.getElementById('project-id').disabled = false;
   document.getElementById('project-uuid').value = '';
   document.getElementById('project-name').value = '';
   document.getElementById('project-password').value = '';
   document.getElementById('project-column-mapping').value = JSON.stringify({
     "temperature": "温度",
-    "humidity": "湿度", 
+    "humidity": "湿度",
     "pressure": "压力",
     "battery": "电池"
   }, null, 2);
-  
+
+  // 重置自动导入区域
+  const verseIdInput = document.getElementById('verse-id-input');
+  if (verseIdInput) {
+    verseIdInput.value = '';
+  }
+  const autoImportStatus = document.getElementById('auto-import-status');
+  if (autoImportStatus) {
+    autoImportStatus.style.display = 'none';
+    autoImportStatus.textContent = '';
+  }
+
   document.getElementById('project-form-error').textContent = '';
   document.getElementById('project-form-error').classList.remove('active');
   document.getElementById('project-modal').classList.add('active');
+}
+
+// 自动导入项目信息
+async function fetchProjectFromVerse() {
+  const verseIdInput = document.getElementById('verse-id-input');
+  const statusEl = document.getElementById('auto-import-status');
+  const importBtn = document.getElementById('btn-auto-import');
+
+  const verseId = verseIdInput.value.trim();
+
+  if (!verseId) {
+    showAutoImportStatus('请输入 Verse ID', 'warning');
+    return;
+  }
+
+  try {
+    importBtn.disabled = true;
+    importBtn.innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; animation: spin 1s linear infinite;">
+        <path d="M21 12a9 9 0 11-6.219-8.56" />
+      </svg>
+      导入中...
+    `;
+    showAutoImportStatus('正在从服务器获取项目信息...', 'info');
+
+    const response = await fetch(`https://a1.voxel.cn/v1/server/snapshot?verse_id=${verseId}&expand=verse_id,name,uuid`);
+
+    if (!response.ok) {
+      throw new Error(`请求失败: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // 填充表单字段
+    // verse_id 作为 projectId
+    document.getElementById('project-id').value = data.verse_id || '';
+    // name 作为项目名称
+    document.getElementById('project-name').value = data.name || '';
+    // uuid 作为 uuid
+    document.getElementById('project-uuid').value = data.uuid || '';
+
+    showAutoImportStatus(`成功导入项目信息: ${data.name || 'N/A'}`, 'success');
+  } catch (error) {
+    console.error('自动导入失败:', error);
+    showAutoImportStatus(`导入失败: ${error.message}`, 'error');
+  } finally {
+    importBtn.disabled = false;
+    importBtn.innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+        <polyline points="7 10 12 15 17 10" />
+        <line x1="12" y1="15" x2="12" y2="3" />
+      </svg>
+      自动导入
+    `;
+  }
+}
+
+function showAutoImportStatus(message, type) {
+  const statusEl = document.getElementById('auto-import-status');
+  if (!statusEl) return;
+
+  statusEl.style.display = 'block';
+  statusEl.textContent = message;
+
+  // 根据类型设置样式
+  const styles = {
+    success: { background: 'rgba(25, 135, 84, 0.1)', color: '#198754' },
+    error: { background: 'rgba(220, 53, 69, 0.1)', color: '#dc3545' },
+    warning: { background: 'rgba(255, 193, 7, 0.1)', color: '#b45309' },
+    info: { background: 'rgba(13, 110, 253, 0.1)', color: '#0d6efd' }
+  };
+
+  const style = styles[type] || styles.info;
+  statusEl.style.backgroundColor = style.background;
+  statusEl.style.color = style.color;
 }
 
 async function editProject(id) {
   try {
     state.projects.isEditing = true;
     state.projects.currentProject = state.projects.data.find(p => p.id === id);
-    
+
     if (!state.projects.currentProject) {
       throw new Error('项目不存在');
     }
-    
+
     document.getElementById('project-modal-title').textContent = '编辑项目';
     document.querySelector('.modal-subtitle').textContent = `编辑项目：${state.projects.currentProject.name}`;
+    document.getElementById('project-id').value = state.projects.currentProject.id;
+    document.getElementById('project-id').disabled = true; // 编辑时不可修改ID
     document.getElementById('project-uuid').value = state.projects.currentProject.uuid;
     document.getElementById('project-name').value = state.projects.currentProject.name;
     document.getElementById('project-password').value = ''; // 不显示现有密码
     document.getElementById('project-column-mapping').value = JSON.stringify(state.projects.currentProject.columnMapping || {}, null, 2);
-    
+
     document.getElementById('project-form-error').textContent = '';
     document.getElementById('project-form-error').classList.remove('active');
     document.getElementById('project-modal').classList.add('active');
@@ -1039,23 +1130,24 @@ async function saveProject() {
   const submitBtn = form.querySelector('button[type="submit"]');
   const errorEl = document.getElementById('project-form-error');
   const originalText = submitBtn.textContent;
-  
+
   try {
     submitBtn.disabled = true;
     submitBtn.textContent = '保存中...';
     errorEl.textContent = '';
     errorEl.classList.remove('active');
-    
+
+    const projectIdStr = document.getElementById('project-id').value.trim();
     const uuid = document.getElementById('project-uuid').value.trim();
     const name = document.getElementById('project-name').value.trim();
     const password = document.getElementById('project-password').value.trim();
     const columnMappingText = document.getElementById('project-column-mapping').value.trim();
-    
+
     // 验证输入
     if (!uuid || !name) {
       throw new Error('项目UUID和名称不能为空');
     }
-    
+
     let columnMapping = {};
     if (columnMappingText) {
       try {
@@ -1064,14 +1156,18 @@ async function saveProject() {
         throw new Error('列名映射格式错误，请输入有效的JSON格式');
       }
     }
-    
+
     const projectData = {
       uuid,
       name,
       password: password || null,
       columnMapping: Object.keys(columnMapping).length > 0 ? columnMapping : null
     };
-    
+
+    if (projectIdStr && !state.projects.isEditing) {
+      projectData.id = parseInt(projectIdStr, 10);
+    }
+
     if (state.projects.isEditing && state.projects.currentProject) {
       await api.updateProject(state.projects.currentProject.id, projectData);
       showProjectSuccess('项目更新成功');
@@ -1079,7 +1175,7 @@ async function saveProject() {
       await api.createProject(projectData);
       showProjectSuccess('项目创建成功');
     }
-    
+
     // 关闭模态框并刷新列表
     closeModal();
     await loadProjects();
@@ -1344,13 +1440,14 @@ function bindEvents() {
   // 项目管理事件
   document.getElementById('btn-add-project')?.addEventListener('click', openCreateProjectModal);
   document.getElementById('btn-refresh-projects')?.addEventListener('click', loadProjects);
-  
+  document.getElementById('btn-auto-import')?.addEventListener('click', fetchProjectFromVerse);
+
   // 项目表单提交
   document.getElementById('project-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     await saveProject();
   });
-  
+
   // 项目表单回车键提交
   document.getElementById('project-form')?.addEventListener('keypress', (e) => {
     if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {

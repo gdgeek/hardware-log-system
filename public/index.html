@@ -6,14 +6,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>硬件日志管理系统</title>
   <meta name="description" content="硬件日志管理系统 - 可视化管理和查询日志数据">
-  
+
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  
+
   <style>
     :root {
       --primary-color: #0d6efd;
@@ -26,10 +26,10 @@
       --dark-color: #212529;
       --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-      --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
-      --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
-      --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
-      --shadow-xl: 0 20px 25px rgba(0,0,0,0.1);
+      --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+      --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+      --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
     }
 
     * {
@@ -249,8 +249,25 @@
     }
 
     @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     /* 页面内容 */
@@ -448,14 +465,16 @@
     }
 
     /* 表单 */
-    .form-control, .form-select {
+    .form-control,
+    .form-select {
       border-radius: 10px;
       border: 2px solid #e9ecef;
       padding: 0.75rem 1rem;
       transition: all 0.3s ease;
     }
 
-    .form-control:focus, .form-select:focus {
+    .form-control:focus,
+    .form-select:focus {
       border-color: var(--primary-color);
       box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
     }
@@ -587,6 +606,7 @@
     .modal-body {
       padding: 1.5rem;
     }
+
     /* 添加日志模态框样式 */
     .modal-wide {
       max-width: 800px;
@@ -756,7 +776,8 @@
       font-weight: 700;
     }
 
-    .form-input, .form-textarea {
+    .form-input,
+    .form-textarea {
       width: 100%;
       padding: 0.875rem 1rem;
       border: 2px solid #e9ecef;
@@ -767,7 +788,8 @@
       font-family: inherit;
     }
 
-    .form-input:focus, .form-textarea:focus {
+    .form-input:focus,
+    .form-textarea:focus {
       outline: none;
       border-color: var(--primary-color);
       box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
@@ -1284,904 +1306,959 @@
 
     .btn-sm:hover {
       transform: translateY(-1px);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
   </style>
 </head>
 
 <body>
-<!-- 登录页面覆盖层 -->
-<div id="login-overlay" class="login-overlay active">
-  <div class="login-card">
-    <div class="login-header">
-      <h2>系统认证</h2>
-      <p>请输入管理密码</p>
-    </div>
-
-    <div id="login-error" class="login-error">密码错误</div>
-
-    <form id="login-form" class="login-form">
-      <div class="form-group">
-        <label for="login-password">管理密码</label>
-        <input type="password" id="login-password" required placeholder="请输入密码">
+  <!-- 登录页面覆盖层 -->
+  <div id="login-overlay" class="login-overlay active">
+    <div class="login-card">
+      <div class="login-header">
+        <h2>系统认证</h2>
+        <p>请输入管理密码</p>
       </div>
-      <button type="submit" class="btn btn-primary">进入系统</button>
-    </form>
+
+      <div id="login-error" class="login-error">密码错误</div>
+
+      <form id="login-form" class="login-form">
+        <div class="form-group">
+          <label for="login-password">管理密码</label>
+          <input type="password" id="login-password" required placeholder="请输入密码">
+        </div>
+        <button type="submit" class="btn btn-primary">进入系统</button>
+      </form>
+    </div>
   </div>
-</div>
 
-<div class="app-container" id="app-content" style="display: none;">
-  <!-- 侧边栏 -->
-  <aside class="sidebar">
-    <div class="sidebar-header">
-      <div class="logo">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="32" height="32" rx="8" fill="url(#gradient1)" />
-          <path d="M8 12h16M8 16h12M8 20h14" stroke="white" stroke-width="2" stroke-linecap="round" />
-          <defs>
-            <linearGradient id="gradient1" x1="0" y1="0" x2="32" y2="32">
-              <stop stop-color="#6366f1" />
-              <stop offset="1" stop-color="#8b5cf6" />
-            </linearGradient>
-          </defs>
-        </svg>
-        <span>日志管理</span>
-      </div>
-    </div>
-
-    <nav class="sidebar-nav">
-      <a href="#dashboard" class="nav-item active" data-page="dashboard">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-          <path
-            d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-        </svg>
-        <span>仪表盘</span>
-      </a>
-      <a href="#logs" class="nav-item" data-page="logs">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd"
-            d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
-            clip-rule="evenodd" />
-        </svg>
-        <span>日志管理</span>
-      </a>
-      <a href="#projects" class="nav-item" data-page="projects">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-          <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-        </svg>
-        <span>项目管理</span>
-      </a>
-      <a href="#reports" class="nav-item" data-page="reports">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-          <path
-            d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
-        </svg>
-        <span>报表中心</span>
-      </a>
-    </nav>
-
-    <div class="sidebar-footer">
-      <a href="/api-docs" target="_blank" class="nav-item">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd"
-            d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
-            clip-rule="evenodd" />
-        </svg>
-        <span>API 文档</span>
-      </a>
-      <button id="btn-logout" class="btn btn-logout nav-item">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd"
-            d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 1.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H7a1 1 0 110-2h7.586l-1.293-1.293a1 1 0 010-1.414z"
-            clip-rule="evenodd" />
-        </svg>
-        <span>退出登录</span>
-      </button>
-    </div>
-  </aside>
-
-  <!-- 主内容区 -->
-  <main class="main-content">
-    <!-- 顶部栏 -->
-    <header class="top-bar">
-      <div class="search-box">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd"
-            d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-            clip-rule="evenodd" />
-        </svg>
-        <input type="text" id="global-search" placeholder="搜索日志...">
-      </div>
-      <div class="top-bar-right">
-        <div class="health-status" id="health-status">
-          <span class="status-dot"></span>
-          <span class="status-text">检测中...</span>
+  <div class="app-container" id="app-content" style="display: none;">
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="32" height="32" rx="8" fill="url(#gradient1)" />
+            <path d="M8 12h16M8 16h12M8 20h14" stroke="white" stroke-width="2" stroke-linecap="round" />
+            <defs>
+              <linearGradient id="gradient1" x1="0" y1="0" x2="32" y2="32">
+                <stop stop-color="#6366f1" />
+                <stop offset="1" stop-color="#8b5cf6" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <span>日志管理</span>
         </div>
       </div>
-    </header>
 
-    <!-- 页面内容 -->
-    <div class="page-content">
-      <!-- 仪表盘页面 -->
-      <section id="page-dashboard" class="page active">
-        <div class="page-header">
-          <div class="page-header-content">
-            <div>
-              <h1>仪表盘</h1>
-              <p>系统概览和关键指标</p>
-            </div>
-            <a href="/session.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary" title="在新标签页中打开项目整理报表">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" style="margin-right: 8px;">
-                <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
-              </svg>
-              打开报表
-            </a>
+      <nav class="sidebar-nav">
+        <a href="#dashboard" class="nav-item active" data-page="dashboard">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+            <path
+              d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+          </svg>
+          <span>仪表盘</span>
+        </a>
+        <a href="#logs" class="nav-item" data-page="logs">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
+              clip-rule="evenodd" />
+          </svg>
+          <span>日志管理</span>
+        </a>
+        <a href="#projects" class="nav-item" data-page="projects">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+          </svg>
+          <span>项目管理</span>
+        </a>
+        <a href="#reports" class="nav-item" data-page="reports">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+            <path
+              d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+          </svg>
+          <span>报表中心</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="/api-docs" target="_blank" class="nav-item">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+              clip-rule="evenodd" />
+          </svg>
+          <span>API 文档</span>
+        </a>
+        <button id="btn-logout" class="btn btn-logout nav-item">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 1.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H7a1 1 0 110-2h7.586l-1.293-1.293a1 1 0 010-1.414z"
+              clip-rule="evenodd" />
+          </svg>
+          <span>退出登录</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <!-- 顶部栏 -->
+      <header class="top-bar">
+        <div class="search-box">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+              clip-rule="evenodd" />
+          </svg>
+          <input type="text" id="global-search" placeholder="搜索日志...">
+        </div>
+        <div class="top-bar-right">
+          <div class="health-status" id="health-status">
+            <span class="status-dot"></span>
+            <span class="status-text">检测中...</span>
           </div>
         </div>
+      </header>
 
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon" style="--icon-bg: linear-gradient(135deg, #6366f1, #8b5cf6);">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            </div>
-            <div class="stat-info">
-              <span class="stat-value" id="stat-total-logs">--</span>
-              <span class="stat-label">总日志数</span>
+      <!-- 页面内容 -->
+      <div class="page-content">
+        <!-- 仪表盘页面 -->
+        <section id="page-dashboard" class="page active">
+          <div class="page-header">
+            <div class="page-header-content">
+              <div>
+                <h1>仪表盘</h1>
+                <p>系统概览和关键指标</p>
+              </div>
+              <a href="/session.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary"
+                title="在新标签页中打开项目整理报表">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" style="margin-right: 8px;">
+                  <path
+                    d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+                </svg>
+                打开报表
+              </a>
             </div>
           </div>
 
-          <div class="stat-card">
-            <div class="stat-icon" style="--icon-bg: linear-gradient(135deg, #10b981, #34d399);">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon" style="--icon-bg: linear-gradient(135deg, #6366f1, #8b5cf6);">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <div class="stat-info">
+                <span class="stat-value" id="stat-total-logs">--</span>
+                <span class="stat-label">总日志数</span>
+              </div>
             </div>
-            <div class="stat-info">
-              <span class="stat-value" id="stat-record-count">--</span>
-              <span class="stat-label">记录日志</span>
+
+            <div class="stat-card">
+              <div class="stat-icon" style="--icon-bg: linear-gradient(135deg, #10b981, #34d399);">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div class="stat-info">
+                <span class="stat-value" id="stat-record-count">--</span>
+                <span class="stat-label">记录日志</span>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon" style="--icon-bg: linear-gradient(135deg, #f59e0b, #fbbf24);">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div class="stat-info">
+                <span class="stat-value" id="stat-warning-count">--</span>
+                <span class="stat-label">警告日志</span>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon" style="--icon-bg: linear-gradient(135deg, #ef4444, #f87171);">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div class="stat-info">
+                <span class="stat-value" id="stat-error-count">--</span>
+                <span class="stat-label">错误日志</span>
+              </div>
             </div>
           </div>
 
-          <div class="stat-card">
-            <div class="stat-icon" style="--icon-bg: linear-gradient(135deg, #f59e0b, #fbbf24);">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
+          <div class="dashboard-grid">
+            <div class="card chart-card">
+              <div class="card-header">
+                <h3>日志趋势（最近7天）</h3>
+              </div>
+              <div class="card-body">
+                <canvas id="chart-trend"></canvas>
+              </div>
             </div>
-            <div class="stat-info">
-              <span class="stat-value" id="stat-warning-count">--</span>
-              <span class="stat-label">警告日志</span>
+
+            <div class="card chart-card">
+              <div class="card-header">
+                <h3>日志类型分布</h3>
+              </div>
+              <div class="card-body">
+                <canvas id="chart-type"></canvas>
+              </div>
             </div>
           </div>
 
-          <div class="stat-card">
-            <div class="stat-icon" style="--icon-bg: linear-gradient(135deg, #ef4444, #f87171);">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div class="stat-info">
-              <span class="stat-value" id="stat-error-count">--</span>
-              <span class="stat-label">错误日志</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="dashboard-grid">
-          <div class="card chart-card">
+          <div class="card">
             <div class="card-header">
-              <h3>日志趋势（最近7天）</h3>
+              <h3>最新日志</h3>
+              <a href="#logs" class="btn btn-link" data-page="logs">查看全部</a>
             </div>
             <div class="card-body">
-              <canvas id="chart-trend"></canvas>
+              <div class="table-container">
+                <table class="data-table" id="recent-logs-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 4%;">ID</th>
+                      <th style="width: 12%;">设备 UUID</th>
+                      <th style="width: 6%;">类型</th>
+                      <th style="width: 12%;">Key</th>
+                      <th style="width: 15%;">Value</th>
+                      <th style="width: 6%;">项目 ID</th>
+                      <th style="width: 12%;">会话 UUID</th>
+                      <th style="width: 10%;">IP</th>
+                      <th style="width: 18%;">时间</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="loading-row">
+                      <td colspan="9">加载中...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 日志管理页面 -->
+        <section id="page-logs" class="page">
+          <div class="page-header">
+            <div class="page-header-content">
+              <div>
+                <h1>日志管理</h1>
+                <p>查询和管理日志记录</p>
+              </div>
+              <button id="btn-add-log" class="btn btn-primary">+ 添加日志</button>
             </div>
           </div>
 
-          <div class="card chart-card">
+          <div class="card filter-card">
+            <div class="card-body">
+              <form id="log-filter-form" class="filter-form">
+                <div class="form-group">
+                  <label for="filter-device-uuid">设备 UUID</label>
+                  <input type="text" id="filter-device-uuid" placeholder="输入设备 UUID">
+                </div>
+                <div class="form-group">
+                  <label for="filter-data-type">日志类型</label>
+                  <select id="filter-data-type">
+                    <option value="">全部</option>
+                    <option value="record">记录</option>
+                    <option value="warning">警告</option>
+                    <option value="error">错误</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="filter-project-id">项目 ID</label>
+                  <input type="number" id="filter-project-id" placeholder="输入项目 ID">
+                </div>
+                <div class="form-group">
+                  <label for="filter-session-uuid">会话 UUID</label>
+                  <input type="text" id="filter-session-uuid" placeholder="输入会话 UUID">
+                </div>
+                <div class="form-group">
+                  <label for="filter-key">Key</label>
+                  <input type="text" id="filter-key" placeholder="输入 Key">
+                </div>
+                <div class="form-group">
+                  <label for="filter-start-time">开始时间</label>
+                  <input type="datetime-local" id="filter-start-time">
+                </div>
+                <div class="form-group">
+                  <label for="filter-end-time">结束时间</label>
+                  <input type="datetime-local" id="filter-end-time">
+                </div>
+                <div class="form-actions">
+                  <button type="submit" class="btn btn-primary">搜索</button>
+                  <button type="reset" class="btn btn-secondary">重置</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="card">
             <div class="card-header">
-              <h3>日志类型分布</h3>
+              <h3>日志列表</h3>
+              <div class="pagination-info" id="logs-pagination-info"></div>
             </div>
             <div class="card-body">
-              <canvas id="chart-type"></canvas>
+              <div class="table-container">
+                <table class="data-table" id="logs-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 4%;">ID</th>
+                      <th style="width: 12%;">设备 UUID</th>
+                      <th style="width: 6%;">类型</th>
+                      <th style="width: 12%;">Key</th>
+                      <th style="width: 15%;">Value</th>
+                      <th style="width: 6%;">项目 ID</th>
+                      <th style="width: 12%;">会话 UUID</th>
+                      <th style="width: 10%;">IP</th>
+                      <th style="width: 18%;">时间</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="loading-row">
+                      <td colspan="9">加载中...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="pagination" id="logs-pagination"></div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div class="card">
-          <div class="card-header">
-            <h3>最新日志</h3>
-            <a href="#logs" class="btn btn-link" data-page="logs">查看全部</a>
+        <!-- 报表中心页面 -->
+        <section id="page-reports" class="page">
+          <div class="page-header">
+            <h1>报表中心</h1>
+            <p>统计报表和数据分析</p>
           </div>
-          <div class="card-body">
-            <div class="table-container">
-              <table class="data-table" id="recent-logs-table">
-                <thead>
-                  <tr>
-                    <th style="width: 4%;">ID</th>
-                    <th style="width: 12%;">设备 UUID</th>
-                    <th style="width: 6%;">类型</th>
-                    <th style="width: 12%;">Key</th>
-                    <th style="width: 15%;">Value</th>
-                    <th style="width: 6%;">项目 ID</th>
-                    <th style="width: 12%;">会话 UUID</th>
-                    <th style="width: 10%;">IP</th>
-                    <th style="width: 18%;">时间</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr class="loading-row">
-                    <td colspan="9">加载中...</td>
-                  </tr>
-                </tbody>
-              </table>
+
+          <div class="tabs">
+            <button class="tab-btn active" data-tab="device-report">设备报表</button>
+            <button class="tab-btn" data-tab="time-report">时间段报表</button>
+            <button class="tab-btn" data-tab="error-report">错误统计</button>
+          </div>
+
+          <!-- 设备报表 -->
+          <div id="tab-device-report" class="tab-content active">
+            <div class="card">
+              <div class="card-body">
+                <form id="device-report-form" class="inline-form">
+                  <div class="form-group">
+                    <label for="report-device-uuid">设备 UUID</label>
+                    <input type="text" id="report-device-uuid" placeholder="输入设备 UUID" required>
+                  </div>
+                  <button type="submit" class="btn btn-primary">生成报表</button>
+                </form>
+              </div>
+            </div>
+            <div id="device-report-result" class="report-result" style="display: none;">
+              <div class="stats-grid">
+                <div class="stat-card">
+                  <div class="stat-info">
+                    <span class="stat-value" id="device-total-logs">--</span>
+                    <span class="stat-label">总日志数</span>
+                  </div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-info">
+                    <span class="stat-value" id="device-record-count">--</span>
+                    <span class="stat-label">记录</span>
+                  </div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-info">
+                    <span class="stat-value" id="device-warning-count">--</span>
+                    <span class="stat-label">警告</span>
+                  </div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-info">
+                    <span class="stat-value" id="device-error-count">--</span>
+                    <span class="stat-label">错误</span>
+                  </div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-header">
+                  <h3>设备日志类型分布</h3>
+                </div>
+                <div class="card-body">
+                  <canvas id="chart-device-type"></canvas>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
 
-      <!-- 日志管理页面 -->
-      <section id="page-logs" class="page">
-        <div class="page-header">
-          <div class="page-header-content">
-            <div>
-              <h1>日志管理</h1>
-              <p>查询和管理日志记录</p>
+          <!-- 时间段报表 -->
+          <div id="tab-time-report" class="tab-content">
+            <div class="card">
+              <div class="card-body">
+                <form id="time-report-form" class="inline-form">
+                  <div class="form-group">
+                    <label for="report-start-time">开始时间</label>
+                    <input type="datetime-local" id="report-start-time" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="report-end-time">结束时间</label>
+                    <input type="datetime-local" id="report-end-time" required>
+                  </div>
+                  <button type="submit" class="btn btn-primary">生成报表</button>
+                </form>
+              </div>
             </div>
-            <button id="btn-add-log" class="btn btn-primary">+ 添加日志</button>
+            <div id="time-report-result" class="report-result" style="display: none;">
+              <div class="stats-grid">
+                <div class="stat-card">
+                  <div class="stat-info">
+                    <span class="stat-value" id="time-total-logs">--</span>
+                    <span class="stat-label">总日志数</span>
+                  </div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-info">
+                    <span class="stat-value" id="time-device-count">--</span>
+                    <span class="stat-label">设备数</span>
+                  </div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-header">
+                  <h3>时间段日志类型分布</h3>
+                </div>
+                <div class="card-body">
+                  <canvas id="chart-time-type"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 错误统计 -->
+          <div id="tab-error-report" class="tab-content">
+            <div class="card">
+              <div class="card-body">
+                <button type="button" class="btn btn-primary" id="btn-load-error-report">加载错误报表</button>
+              </div>
+            </div>
+            <div id="error-report-result" class="report-result" style="display: none;">
+              <div class="stats-grid">
+                <div class="stat-card">
+                  <div class="stat-info">
+                    <span class="stat-value" id="error-total">--</span>
+                    <span class="stat-label">总错误数</span>
+                  </div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-header">
+                  <h3>错误列表</h3>
+                </div>
+                <div class="card-body">
+                  <div class="table-container">
+                    <table class="data-table" id="error-table">
+                      <thead>
+                        <tr>
+                          <th style="width: 4%;">ID</th>
+                          <th style="width: 12%;">设备 UUID</th>
+                          <th style="width: 6%;">类型</th>
+                          <th style="width: 12%;">Key</th>
+                          <th style="width: 15%;">Value</th>
+                          <th style="width: 6%;">项目 ID</th>
+                          <th style="width: 12%;">会话 UUID</th>
+                          <th style="width: 10%;">IP</th>
+                          <th style="width: 18%;">时间</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 项目管理页面 -->
+        <section id="page-projects" class="page">
+          <div class="page-header">
+            <div class="page-header-content">
+              <div>
+                <h1>项目管理</h1>
+                <p>管理系统中的所有项目，包括创建、编辑、删除和配置列名映射</p>
+              </div>
+              <button id="btn-add-project" class="btn btn-primary">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" style="margin-right: 8px;">
+                  <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
+                </svg>
+                新建项目
+              </button>
+            </div>
+          </div>
+
+          <!-- 操作栏 -->
+          <div class="card" style="margin-bottom: 1.5rem;">
+            <div class="card-body" style="padding: 1rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <button id="btn-refresh-projects" class="btn btn-secondary">
+                    <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" style="margin-right: 6px;">
+                      <path fill-rule="evenodd"
+                        d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                        clip-rule="evenodd" />
+                    </svg>
+                    刷新
+                  </button>
+                </div>
+                <div id="projects-stats" style="display: flex; gap: 2rem; font-size: 0.9rem; color: #6c757d;">
+                  <span>总项目数: <strong id="total-projects">0</strong></span>
+                  <span>受保护项目: <strong id="protected-projects">0</strong></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 加载状态 -->
+          <div id="projects-loading" class="card" style="display: none;">
+            <div class="card-body" style="text-align: center; padding: 3rem;">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">正在加载...</span>
+              </div>
+              <p style="margin-top: 1rem; color: #6c757d;">正在加载项目列表...</p>
+            </div>
+          </div>
+
+          <!-- 项目列表 -->
+          <div id="projects-container" class="card">
+            <div class="card-header">
+              <h3>项目列表</h3>
+            </div>
+            <div class="card-body" style="padding: 0;">
+              <div class="table-container">
+                <table class="data-table" id="projects-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 8%;">ID</th>
+                      <th style="width: 20%;">项目名称</th>
+                      <th style="width: 25%;">UUID</th>
+                      <th style="width: 12%;">密码保护</th>
+                      <th style="width: 20%;">列名映射</th>
+                      <th style="width: 15%;">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="projects-tbody">
+                    <tr class="loading-row">
+                      <td colspan="6">加载中...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- 空数据状态 -->
+          <div id="projects-empty" class="card" style="display: none;">
+            <div class="card-body" style="text-align: center; padding: 3rem; color: #6c757d;">
+              <svg width="64" height="64" viewBox="0 0 20 20" fill="currentColor"
+                style="opacity: 0.3; margin-bottom: 1rem;">
+                <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+              </svg>
+              <h4>暂无项目</h4>
+              <p>点击"新建项目"按钮创建第一个项目</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- 日志详情模态框 -->
+  <div class="modal" id="log-detail-modal">
+    <div class="modal-content enhanced-modal-content">
+      <div class="modal-header enhanced-modal-header">
+        <div class="modal-title-section">
+          <div class="modal-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+              <polyline points="14,2 14,8 20,8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+              <polyline points="10,9 9,9 8,9" />
+            </svg>
+          </div>
+          <div>
+            <h3>日志详情</h3>
+            <p class="modal-subtitle">查看日志记录的详细信息</p>
           </div>
         </div>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body enhanced-modal-body" id="log-detail-content"></div>
+    </div>
+  </div>
 
-        <div class="card filter-card">
-          <div class="card-body">
-            <form id="log-filter-form" class="filter-form">
+  <!-- 添加日志模态框 -->
+  <div class="modal" id="add-log-modal">
+    <div class="modal-content enhanced-modal-content enhanced-modal-wide">
+      <div class="modal-header enhanced-modal-header">
+        <div class="modal-title-section">
+          <div class="modal-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="16" />
+              <line x1="8" y1="12" x2="16" y2="12" />
+            </svg>
+          </div>
+          <div>
+            <h3>添加日志</h3>
+            <p class="modal-subtitle">创建一条新的硬件日志记录</p>
+          </div>
+        </div>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body enhanced-modal-body">
+        <form id="add-log-form" class="enhanced-form">
+          <div class="form-section">
+            <h4 class="section-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              设备信息
+            </h4>
+            <div class="form-row">
               <div class="form-group">
-                <label for="filter-device-uuid">设备 UUID</label>
-                <input type="text" id="filter-device-uuid" placeholder="输入设备 UUID">
+                <label for="add-device-uuid" class="form-label">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                    <line x1="8" y1="21" x2="16" y2="21" />
+                    <line x1="12" y1="17" x2="12" y2="21" />
+                  </svg>
+                  设备 UUID
+                  <span class="required">*</span>
+                </label>
+                <input type="text" id="add-device-uuid" class="form-input" placeholder="例如：device-001" required>
               </div>
               <div class="form-group">
-                <label for="filter-data-type">日志类型</label>
-                <select id="filter-data-type">
-                  <option value="">全部</option>
-                  <option value="record">记录</option>
-                  <option value="warning">警告</option>
-                  <option value="error">错误</option>
+                <label for="add-session-uuid" class="form-label">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                  </svg>
+                  会话 UUID
+                  <span class="required">*</span>
+                </label>
+                <input type="text" id="add-session-uuid" class="form-input" placeholder="例如：session-001" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h4 class="section-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 12l2 2 4-4" />
+                <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3" />
+                <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3" />
+                <path d="M3 12h6m6 0h6" />
+              </svg>
+              日志配置
+            </h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="add-project-id" class="form-label">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
+                  </svg>
+                  项目 ID
+                  <span class="required">*</span>
+                </label>
+                <input type="number" id="add-project-id" class="form-input" placeholder="例如：1" required>
+              </div>
+              <div class="form-group">
+                <label for="add-data-type" class="form-label">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                    <polyline points="14,2 14,8 20,8" />
+                  </svg>
+                  日志类型
+                  <span class="required">*</span>
+                </label>
+                <select id="add-data-type" class="form-input" required>
+                  <option value="record">📝 记录</option>
+                  <option value="warning">⚠️ 警告</option>
+                  <option value="error">❌ 错误</option>
                 </select>
               </div>
-              <div class="form-group">
-                <label for="filter-project-id">项目 ID</label>
-                <input type="number" id="filter-project-id" placeholder="输入项目 ID">
-              </div>
-              <div class="form-group">
-                <label for="filter-session-uuid">会话 UUID</label>
-                <input type="text" id="filter-session-uuid" placeholder="输入会话 UUID">
-              </div>
-              <div class="form-group">
-                <label for="filter-key">Key</label>
-                <input type="text" id="filter-key" placeholder="输入 Key">
-              </div>
-              <div class="form-group">
-                <label for="filter-start-time">开始时间</label>
-                <input type="datetime-local" id="filter-start-time">
-              </div>
-              <div class="form-group">
-                <label for="filter-end-time">结束时间</label>
-                <input type="datetime-local" id="filter-end-time">
-              </div>
-              <div class="form-actions">
-                <button type="submit" class="btn btn-primary">搜索</button>
-                <button type="reset" class="btn btn-secondary">重置</button>
-              </div>
-            </form>
+            </div>
           </div>
-        </div>
 
-        <div class="card">
-          <div class="card-header">
-            <h3>日志列表</h3>
-            <div class="pagination-info" id="logs-pagination-info"></div>
-          </div>
-          <div class="card-body">
-            <div class="table-container">
-              <table class="data-table" id="logs-table">
-                <thead>
-                  <tr>
-                    <th style="width: 4%;">ID</th>
-                    <th style="width: 12%;">设备 UUID</th>
-                    <th style="width: 6%;">类型</th>
-                    <th style="width: 12%;">Key</th>
-                    <th style="width: 15%;">Value</th>
-                    <th style="width: 6%;">项目 ID</th>
-                    <th style="width: 12%;">会话 UUID</th>
-                    <th style="width: 10%;">IP</th>
-                    <th style="width: 18%;">时间</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr class="loading-row">
-                    <td colspan="9">加载中...</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="pagination" id="logs-pagination"></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 报表中心页面 -->
-      <section id="page-reports" class="page">
-        <div class="page-header">
-          <h1>报表中心</h1>
-          <p>统计报表和数据分析</p>
-        </div>
-
-        <div class="tabs">
-          <button class="tab-btn active" data-tab="device-report">设备报表</button>
-          <button class="tab-btn" data-tab="time-report">时间段报表</button>
-          <button class="tab-btn" data-tab="error-report">错误统计</button>
-        </div>
-
-        <!-- 设备报表 -->
-        <div id="tab-device-report" class="tab-content active">
-          <div class="card">
-            <div class="card-body">
-              <form id="device-report-form" class="inline-form">
-                <div class="form-group">
-                  <label for="report-device-uuid">设备 UUID</label>
-                  <input type="text" id="report-device-uuid" placeholder="输入设备 UUID" required>
-                </div>
-                <button type="submit" class="btn btn-primary">生成报表</button>
-              </form>
-            </div>
-          </div>
-          <div id="device-report-result" class="report-result" style="display: none;">
-            <div class="stats-grid">
-              <div class="stat-card">
-                <div class="stat-info">
-                  <span class="stat-value" id="device-total-logs">--</span>
-                  <span class="stat-label">总日志数</span>
-                </div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-info">
-                  <span class="stat-value" id="device-record-count">--</span>
-                  <span class="stat-label">记录</span>
-                </div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-info">
-                  <span class="stat-value" id="device-warning-count">--</span>
-                  <span class="stat-label">警告</span>
-                </div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-info">
-                  <span class="stat-value" id="device-error-count">--</span>
-                  <span class="stat-label">错误</span>
-                </div>
-              </div>
-            </div>
-            <div class="card">
-              <div class="card-header">
-                <h3>设备日志类型分布</h3>
-              </div>
-              <div class="card-body">
-                <canvas id="chart-device-type"></canvas>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 时间段报表 -->
-        <div id="tab-time-report" class="tab-content">
-          <div class="card">
-            <div class="card-body">
-              <form id="time-report-form" class="inline-form">
-                <div class="form-group">
-                  <label for="report-start-time">开始时间</label>
-                  <input type="datetime-local" id="report-start-time" required>
-                </div>
-                <div class="form-group">
-                  <label for="report-end-time">结束时间</label>
-                  <input type="datetime-local" id="report-end-time" required>
-                </div>
-                <button type="submit" class="btn btn-primary">生成报表</button>
-              </form>
-            </div>
-          </div>
-          <div id="time-report-result" class="report-result" style="display: none;">
-            <div class="stats-grid">
-              <div class="stat-card">
-                <div class="stat-info">
-                  <span class="stat-value" id="time-total-logs">--</span>
-                  <span class="stat-label">总日志数</span>
-                </div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-info">
-                  <span class="stat-value" id="time-device-count">--</span>
-                  <span class="stat-label">设备数</span>
-                </div>
-              </div>
-            </div>
-            <div class="card">
-              <div class="card-header">
-                <h3>时间段日志类型分布</h3>
-              </div>
-              <div class="card-body">
-                <canvas id="chart-time-type"></canvas>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 错误统计 -->
-        <div id="tab-error-report" class="tab-content">
-          <div class="card">
-            <div class="card-body">
-              <button type="button" class="btn btn-primary" id="btn-load-error-report">加载错误报表</button>
-            </div>
-          </div>
-          <div id="error-report-result" class="report-result" style="display: none;">
-            <div class="stats-grid">
-              <div class="stat-card">
-                <div class="stat-info">
-                  <span class="stat-value" id="error-total">--</span>
-                  <span class="stat-label">总错误数</span>
-                </div>
-              </div>
-            </div>
-            <div class="card">
-              <div class="card-header">
-                <h3>错误列表</h3>
-              </div>
-              <div class="card-body">
-                <div class="table-container">
-                  <table class="data-table" id="error-table">
-                    <thead>
-                      <tr>
-                        <th style="width: 4%;">ID</th>
-                        <th style="width: 12%;">设备 UUID</th>
-                        <th style="width: 6%;">类型</th>
-                        <th style="width: 12%;">Key</th>
-                        <th style="width: 15%;">Value</th>
-                        <th style="width: 6%;">项目 ID</th>
-                        <th style="width: 12%;">会话 UUID</th>
-                        <th style="width: 10%;">IP</th>
-                        <th style="width: 18%;">时间</th>
-                      </tr>
-                    </thead>
-                    <tbody></tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 项目管理页面 -->
-      <section id="page-projects" class="page">
-        <div class="page-header">
-          <div class="page-header-content">
-            <div>
-              <h1>项目管理</h1>
-              <p>管理系统中的所有项目，包括创建、编辑、删除和配置列名映射</p>
-            </div>
-            <button id="btn-add-project" class="btn btn-primary">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" style="margin-right: 8px;">
-                <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
+          <div class="form-section">
+            <h4 class="section-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
               </svg>
-              新建项目
+              数据内容
+            </h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="add-key" class="form-label">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <circle cx="12" cy="16" r="1" />
+                    <path d="M7 11V7a5 5 0 0110 0v4" />
+                  </svg>
+                  Key
+                  <span class="required">*</span>
+                </label>
+                <input type="text" id="add-key" class="form-input" placeholder="例如：temperature" required>
+              </div>
+              <div class="form-group">
+                <label for="add-timestamp" class="form-label">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12,6 12,12 16,14" />
+                  </svg>
+                  时间戳
+                </label>
+                <input type="number" id="add-timestamp" class="form-input" placeholder="留空使用当前时间">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="add-client-ip" class="form-label">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="2" y1="12" x2="22" y2="12" />
+                    <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+                  </svg>
+                  客户端 IP
+                </label>
+                <input type="text" id="add-client-ip" class="form-input" placeholder="例如：192.168.1.1">
+              </div>
+              <div class="form-group"></div>
+            </div>
+            <div class="form-group">
+              <label for="add-value" class="form-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="16 18 22 12 16 6" />
+                  <polyline points="8 6 2 12 8 18" />
+                </svg>
+                Value
+                <span class="required">*</span>
+              </label>
+              <textarea id="add-value" class="form-textarea" placeholder="输入数据值，支持JSON格式" rows="4" required></textarea>
+            </div>
+          </div>
+
+          <div id="add-log-error" class="form-error"></div>
+          <div class="modal-actions enhanced-modal-actions">
+            <button type="button" class="btn btn-secondary modal-close">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+              取消
+            </button>
+            <button type="submit" class="btn btn-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20,6 9,17 4,12" />
+              </svg>
+              添加日志
             </button>
           </div>
-        </div>
+        </form>
+      </div>
+    </div>
+  </div>
 
-        <!-- 操作栏 -->
-        <div class="card" style="margin-bottom: 1.5rem;">
-          <div class="card-body" style="padding: 1rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <div>
-                <button id="btn-refresh-projects" class="btn btn-secondary">
-                  <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" style="margin-right: 6px;">
-                    <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+  <!-- 项目编辑模态框 -->
+  <div class="modal" id="project-modal">
+    <div class="modal-content enhanced-modal-content">
+      <div class="modal-header enhanced-modal-header">
+        <div class="modal-title-section">
+          <div class="modal-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
+            </svg>
+          </div>
+          <div>
+            <h3 id="project-modal-title">新建项目</h3>
+            <p class="modal-subtitle">创建一个新的硬件日志项目</p>
+          </div>
+        </div>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body enhanced-modal-body">
+        <form id="project-form" class="enhanced-form">
+          <!-- 自动导入区域 -->
+          <div class="form-section" id="auto-import-section">
+            <h4 class="section-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              自动导入
+            </h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="verse-id-input" class="form-label">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="M21 21l-4.35-4.35" />
                   </svg>
-                  刷新
+                  Verse ID
+                </label>
+                <input type="number" id="verse-id-input" class="form-input" placeholder="输入 Verse ID 自动获取项目信息">
+                <small class="form-help">从服务器自动获取项目基本信息</small>
+              </div>
+              <div class="form-group" style="display: flex; align-items: flex-end;">
+                <button type="button" id="btn-auto-import" class="btn btn-success" style="width: 100%;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    style="margin-right: 6px;">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  自动导入
                 </button>
               </div>
-              <div id="projects-stats" style="display: flex; gap: 2rem; font-size: 0.9rem; color: #6c757d;">
-                <span>总项目数: <strong id="total-projects">0</strong></span>
-                <span>受保护项目: <strong id="protected-projects">0</strong></span>
+            </div>
+            <div id="auto-import-status" class="form-help"
+              style="display: none; margin-top: 0.5rem; padding: 0.5rem; border-radius: 8px;"></div>
+          </div>
+
+          <div class="form-section">
+            <h4 class="section-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1" />
+              </svg>
+              基本信息
+            </h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="project-id" class="form-label">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 12l2 2 4-4" />
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  </svg>
+                  项目 ID
+                </label>
+                <input type="number" id="project-id" class="form-input" placeholder="留空自动生成">
+                <small class="form-help">自定义项目ID，留空则由系统自动生成</small>
+              </div>
+              <div class="form-group">
+                <label for="project-uuid" class="form-label">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 12l2 2 4-4" />
+                    <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3" />
+                    <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3" />
+                    <path d="M3 12h6m6 0h6" />
+                  </svg>
+                  项目 UUID
+                  <span class="required">*</span>
+                </label>
+                <input type="text" id="project-uuid" class="form-input" placeholder="例如：sensor-project-001" required>
+                <small class="form-help">项目的唯一标识符，用于系统内部识别</small>
+              </div>
+              <div class="form-group">
+                <label for="project-name" class="form-label">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
+                  </svg>
+                  项目名称
+                  <span class="required">*</span>
+                </label>
+                <input type="text" id="project-name" class="form-input" placeholder="例如：温湿度传感器项目" required>
+                <small class="form-help">项目的显示名称，用于界面展示</small>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- 加载状态 -->
-        <div id="projects-loading" class="card" style="display: none;">
-          <div class="card-body" style="text-align: center; padding: 3rem;">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">正在加载...</span>
-            </div>
-            <p style="margin-top: 1rem; color: #6c757d;">正在加载项目列表...</p>
-          </div>
-        </div>
-
-        <!-- 项目列表 -->
-        <div id="projects-container" class="card">
-          <div class="card-header">
-            <h3>项目列表</h3>
-          </div>
-          <div class="card-body" style="padding: 0;">
-            <div class="table-container">
-              <table class="data-table" id="projects-table">
-                <thead>
-                  <tr>
-                    <th style="width: 8%;">ID</th>
-                    <th style="width: 20%;">项目名称</th>
-                    <th style="width: 25%;">UUID</th>
-                    <th style="width: 12%;">密码保护</th>
-                    <th style="width: 20%;">列名映射</th>
-                    <th style="width: 15%;">操作</th>
-                  </tr>
-                </thead>
-                <tbody id="projects-tbody">
-                  <tr class="loading-row">
-                    <td colspan="6">加载中...</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- 空数据状态 -->
-        <div id="projects-empty" class="card" style="display: none;">
-          <div class="card-body" style="text-align: center; padding: 3rem; color: #6c757d;">
-            <svg width="64" height="64" viewBox="0 0 20 20" fill="currentColor" style="opacity: 0.3; margin-bottom: 1rem;">
-              <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-            </svg>
-            <h4>暂无项目</h4>
-            <p>点击"新建项目"按钮创建第一个项目</p>
-          </div>
-        </div>
-      </section>
-    </div>
-  </main>
-</div>
-
-<!-- 日志详情模态框 -->
-<div class="modal" id="log-detail-modal">
-  <div class="modal-content enhanced-modal-content">
-    <div class="modal-header enhanced-modal-header">
-      <div class="modal-title-section">
-        <div class="modal-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-            <polyline points="14,2 14,8 20,8"/>
-            <line x1="16" y1="13" x2="8" y2="13"/>
-            <line x1="16" y1="17" x2="8" y2="17"/>
-            <polyline points="10,9 9,9 8,9"/>
-          </svg>
-        </div>
-        <div>
-          <h3>日志详情</h3>
-          <p class="modal-subtitle">查看日志记录的详细信息</p>
-        </div>
-      </div>
-      <button class="modal-close">&times;</button>
-    </div>
-    <div class="modal-body enhanced-modal-body" id="log-detail-content"></div>
-  </div>
-</div>
-
-<!-- 添加日志模态框 -->
-<div class="modal" id="add-log-modal">
-  <div class="modal-content enhanced-modal-content enhanced-modal-wide">
-    <div class="modal-header enhanced-modal-header">
-      <div class="modal-title-section">
-        <div class="modal-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="16"/>
-            <line x1="8" y1="12" x2="16" y2="12"/>
-          </svg>
-        </div>
-        <div>
-          <h3>添加日志</h3>
-          <p class="modal-subtitle">创建一条新的硬件日志记录</p>
-        </div>
-      </div>
-      <button class="modal-close">&times;</button>
-    </div>
-    <div class="modal-body enhanced-modal-body">
-      <form id="add-log-form" class="enhanced-form">
-        <div class="form-section">
-          <h4 class="section-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
-            </svg>
-            设备信息
-          </h4>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="add-device-uuid" class="form-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-                  <line x1="8" y1="21" x2="16" y2="21"/>
-                  <line x1="12" y1="17" x2="12" y2="21"/>
-                </svg>
-                设备 UUID
-                <span class="required">*</span>
-              </label>
-              <input type="text" id="add-device-uuid" class="form-input" placeholder="例如：device-001" required>
-            </div>
-            <div class="form-group">
-              <label for="add-session-uuid" class="form-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
-                </svg>
-                会话 UUID
-                <span class="required">*</span>
-              </label>
-              <input type="text" id="add-session-uuid" class="form-input" placeholder="例如：session-001" required>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-section">
-          <h4 class="section-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 12l2 2 4-4"/>
-              <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
-              <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"/>
-              <path d="M3 12h6m6 0h6"/>
-            </svg>
-            日志配置
-          </h4>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="add-project-id" class="form-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
-                </svg>
-                项目 ID
-                <span class="required">*</span>
-              </label>
-              <input type="number" id="add-project-id" class="form-input" placeholder="例如：1" required>
-            </div>
-            <div class="form-group">
-              <label for="add-data-type" class="form-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                  <polyline points="14,2 14,8 20,8"/>
-                </svg>
-                日志类型
-                <span class="required">*</span>
-              </label>
-              <select id="add-data-type" class="form-input" required>
-                <option value="record">📝 记录</option>
-                <option value="warning">⚠️ 警告</option>
-                <option value="error">❌ 错误</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-section">
-          <h4 class="section-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 20h9"/>
-              <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
-            </svg>
-            数据内容
-          </h4>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="add-key" class="form-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <circle cx="12" cy="16" r="1"/>
-                  <path d="M7 11V7a5 5 0 0110 0v4"/>
-                </svg>
-                Key
-                <span class="required">*</span>
-              </label>
-              <input type="text" id="add-key" class="form-input" placeholder="例如：temperature" required>
-            </div>
-            <div class="form-group">
-              <label for="add-timestamp" class="form-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <polyline points="12,6 12,12 16,14"/>
-                </svg>
-                时间戳
-              </label>
-              <input type="number" id="add-timestamp" class="form-input" placeholder="留空使用当前时间">
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="add-client-ip" class="form-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="2" y1="12" x2="22" y2="12"/>
-                  <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
-                </svg>
-                客户端 IP
-              </label>
-              <input type="text" id="add-client-ip" class="form-input" placeholder="例如：192.168.1.1">
-            </div>
-            <div class="form-group"></div>
-          </div>
-          <div class="form-group">
-            <label for="add-value" class="form-label">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="16 18 22 12 16 6"/>
-                <polyline points="8 6 2 12 8 18"/>
+          <div class="form-section">
+            <h4 class="section-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <circle cx="12" cy="16" r="1" />
+                <path d="M7 11V7a5 5 0 0110 0v4" />
               </svg>
-              Value
-              <span class="required">*</span>
-            </label>
-            <textarea id="add-value" class="form-textarea" placeholder="输入数据值，支持JSON格式" rows="4" required></textarea>
+              安全设置
+            </h4>
+            <div class="form-group">
+              <label for="project-password" class="form-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <circle cx="12" cy="16" r="1" />
+                  <path d="M7 11V7a5 5 0 0110 0v4" />
+                </svg>
+                访问密码
+              </label>
+              <input type="password" id="project-password" class="form-input" placeholder="留空表示无密码保护">
+              <small class="form-help">设置密码后，访问项目报表需要输入密码验证</small>
+            </div>
           </div>
-        </div>
 
-        <div id="add-log-error" class="form-error"></div>
-        <div class="modal-actions enhanced-modal-actions">
-          <button type="button" class="btn btn-secondary modal-close">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-            取消
-          </button>
-          <button type="submit" class="btn btn-primary">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="20,6 9,17 4,12"/>
-            </svg>
-            添加日志
-          </button>
-        </div>
-      </form>
+          <div class="form-section">
+            <h4 class="section-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                <polyline points="14,2 14,8 20,8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+                <polyline points="10,9 9,9 8,9" />
+              </svg>
+              数据映射配置
+            </h4>
+            <div class="form-group">
+              <label for="project-column-mapping" class="form-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="16 18 22 12 16 6" />
+                  <polyline points="8 6 2 12 8 18" />
+                </svg>
+                列名映射 (JSON格式)
+              </label>
+              <textarea id="project-column-mapping" class="form-textarea" rows="6"
+                placeholder='{"temperature": "温度", "humidity": "湿度", "pressure": "压力", "battery": "电池电量"}'></textarea>
+              <small class="form-help">
+                <strong>格式说明：</strong>将英文字段名映射为中文显示名称<br>
+                <code>{"原字段名": "显示名称", "field_name": "中文名称"}</code>
+              </small>
+            </div>
+          </div>
+
+          <div id="project-form-error" class="form-error"></div>
+          <div class="modal-actions enhanced-modal-actions">
+            <button type="button" class="btn btn-secondary modal-close">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+              取消
+            </button>
+            <button type="submit" class="btn btn-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20,6 9,17 4,12" />
+              </svg>
+              保存项目
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- 项目编辑模态框 -->
-<div class="modal" id="project-modal">
-  <div class="modal-content enhanced-modal-content">
-    <div class="modal-header enhanced-modal-header">
-      <div class="modal-title-section">
-        <div class="modal-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
-          </svg>
-        </div>
-        <div>
-          <h3 id="project-modal-title">新建项目</h3>
-          <p class="modal-subtitle">创建一个新的硬件日志项目</p>
-        </div>
-      </div>
-      <button class="modal-close">&times;</button>
-    </div>
-    <div class="modal-body enhanced-modal-body">
-      <form id="project-form" class="enhanced-form">
-        <div class="form-section">
-          <h4 class="section-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"/>
-            </svg>
-            基本信息
-          </h4>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="project-uuid" class="form-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M9 12l2 2 4-4"/>
-                  <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
-                  <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"/>
-                  <path d="M3 12h6m6 0h6"/>
-                </svg>
-                项目 UUID
-                <span class="required">*</span>
-              </label>
-              <input type="text" id="project-uuid" class="form-input" placeholder="例如：sensor-project-001" required>
-              <small class="form-help">项目的唯一标识符，用于系统内部识别</small>
-            </div>
-            <div class="form-group">
-              <label for="project-name" class="form-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
-                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
-                </svg>
-                项目名称
-                <span class="required">*</span>
-              </label>
-              <input type="text" id="project-name" class="form-input" placeholder="例如：温湿度传感器项目" required>
-              <small class="form-help">项目的显示名称，用于界面展示</small>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-section">
-          <h4 class="section-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-              <circle cx="12" cy="16" r="1"/>
-              <path d="M7 11V7a5 5 0 0110 0v4"/>
-            </svg>
-            安全设置
-          </h4>
-          <div class="form-group">
-            <label for="project-password" class="form-label">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <circle cx="12" cy="16" r="1"/>
-                <path d="M7 11V7a5 5 0 0110 0v4"/>
-              </svg>
-              访问密码
-            </label>
-            <input type="password" id="project-password" class="form-input" placeholder="留空表示无密码保护">
-            <small class="form-help">设置密码后，访问项目报表需要输入密码验证</small>
-          </div>
-        </div>
-
-        <div class="form-section">
-          <h4 class="section-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-              <polyline points="14,2 14,8 20,8"/>
-              <line x1="16" y1="13" x2="8" y2="13"/>
-              <line x1="16" y1="17" x2="8" y2="17"/>
-              <polyline points="10,9 9,9 8,9"/>
-            </svg>
-            数据映射配置
-          </h4>
-          <div class="form-group">
-            <label for="project-column-mapping" class="form-label">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="16 18 22 12 16 6"/>
-                <polyline points="8 6 2 12 8 18"/>
-              </svg>
-              列名映射 (JSON格式)
-            </label>
-            <textarea id="project-column-mapping" class="form-textarea" rows="6" placeholder='{"temperature": "温度", "humidity": "湿度", "pressure": "压力", "battery": "电池电量"}'></textarea>
-            <small class="form-help">
-              <strong>格式说明：</strong>将英文字段名映射为中文显示名称<br>
-              <code>{"原字段名": "显示名称", "field_name": "中文名称"}</code>
-            </small>
-          </div>
-        </div>
-
-        <div id="project-form-error" class="form-error"></div>
-        <div class="modal-actions enhanced-modal-actions">
-          <button type="button" class="btn btn-secondary modal-close">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-            取消
-          </button>
-          <button type="submit" class="btn btn-primary">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="20,6 9,17 4,12"/>
-            </svg>
-            保存项目
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<script src="/js/app.js"></script>
+  <script src="/js/app.js"></script>
 </body>
 
 </html>

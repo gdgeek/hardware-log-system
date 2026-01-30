@@ -36,3 +36,16 @@ CREATE TABLE IF NOT EXISTS logs (
   INDEX idx_device_time (device_uuid, created_at),
   INDEX idx_device_session (device_uuid, session_uuid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Hardware device logs';
+
+-- Create projects table (id is provided manually, not AUTO_INCREMENT)
+CREATE TABLE IF NOT EXISTS projects (
+  id INT NOT NULL PRIMARY KEY COMMENT 'Project ID (manual)',
+  uuid VARCHAR(36) NOT NULL UNIQUE,
+  name VARCHAR(255) NOT NULL,
+  password VARCHAR(255) DEFAULT NULL,
+  column_mapping JSON DEFAULT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_projects_name (name),
+  INDEX idx_projects_uuid (uuid)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

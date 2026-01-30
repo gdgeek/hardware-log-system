@@ -774,6 +774,114 @@ function createWorkbookFromReport(report) {
   return wb;
 }
 
+// 自动添加项目功能
+async function autoAddProject() {
+  const projectIdInput = document.getElementById('org-project-id');
+  const verseId = projectIdInput.value;
+
+  if (!verseId || verseId < 1) {
+    showError('请先输入有效的项目 ID');
+    return;
+  }
+
+  try {
+    // 显示加载状态
+    const btn = document.getElementById('auto-add-project-btn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>获取中...';
+
+    // 调用外部API获取项目信息
+    const externalApiUrl = `https://a1.voxel.cn/v1/server/snapshot?verse_id=${verseId}&expand=verse_id,name,uuid`;
+    const response = await fetch(externalApiUrl);
+    
+    if (!response.ok) {
+      throw new Error('无法从外部API获取项目信息');
+    }
+
+    const data = await response.json();
+    
+    // 验证返回的数据
+    if (!data || !data.verse_id || !data.name || !data.uuid) {
+      throw new Error('外部API返回的数据格式不正确');
+    }
+
+    // 准备项目数据
+    const projectData = {
+      id: parseInt(data.verse_id, 10),
+      uuid: data.uuid,
+      name: data.name,
+      password: null,
+      columnMapping: null
+    };
+
+    // 调用本地API创建项目
+    const createResponse = await fetch(`${API_BASE}/projects`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('admin_token') || ''}`
+      },
+      body: JSON.stringify(projectData)
+    });
+
+    if (!createResponse.ok) {
+      const error = await createResponse.json();
+      // 如果项目已存在，也算成功
+      if (createResponse.status === 409) {
+        showSuccess(`项目已存在: ${data.name} (ID: ${data.verse_id})`);
+      } else {
+        throw new Error(error.error?.message || '创建项目失败');
+      }
+    } else {
+      const result = await createResponse.json();
+      showSuccess(`项目添加成功: ${result.data.name} (ID: ${result.data.id})`);
+    }
+
+    // 恢复按钮状态
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+
+  } catch (error) {
+    console.error('自动添加项目失败:', error);
+    showError('自动添加项目失败: ' + error.message);
+    
+    // 恢复按钮状态
+    const btn = document.getElementById('auto-add-project-btn');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-plus-circle me-1"></i>自动添加项目';
+  }
+}
+
+// 显示成功消息
+function showSuccess(message) {
+  const container = document.getElementById('error-message-container');
+  const title = document.getElementById('error-message-title');
+  const text = document.getElementById('error-message-text');
+  
+  container.className = 'alert alert-success alert-dismissible fade show d-flex align-items-center';
+  title.textContent = '成功：';
+  text.textContent = message;
+  container.style.display = 'flex';
+  
+  // 3秒后自动隐藏
+  setTimeout(() => {
+    container.style.display = 'none';
+  }, 3000);
+}
+
+// 显示错误消息
+function showError(message) {
+  const container = document.getElementById('error-message-container');
+  const title = document.getElementById('error-message-title');
+  const text = document.getElementById('error-message-text');
+  
+  container.className = 'alert alert-danger alert-dismissible fade show d-flex align-items-center';
+  title.textContent = '错误：';
+  text.textContent = message;
+  container.style.display = 'flex';
+}
+
 // 事件绑定
 document.addEventListener('DOMContentLoaded', async () => {
   // 初始化
@@ -781,6 +889,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 生成报表按钮
   document.getElementById('generate-organization-btn').addEventListener('click', generateOrganizationReport);
+
+  // 自动添加项目按钮
+  document.getElementById('auto-add-project-btn').addEventListener('click', autoAddProject);
 
   // 导出Excel按钮
   // export-excel-btn 已移除，导出功能集成到工具栏

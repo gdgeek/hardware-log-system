@@ -74,7 +74,6 @@ Project.init(
   {
     id: {
       type: DataTypes.INTEGER,
-      autoIncrement: true,
       primaryKey: true,
     },
     uuid: {
