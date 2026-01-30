@@ -13,6 +13,11 @@ export const sequelize = new Sequelize({
   password: config.dbPassword,
   dialect: "mysql",
 
+  // 字符集配置 - 解决中文乱码问题
+  dialectOptions: {
+    charset: "utf8mb4",
+  },
+
   // Connection pool configuration
   pool: {
     min: config.dbPoolMin,
@@ -31,6 +36,8 @@ export const sequelize = new Sequelize({
   // Disable automatic timestamp fields (we'll manage them manually)
   define: {
     timestamps: false,
+    charset: "utf8mb4",
+    collate: "utf8mb4_unicode_ci",
   },
 });
 
