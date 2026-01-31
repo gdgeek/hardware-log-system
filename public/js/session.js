@@ -58,14 +58,20 @@ async function getProjectOrganizationReportByDays(projectId, startDate, endDate)
 
 // 获取项目信息
 async function getProjectInfo(projectId) {
-  const res = await fetch(`${API_BASE}/projects/${projectId}`);
-  if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.error?.message || '获取项目信息失败');
+  try {
+    // 直接从公开的项目列表中查找项目信息
+    const listRes = await fetch(`${API_BASE}/projects`);
+    if (listRes.ok) {
+      const listResult = await listRes.json();
+      const projects = listResult.success ? listResult.data : listResult;
+      const project = projects.find(p => p.id === parseInt(projectId, 10));
+      return project || null;
+    }
+    return null;
+  } catch (error) {
+    console.warn('获取项目信息失败:', error);
+    return null;
   }
-  const result = await res.json();
-  // API返回格式是 {success: true, data: {...}}，我们需要返回data部分
-  return result.success ? result.data : result;
 }
 
 // 项目认证
@@ -85,6 +91,34 @@ async function authenticateProject(projectId, password) {
   return result;
 }
 
+// 更新页面标题显示项目信息
+async function updateProjectInfo(projectId) {
+  const projectInfoEl = document.getElementById('project-info');
+  
+  try {
+    const project = await getProjectInfo(projectId);
+    if (project) {
+      projectInfoEl.innerHTML = `
+        <strong>项目：${project.name}</strong> (ID: ${project.id})
+        <br>
+        <small>查看项目中会话和数据的矩阵报表，支持Excel导出</small>
+      `;
+    } else {
+      projectInfoEl.innerHTML = `
+        <strong>项目 ID: ${projectId}</strong>
+        <br>
+        <small>查看项目中会话和数据的矩阵报表，支持Excel导出</small>
+      `;
+    }
+  } catch (error) {
+    console.warn('获取项目信息失败:', error);
+    projectInfoEl.innerHTML = `
+      <strong>项目 ID: ${projectId}</strong>
+      <br>
+      <small>查看项目中会话和数据的矩阵报表，支持Excel导出</small>
+    `;
+  }
+}
 // 状态管理
 const state = {
   organizationReport: null,
@@ -107,11 +141,17 @@ async function initOrganizationReport() {
     projectIdInput.readOnly = true;
     projectIdInput.style.backgroundColor = '#e9ecef';
     projectIdInput.title = '项目ID由URL参数指定';
+    
+    // 更新项目信息显示
+    await updateProjectInfo(projectId);
   } else {
     // 如果没有URL参数，使用默认值
     if (!projectIdInput.value) {
       projectIdInput.value = 1;
     }
+    
+    // 更新项目信息显示
+    await updateProjectInfo(parseInt(projectIdInput.value, 10));
   }
 
   // 设置默认日期为今天

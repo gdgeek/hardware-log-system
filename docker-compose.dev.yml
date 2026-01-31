@@ -1,63 +1,92 @@
 version: '3.8'
 
 services:
-  # 开发工具服务 - 用于生成 package-lock.json 和其他开发任务
-  dev-tools:
+  # 应用服务 (开发模式 - 代码挂载)
+  app:
     image: node:18-alpine
-    container_name: hardware-log-dev-tools
+    container_name: hardware-log-app-dev
+    restart: unless-stopped
     working_dir: /app
-    volumes:
-      - .:/app
-    command: npm install
-    profiles:
-      - dev
-
-  # 测试服务 - 用于运行测试
-  test:
-    image: node:18-alpine
-    container_name: hardware-log-test
-    working_dir: /app
-    volumes:
-      - .:/app
-      - /app/node_modules
     environment:
-      - NODE_ENV=test
-      - DB_HOST=mysql-test
-      - DB_PORT=3306
-      - DB_NAME=hardware_logs_test
-      - DB_USER=root
-      - DB_PASSWORD=test_password
+      NODE_ENV: development
+      PORT: 3000
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: hardware_logs
+      DB_USER: root
+      DB_PASSWORD: root123
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: your-super-secret-jwt-key-for-development
+      ADMIN_PASSWORD: admin123
+      AUTH_KEY: 123456
+      LOG_LEVEL: info
+      LOG_FILE: logs/app.log
+    ports:
+      - "3000:3000"
+    volumes:
+      # 挂载源代码目录
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./docs:/app/docs
+      # 挂载配置文件
+      - ./package.json:/app/package.json
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./.env.dev:/app/.env
+      # 挂载日志目录
+      - ./logs:/app/logs
+      # 使用命名卷存储node_modules (避免每次重新安装)
+      - node_modules_cache:/app/node_modules
+    command: sh -c "npm install --production=false && npm run dev:watch"
     depends_on:
-      mysql-test:
-        condition: service_healthy
-    command: npm test
-    networks:
-      - test-network
-    profiles:
-      - test
-
-  # 测试数据库
-  mysql-test:
-    image: mysql:8.0
-    container_name: hardware-log-mysql-test
-    environment:
-      - MYSQL_ROOT_PASSWORD=test_password
-      - MYSQL_DATABASE=hardware_logs_test
-      - MYSQL_CHARACTER_SET_SERVER=utf8mb4
-      - MYSQL_COLLATION_SERVER=utf8mb4_unicode_ci
-    tmpfs:
-      - /var/lib/mysql
-    networks:
-      - test-network
+      - db
+      - redis
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ptest_password"]
-      interval: 5s
-      timeout: 3s
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      timeout: 30s
       retries: 5
-      start_period: 10s
-    profiles:
-      - test
+      start_period: 120s
+
+  # MySQL数据库
+  db:
+    image: mysql:8.0
+    container_name: hardware-log-mysql-dev
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: hardware_logs
+      MYSQL_USER: hardware_user
+      MYSQL_PASSWORD: hardware_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data_dev:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    container_name: hardware-log-redis-dev
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_dev:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 20s
+      retries: 10
+
+volumes:
+  mysql_data_dev:
+  redis_data_dev:
+  node_modules_cache:
 
 networks:
-  test-network:
-    driver: bridge
+  default:
+    name: hardware-log-dev-network
