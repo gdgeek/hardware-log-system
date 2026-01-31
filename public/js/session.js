@@ -135,12 +135,14 @@ async function initOrganizationReport() {
   const projectIdInput = document.getElementById('org-project-id');
 
   if (urlProjectId && !isNaN(parseInt(urlProjectId, 10))) {
-    // 如果URL中有有效的projectId参数，预填充并禁用输入框
+    // 如果URL中有有效的projectId参数，隐藏项目ID输入框
     const projectId = parseInt(urlProjectId, 10);
-    projectIdInput.value = projectId;
-    projectIdInput.readOnly = true;
-    projectIdInput.style.backgroundColor = '#e9ecef';
-    projectIdInput.title = '项目ID由URL参数指定';
+    
+    // 隐藏整个项目ID输入列
+    const projectIdColumn = projectIdInput.closest('.col-md-3');
+    if (projectIdColumn) {
+      projectIdColumn.style.display = 'none';
+    }
     
     // 更新项目信息显示
     await updateProjectInfo(projectId);
@@ -345,7 +347,7 @@ async function generateOrganizationReport() {
     projectId = parseInt(urlProjectId, 10);
   } else {
     const projectIdInput = document.getElementById('org-project-id');
-    if (projectIdInput) {
+    if (projectIdInput && projectIdInput.value) {
       projectId = parseInt(projectIdInput.value, 10);
     }
   }
