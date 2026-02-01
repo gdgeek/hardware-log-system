@@ -103,12 +103,14 @@ async function updateProjectInfo(projectId) {
         <br>
         <small>查看项目中会话和数据的矩阵报表，支持Excel导出</small>
       `;
+      return true; // 项目存在
     } else {
       projectInfoEl.innerHTML = `
         <strong>项目 ID: ${projectId}</strong>
         <br>
         <small>查看项目中会话和数据的矩阵报表，支持Excel导出</small>
       `;
+      return false; // 项目不存在
     }
   } catch (error) {
     console.warn('获取项目信息失败:', error);
@@ -117,6 +119,7 @@ async function updateProjectInfo(projectId) {
       <br>
       <small>查看项目中会话和数据的矩阵报表，支持Excel导出</small>
     `;
+    return false; // 获取失败，视为不存在
   }
 }
 // 状态管理
@@ -135,7 +138,7 @@ async function initOrganizationReport() {
   const projectIdInput = document.getElementById('org-project-id');
 
   if (urlProjectId && !isNaN(parseInt(urlProjectId, 10))) {
-    // 如果URL中有有效的projectId参数，隐藏项目ID输入框
+    // 如果URL中有有效的projectId参数，隐藏项目ID输入框并重新布局
     const projectId = parseInt(urlProjectId, 10);
     
     // 隐藏整个项目ID输入列
@@ -144,13 +147,48 @@ async function initOrganizationReport() {
       projectIdColumn.style.display = 'none';
     }
     
-    // 更新项目信息显示
-    await updateProjectInfo(projectId);
+    // 重新调整布局 - 让日期列占用更多空间
+    const startDateColumn = document.getElementById('org-start-date').closest('.col-md-3');
+    const endDateColumn = document.getElementById('org-end-date').closest('.col-md-3');
+    const buttonColumn = document.getElementById('generate-organization-btn').closest('.col-md-3');
+    
+    if (startDateColumn && endDateColumn && buttonColumn) {
+      // 调整为更均匀的布局：开始日期(4列) + 结束日期(4列) + 按钮(4列)
+      startDateColumn.className = startDateColumn.className.replace('col-md-3', 'col-md-4');
+      endDateColumn.className = endDateColumn.className.replace('col-md-3', 'col-md-4');
+      buttonColumn.className = buttonColumn.className.replace('col-md-3', 'col-md-4');
+    }
+    
+    // 更新项目信息显示并检查项目是否存在
+    const projectExists = await updateProjectInfo(projectId);
+    
+    // 如果项目不存在，显示错误并准备重定向
+    if (!projectExists) {
+      showError('项目不存在', '错误：', 5000);
+      
+      // 5秒后删除projectId参数并重定向到正常页面
+      setTimeout(() => {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('projectId');
+        window.location.href = url.toString();
+      }, 5000);
+      
+      return; // 不继续执行后续逻辑
+    }
   } else {
-    // 如果没有URL参数，使用默认值
+    // 如果没有URL参数，使用默认值并保持原始布局
     if (!projectIdInput.value) {
       projectIdInput.value = 1;
     }
+    
+    // 确保布局是原始的4列布局
+    const startDateColumn = document.getElementById('org-start-date').closest('.col-md-4');
+    const endDateColumn = document.getElementById('org-end-date').closest('.col-md-4');
+    const buttonColumn = document.getElementById('generate-organization-btn').closest('.col-md-4');
+    
+    if (startDateColumn) startDateColumn.className = startDateColumn.className.replace('col-md-4', 'col-md-3');
+    if (endDateColumn) endDateColumn.className = endDateColumn.className.replace('col-md-4', 'col-md-3');
+    if (buttonColumn) buttonColumn.className = buttonColumn.className.replace('col-md-4', 'col-md-3');
     
     // 更新项目信息显示
     await updateProjectInfo(parseInt(projectIdInput.value, 10));
@@ -301,7 +339,7 @@ function showPasswordModal(projectId) {
 
 // 显示错误信息
 let errorTimeout = null;
-function showError(message, title = '错误：', duration = 8000) {
+function showError(message, title = '错误：', duration = 5000) {
   const container = document.getElementById('error-message-container');
   const titleEl = document.getElementById('error-message-title');
   const textEl = document.getElementById('error-message-text');
@@ -814,18 +852,6 @@ function createWorkbookFromReport(report) {
 
   XLSX.utils.book_append_sheet(wb, wsMatrix, '项目整理报表');
   return wb;
-}
-
-// 显示错误消息
-function showError(message) {
-  const container = document.getElementById('error-message-container');
-  const title = document.getElementById('error-message-title');
-  const text = document.getElementById('error-message-text');
-  
-  container.className = 'alert alert-danger alert-dismissible fade show d-flex align-items-center';
-  title.textContent = '错误：';
-  text.textContent = message;
-  container.style.display = 'flex';
 }
 
 // 事件绑定
