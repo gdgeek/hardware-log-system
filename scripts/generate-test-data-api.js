@@ -7,7 +7,27 @@ const fetch = require('node-fetch');
 const { v4: uuidv4 } = require('uuid');
 
 const API_BASE = 'http://localhost:3000/api/v1';
-const AUTH_KEY = process.env.AUTH_KEY || 'your-secret-auth-key-here';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+
+// 获取管理员 token
+async function getAdminToken() {
+  const response = await fetch(`${API_BASE}/admin/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      password: ADMIN_PASSWORD
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error('管理员登录失败');
+  }
+
+  const result = await response.json();
+  return result.token;
+}
 
 // 生成随机日期（最近N天内）
 function getRandomDate(daysAgo) {
@@ -24,12 +44,12 @@ function getRandomDate(daysAgo) {
 }
 
 // 创建项目
-async function createProject(name, description, password, columnMapping) {
-  const response = await fetch(`${API_BASE}/admin/projects`, {
+async function createProject(token, name, description, password, columnMapping) {
+  const response = await fetch(`${API_BASE}/projects`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${AUTH_KEY}`
+      'Authorization': `Bearer ${token}`
     },
     body: JSON.stringify({
       name,
