@@ -56,6 +56,16 @@ async function getProjectOrganizationReportByDays(projectId, startDate, endDate)
   return res.json();
 }
 
+// 获取项目原始日志数据
+async function getRawLogs(projectId, startDate, endDate) {
+  const res = await fetch(`${API_BASE}/sessions/reports/raw-logs?projectId=${projectId}&startDate=${startDate}&endDate=${endDate}`);
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error?.message || '获取原始日志数据失败');
+  }
+  return res.json();
+}
+
 // 获取项目信息
 async function getProjectInfo(projectId) {
   try {
@@ -680,6 +690,11 @@ function renderMultipleDaysDownloadOptions(dailyReports, combinedReport) {
           <i class="bi bi-file-earmark-spreadsheet me-1"></i>${t('combined')}
         </button>
         <button class="btn btn-sm px-3 py-1" 
+          style="background: #17a2b8; border: none; color: #fff; border-radius: 6px; font-weight: 500;"
+          onclick="exportRawLogsToExcel()">
+          <i class="bi bi-file-earmark-text me-1"></i>${t('rawData')}
+        </button>
+        <button class="btn btn-sm px-3 py-1" 
           style="background: #6f42c1; border: none; color: #fff; border-radius: 6px; font-weight: 500;"
           onclick="exportAllReports()">
           <i class="bi bi-file-zip me-1"></i>ZIP
@@ -888,3 +903,127 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 });
+
+// 导出原始日志数据到Excel
+async function exportRawLogsToExcel() {
+  // 优先从URL参数获取projectId，如果没有则从输入框获取
+  const urlProjectId = getUrlParameter('projectId');
+  let projectId;
+
+  if (urlProjectId && !isNaN(parseInt(urlProjectId, 10))) {
+    projectId = parseInt(urlProjectId, 10);
+  } else {
+    const projectIdInput = document.getElementById('org-project-id');
+    if (projectIdInput && projectIdInput.value) {
+      projectId = parseInt(projectIdInput.value, 10);
+    }
+  }
+
+  const startDate = document.getElementById('org-start-date').value;
+  const endDate = document.getElementById('org-end-date').value;
+
+  if (!projectId || !startDate || !endDate) {
+    alert(t('noExportData'));
+    return;
+  }
+
+  try {
+    // 显示加载提示
+    const loadingEl = document.getElementById('organization-loading');
+    if (loadingEl) {
+      loadingEl.style.display = 'block';
+    }
+
+    // 获取原始日志数据
+    const result = await getRawLogs(projectId, startDate, endDate);
+
+    if (loadingEl) {
+      loadingEl.style.display = 'none';
+    }
+
+    if (!result.logs || result.logs.length === 0) {
+      alert(t('noExportData'));
+      return;
+    }
+
+    // 创建工作簿
+    const wb = XLSX.utils.book_new();
+
+    // 准备数据：表头 + 数据行
+    const rawData = [
+      ['ID', t('deviceUuid'), t('sessionUuid'), t('projectId'), t('clientIp'), t('dataType'), t('logKey'), t('logValue'), t('createdAt'), t('clientTimestamp')]
+    ];
+
+    // 添加数据行（按创建时间排序，最早的在前）
+    result.logs.forEach(log => {
+      const createdAt = new Date(log.createdAt).toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+
+      const clientTimestamp = log.clientTimestamp 
+        ? new Date(log.clientTimestamp).toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          })
+        : '';
+
+      rawData.push([
+        log.id,
+        log.deviceUuid,
+        log.sessionUuid,
+        log.projectId,
+        log.clientIp || '',
+        log.dataType,
+        log.logKey,
+        log.logValue,
+        createdAt,
+        clientTimestamp
+      ]);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(rawData);
+
+    // 设置列宽
+    ws['!cols'] = [
+      { wch: 10 },  // ID
+      { wch: 40 },  // Device UUID
+      { wch: 40 },  // Session UUID
+      { wch: 12 },  // Project ID
+      { wch: 18 },  // Client IP
+      { wch: 12 },  // Data Type
+      { wch: 30 },  // Log Key
+      { wch: 50 },  // Log Value
+      { wch: 20 },  // Created At
+      { wch: 20 }   // Client Timestamp
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, '原始日志');
+
+    // 生成文件名
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+    const dateRange = startDate === endDate ? startDate : `${startDate}_至_${endDate}`;
+    const filename = `原始日志_项目${projectId}_${dateRange}_${timestamp}.xlsx`;
+
+    // 导出文件
+    XLSX.writeFile(wb, filename);
+    console.log('原始日志Excel文件已导出:', filename);
+  } catch (error) {
+    console.error('导出原始日志失败:', error);
+    alert(t('exportFailed') + ': ' + error.message);
+    
+    // 隐藏加载提示
+    const loadingEl = document.getElementById('organization-loading');
+    if (loadingEl) {
+      loadingEl.style.display = 'none';
+    }
+  }
+}

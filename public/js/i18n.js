@@ -67,12 +67,20 @@ const translations = {
     // 导出
     export: '导出',
     combined: '合并',
+    rawData: '原始数据',
     noExportData: '没有可导出的数据',
     noMatrixData: '没有可导出的矩阵数据',
     dateNotFound: '找不到指定日期的报表',
     exportFailed: '导出ZIP文件失败',
     excelExported: 'Excel文件已导出',
     zipExported: 'ZIP文件已导出',
+    
+    // 原始日志列名
+    deviceUuid: '设备UUID',
+    clientIp: '客户端IP',
+    logKey: '日志键',
+    logValue: '日志值',
+    clientTimestamp: '客户端时间戳',
     
     // 其他
     close: '关闭'
@@ -141,12 +149,20 @@ const translations = {
     // 導出
     export: '導出',
     combined: '合併',
+    rawData: '原始數據',
     noExportData: '沒有可導出的數據',
     noMatrixData: '沒有可導出的矩陣數據',
     dateNotFound: '找不到指定日期的報表',
     exportFailed: '導出ZIP文件失敗',
     excelExported: 'Excel文件已導出',
     zipExported: 'ZIP文件已導出',
+    
+    // 原始日誌列名
+    deviceUuid: '設備UUID',
+    clientIp: '客戶端IP',
+    logKey: '日誌鍵',
+    logValue: '日誌值',
+    clientTimestamp: '客戶端時間戳',
     
     // 其他
     close: '關閉'
@@ -215,12 +231,20 @@ const translations = {
     // Export
     export: 'Export',
     combined: 'Combined',
+    rawData: 'Raw Data',
     noExportData: 'No data to export',
     noMatrixData: 'No matrix data to export',
     dateNotFound: 'Report not found for specified date',
     exportFailed: 'Failed to export ZIP file',
     excelExported: 'Excel file exported',
     zipExported: 'ZIP file exported',
+    
+    // Raw log column names
+    deviceUuid: 'Device UUID',
+    clientIp: 'Client IP',
+    logKey: 'Log Key',
+    logValue: 'Log Value',
+    clientTimestamp: 'Client Timestamp',
     
     // Other
     close: 'Close'

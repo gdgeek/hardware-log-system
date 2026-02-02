@@ -309,6 +309,42 @@ class SessionService {
     
     return report;
   }
+
+  /**
+   * 获取项目的原始日志数据（用于导出）
+   */
+  async getProjectRawLogs(projectId: number, startDate: string, endDate: string): Promise<{
+    projectId: number;
+    startDate: string;
+    endDate: string;
+    totalLogs: number;
+    logs: Log[];
+  }> {
+    // 将日期字符串转换为 Date 对象
+    const startDateTime = new Date(startDate + 'T00:00:00.000Z');
+    const endDateTime = new Date(endDate + 'T23:59:59.999Z');
+
+    // 获取指定日期范围内的所有日志
+    const logs = await logRepository.findByFilters(
+      { 
+        projectId,
+        startTime: startDateTime,
+        endTime: endDateTime
+      },
+      { page: 1, pageSize: 50000 } // 使用大的 pageSize 获取所有日志
+    );
+
+    // 按创建时间排序（最早的在前）
+    logs.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
+    return {
+      projectId,
+      startDate,
+      endDate,
+      totalLogs: logs.length,
+      logs,
+    };
+  }
 }
 
 export const sessionService = new SessionService();

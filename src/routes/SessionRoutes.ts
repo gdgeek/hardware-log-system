@@ -401,4 +401,117 @@ router.get(
   }),
 );
 
+/**
+ * @swagger
+ * /sessions/reports/raw-logs:
+ *   get:
+ *     summary: 获取项目原始日志数据（公开接口）
+ *     tags: [Sessions]
+ *     parameters:
+ *       - in: query
+ *         name: projectId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: 项目 ID
+ *       - in: query
+ *         name: startDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           pattern: '^\d{4}-\d{2}-\d{2}$'
+ *         description: 开始日期 (YYYY-MM-DD 格式)
+ *       - in: query
+ *         name: endDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           pattern: '^\d{4}-\d{2}-\d{2}$'
+ *         description: 结束日期 (YYYY-MM-DD 格式)
+ *     responses:
+ *       200:
+ *         description: 获取成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 projectId:
+ *                   type: integer
+ *                 startDate:
+ *                   type: string
+ *                 endDate:
+ *                   type: string
+ *                 totalLogs:
+ *                   type: integer
+ *                 logs:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       400:
+ *         description: 无效的参数
+ */
+router.get(
+  "/reports/raw-logs",
+  asyncHandler(async (req: Request, res: Response) => {
+    const projectId = parseInt(req.query.projectId as string, 10);
+    const startDate = req.query.startDate as string;
+    const endDate = req.query.endDate as string;
+
+    if (isNaN(projectId) || projectId < 1) {
+      res.status(400).json({
+        error: {
+          code: "INVALID_PARAMETER",
+          message: "Invalid project ID",
+        },
+      });
+      return;
+    }
+
+    if (!startDate || !endDate) {
+      res.status(400).json({
+        error: {
+          code: "INVALID_PARAMETER",
+          message: "Both startDate and endDate are required",
+        },
+      });
+      return;
+    }
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
+      res.status(400).json({
+        error: {
+          code: "INVALID_PARAMETER",
+          message: "Invalid date format, expected YYYY-MM-DD",
+        },
+      });
+      return;
+    }
+    
+    if (new Date(startDate) > new Date(endDate)) {
+      res.status(400).json({
+        error: {
+          code: "INVALID_PARAMETER",
+          message: "Start date cannot be later than end date",
+        },
+      });
+      return;
+    }
+
+    logger.info("获取项目原始日志数据", { projectId, startDate, endDate });
+
+    const result = await sessionService.getProjectRawLogs(projectId, startDate, endDate);
+
+    logger.info("项目原始日志数据获取成功", {
+      projectId,
+      startDate,
+      endDate,
+      totalLogs: result.totalLogs,
+    });
+
+    res.status(200).json(result);
+  }),
+);
+
 export default router;
