@@ -21,7 +21,10 @@
     "test:all": "npm run test && npm run test:frontend && npm run test:e2e",
     "lint": "eslint src --ext .ts",
     "migrate": "ts-node src/models/migrations/migrate.ts up",
-    "migrate:down": "ts-node src/models/migrations/migrate.ts down"
+    "migrate:down": "ts-node src/models/migrations/migrate.ts down",
+    "generate-test-data": "ts-node scripts/generate-test-data.ts",
+    "generate-test-data:clear": "ts-node scripts/generate-test-data.ts --clear",
+    "generate-test-data:api": "ts-node scripts/generate-test-data-api.ts"
   },
   "keywords": [
     "hardware",
