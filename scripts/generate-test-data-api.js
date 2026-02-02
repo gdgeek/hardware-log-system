@@ -73,7 +73,7 @@ async function createLog(projectId, deviceUuid, sessionUuid, dataType, key, valu
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Auth-Key': AUTH_KEY
+      'X-Auth-Key': process.env.AUTH_KEY || '123456'
     },
     body: JSON.stringify({
       deviceUuid,
