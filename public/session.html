@@ -416,6 +416,11 @@
       .table td {
         padding: 0.5rem 0.25rem;
       }
+      
+      .language-selector {
+        top: 10px !important;
+        right: 10px !important;
+      }
     }
 
     @media (max-width: 576px) {
@@ -434,6 +439,38 @@
         margin-bottom: 0.25rem;
       }
     }
+    
+    /* 语言选择器样式 */
+    .language-selector {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 10px;
+      padding: 5px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .language-selector .btn {
+      min-width: 50px;
+      font-size: 0.875rem;
+      padding: 0.375rem 0.75rem;
+      border-color: rgba(255, 255, 255, 0.3);
+      color: rgba(255, 255, 255, 0.9);
+      transition: all 0.3s ease;
+    }
+    
+    .language-selector .btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.5);
+      color: white;
+      transform: translateY(-2px);
+    }
+    
+    .language-selector .btn.active {
+      background: rgba(255, 255, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.6);
+      color: white;
+      font-weight: 600;
+    }
   </style>
 </head>
 
@@ -442,8 +479,8 @@
     <div class="main-container">
       <!-- 页面头部 -->
       <div class="header-section">
-        <h1><i class="bi bi-graph-up-arrow me-3"></i>项目整理报表</h1>
-        <p id="project-info">查看项目中会话和数据的矩阵报表，支持Excel导出</p>
+        <h1><i class="bi bi-graph-up-arrow me-3"></i><span data-i18n="mainTitle">项目整理报表</span></h1>
+        <p id="project-info" data-i18n="viewReportDesc">查看项目中会话和数据的矩阵报表，支持Excel导出</p>
       </div>
 
       <!-- 主要内容 -->
@@ -451,14 +488,14 @@
         <!-- 参数设置卡片 -->
         <div class="card form-card">
           <div class="card-header">
-            <h5><i class="bi bi-gear-fill"></i>报表参数设置</h5>
+            <h5><i class="bi bi-gear-fill"></i><span data-i18n="reportSettings">报表参数设置</span></h5>
           </div>
           <div class="card-body">
             <!-- 错误提示区域 -->
             <div id="error-message-container" class="alert alert-danger d-none align-items-center mb-3">
               <i class="bi bi-exclamation-triangle-fill me-2" style="font-size: 1.2rem;"></i>
               <div>
-                <strong id="error-message-title">错误：</strong>
+                <strong id="error-message-title" data-i18n="error">错误：</strong>
                 <span id="error-message-text"></span>
               </div>
               <button type="button" class="btn-close ms-auto"
@@ -469,37 +506,37 @@
             <div class="row g-3">
               <div class="col-md-3">
                 <label for="org-project-id" class="form-label fw-bold">
-                  <i class="bi bi-folder-fill me-2"></i>项目 ID
+                  <i class="bi bi-folder-fill me-2"></i><span data-i18n="projectId">项目 ID</span>
                 </label>
                 <input type="number" class="form-control" id="org-project-id" min="1" value="1" required>
               </div>
               <div class="col-md-3">
                 <label for="org-start-date" class="form-label fw-bold">
-                  <i class="bi bi-calendar-fill me-2"></i>开始日期
+                  <i class="bi bi-calendar-fill me-2"></i><span data-i18n="startDate">开始日期</span>
                 </label>
                 <input type="date" class="form-control" id="org-start-date" required>
                 <div class="date-shortcuts mt-2">
-                  <button type="button" class="btn btn-outline-secondary btn-sm me-1" data-range="today">今天</button>
-                  <button type="button" class="btn btn-outline-secondary btn-sm me-1" data-range="yesterday">昨天</button>
-                  <button type="button" class="btn btn-outline-secondary btn-sm me-1" data-range="week">7天</button>
-                  <button type="button" class="btn btn-outline-secondary btn-sm" data-range="month">30天</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm me-1" data-range="today" data-i18n="today">今天</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm me-1" data-range="yesterday" data-i18n="yesterday">昨天</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm me-1" data-range="week" data-i18n="last7Days">7天</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm" data-range="month" data-i18n="last30Days">30天</button>
                 </div>
               </div>
               <div class="col-md-3">
                 <label for="org-end-date" class="form-label fw-bold">
-                  <i class="bi bi-calendar-event-fill me-2"></i>结束日期
+                  <i class="bi bi-calendar-event-fill me-2"></i><span data-i18n="endDate">结束日期</span>
                 </label>
                 <input type="date" class="form-control" id="org-end-date" required>
                 <div class="mt-2" style="height: 42px; display: flex; align-items: center;">
                   <small class="text-muted">
                     <i class="bi bi-info-circle me-1"></i>
-                    多天范围生成综合报表
+                    <span data-i18n="multiDayRange">多天范围生成综合报表</span>
                   </small>
                 </div>
               </div>
               <div class="col-md-3 d-flex flex-column justify-content-end">
                 <button id="generate-organization-btn" class="btn btn-primary btn-lg w-100" style="height: 50px;">
-                  <i class="bi bi-play-circle-fill me-2"></i>生成报表
+                  <i class="bi bi-play-circle-fill me-2"></i><span data-i18n="generateReport">生成报表</span>
                 </button>
                 <!-- 占位空间，保持与日期选择部分高度一致 -->
                 <div style="height: 42px;"></div>
@@ -509,9 +546,9 @@
             <!-- 加载状态 -->
             <div id="organization-loading" class="loading-spinner" style="display: none;">
               <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">正在生成报表...</span>
+                <span class="visually-hidden" data-i18n="generating">正在生成报表...</span>
               </div>
-              <p class="mt-3 text-muted">正在生成报表，请稍候...</p>
+              <p class="mt-3 text-muted" data-i18n="generating">正在生成报表，请稍候...</p>
             </div>
           </div>
         </div>
@@ -525,7 +562,7 @@
                   <i class="bi bi-people-fill"></i>
                 </div>
                 <div class="stat-value" id="org-total-devices">0</div>
-                <div class="stat-label">会话数量</div>
+                <div class="stat-label" data-i18n="sessionCount">会话数量</div>
               </div>
             </div>
             <div class="col-md-4">
@@ -534,7 +571,7 @@
                   <i class="bi bi-key-fill"></i>
                 </div>
                 <div class="stat-value" id="org-total-keys">0</div>
-                <div class="stat-label">数据类型</div>
+                <div class="stat-label" data-i18n="dataTypes">数据类型</div>
               </div>
             </div>
             <div class="col-md-4">
@@ -543,7 +580,7 @@
                   <i class="bi bi-database-fill"></i>
                 </div>
                 <div class="stat-value" id="org-total-entries">0</div>
-                <div class="stat-label">总记录数</div>
+                <div class="stat-label" data-i18n="totalRecords">总记录数</div>
               </div>
             </div>
           </div>
@@ -552,17 +589,17 @@
           <div class="card matrix-card">
             <div class="card-header">
               <div>
-                <h5><i class="bi bi-table me-2"></i>会话-数据矩阵</h5>
-                <small>行：会话信息，列：数据Key，值：数据Value</small>
+                <h5><i class="bi bi-table me-2"></i><span data-i18n="sessionDataMatrix">会话-数据矩阵</span></h5>
+                <small data-i18n="matrixDesc">行：会话信息，列：数据Key，值：数据Value</small>
               </div>
             </div>
             <div class="table-container">
               <table class="table table-hover" id="organization-matrix-table">
                 <thead>
                   <tr id="org-table-header">
-                    <th class="session-info-header">会话索引</th>
-                    <th class="session-info-header">启动时间</th>
-                    <th class="session-info-header">会话UUID</th>
+                    <th class="session-info-header" data-i18n="sessionIndex">会话索引</th>
+                    <th class="session-info-header" data-i18n="startTime">启动时间</th>
+                    <th class="session-info-header" data-i18n="sessionUuid">会话UUID</th>
                   </tr>
                 </thead>
                 <tbody id="org-table-body">
@@ -575,8 +612,8 @@
         <!-- 空数据状态 -->
         <div id="organization-empty" class="empty-state" style="display: none;">
           <i class="bi bi-inbox"></i>
-          <h4>暂无数据</h4>
-          <p class="text-muted">该项目在指定日期没有数据记录</p>
+          <h4 data-i18n="noDataTitle">暂无数据</h4>
+          <p class="text-muted" data-i18n="noDataForDate">该项目在指定日期没有数据记录</p>
         </div>
       </div>
     </div>
@@ -589,34 +626,51 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="projectPasswordModalLabel">
-            <i class="bi bi-shield-lock-fill me-2"></i>项目访问认证
+            <i class="bi bi-shield-lock-fill me-2"></i><span data-i18n="projectAuth">项目访问认证</span>
           </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <p class="text-muted mb-3">该项目需要密码才能访问，请输入密码：</p>
+          <p class="text-muted mb-3" data-i18n="projectNeedsPassword">该项目需要密码才能访问，请输入密码：</p>
           <div class="mb-3">
             <label for="project-password" class="form-label fw-bold">
-              <i class="bi bi-key-fill me-2"></i>项目密码
+              <i class="bi bi-key-fill me-2"></i><span data-i18n="projectPassword">项目密码</span>
             </label>
-            <input type="password" class="form-control" id="project-password" placeholder="请输入项目密码" required>
-            <div class="invalid-feedback" id="password-error">
+            <input type="password" class="form-control" id="project-password" data-i18n-placeholder="enterPassword" placeholder="请输入项目密码" required>
+            <div class="invalid-feedback" id="password-error" data-i18n="passwordError">
               密码错误，请重试
             </div>
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">取消</button>
           <button type="button" class="btn btn-primary" id="authenticate-btn">
-            <i class="bi bi-unlock-fill me-2"></i>验证
+            <i class="bi bi-unlock-fill me-2"></i><span data-i18n="verify">验证</span>
           </button>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- 语言选择器 -->
+  <div class="language-selector" style="position: fixed; top: 20px; right: 20px; z-index: 1000;">
+    <div class="btn-group" role="group">
+      <button type="button" class="btn btn-sm btn-outline-light" onclick="switchLanguage('zh-CN')" title="简体中文">
+        简体
+      </button>
+      <button type="button" class="btn btn-sm btn-outline-light" onclick="switchLanguage('zh-TW')" title="繁體中文">
+        繁體
+      </button>
+      <button type="button" class="btn btn-sm btn-outline-light" onclick="switchLanguage('en')" title="English">
+        EN
+      </button>
+    </div>
+  </div>
+
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- i18n 国际化支持 -->
+  <script src="/js/i18n.js"></script>
   <script src="/js/session.js"></script>
 </body>
 

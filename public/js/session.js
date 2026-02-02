@@ -99,25 +99,25 @@ async function updateProjectInfo(projectId) {
     const project = await getProjectInfo(projectId);
     if (project) {
       projectInfoEl.innerHTML = `
-        <strong>项目：${project.name}</strong> (ID: ${project.id})
+        <strong>${t('project')}：${project.name}</strong> (ID: ${project.id})
         <br>
-        <small>查看项目中会话和数据的矩阵报表，支持Excel导出</small>
+        <small>${t('viewReportDesc')}</small>
       `;
       return true; // 项目存在
     } else {
       projectInfoEl.innerHTML = `
-        <strong>项目 ID: ${projectId}</strong>
+        <strong>${t('projectId')}: ${projectId}</strong>
         <br>
-        <small>查看项目中会话和数据的矩阵报表，支持Excel导出</small>
+        <small>${t('viewReportDesc')}</small>
       `;
       return false; // 项目不存在
     }
   } catch (error) {
     console.warn('获取项目信息失败:', error);
     projectInfoEl.innerHTML = `
-      <strong>项目 ID: ${projectId}</strong>
+      <strong>${t('projectId')}: ${projectId}</strong>
       <br>
-      <small>查看项目中会话和数据的矩阵报表，支持Excel导出</small>
+      <small>${t('viewReportDesc')}</small>
     `;
     return false; // 获取失败，视为不存在
   }
@@ -164,7 +164,7 @@ async function initOrganizationReport() {
     
     // 如果项目不存在，显示错误并准备重定向
     if (!projectExists) {
-      showError('项目不存在', '错误：', 5000);
+      showError(t('projectNotFound'), t('error'), 5000);
       
       // 5秒后删除projectId参数并重定向到正常页面
       setTimeout(() => {
@@ -292,14 +292,14 @@ function showPasswordModal(projectId) {
     const password = passwordInput.value.trim();
     if (!password) {
       passwordInput.classList.add('is-invalid');
-      errorDiv.textContent = '请输入密码';
+      errorDiv.textContent = t('enterPasswordPrompt');
       errorDiv.style.display = 'block';
       return;
     }
 
     try {
       authenticateBtn.disabled = true;
-      authenticateBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>验证中...';
+      authenticateBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>${t('verifying')}`;
 
       const authResult = await authenticateProject(projectId, password);
 
@@ -316,16 +316,16 @@ function showPasswordModal(projectId) {
         }
       } else {
         passwordInput.classList.add('is-invalid');
-        errorDiv.textContent = authResult.message || '密码错误';
+        errorDiv.textContent = authResult.message || t('passwordError');
         errorDiv.style.display = 'block';
       }
     } catch (error) {
       passwordInput.classList.add('is-invalid');
-      errorDiv.textContent = error.message || '认证失败';
+      errorDiv.textContent = error.message || t('passwordError');
       errorDiv.style.display = 'block';
     } finally {
       authenticateBtn.disabled = false;
-      authenticateBtn.innerHTML = '<i class="bi bi-unlock-fill me-2"></i>验证';
+      authenticateBtn.innerHTML = `<i class="bi bi-unlock-fill me-2"></i>${t('verify')}`;
     }
   };
 
@@ -339,7 +339,7 @@ function showPasswordModal(projectId) {
 
 // 显示错误信息
 let errorTimeout = null;
-function showError(message, title = '错误：', duration = 5000) {
+function showError(message, title = null, duration = 5000) {
   const container = document.getElementById('error-message-container');
   const titleEl = document.getElementById('error-message-title');
   const textEl = document.getElementById('error-message-text');
@@ -350,7 +350,7 @@ function showError(message, title = '错误：', duration = 5000) {
       clearTimeout(errorTimeout);
     }
 
-    titleEl.textContent = title;
+    titleEl.textContent = title || t('error');
     textEl.textContent = message;
     container.classList.remove('d-none');
     container.classList.add('d-flex');
@@ -364,7 +364,7 @@ function showError(message, title = '错误：', duration = 5000) {
     }, duration);
   } else {
     // 后备方案
-    alert(`${title}${message}`);
+    alert(`${title || t('error')}${message}`);
   }
 }
 
@@ -395,18 +395,18 @@ async function generateOrganizationReport() {
 
   // 验证输入
   if (!projectId || projectId < 1) {
-    showError('请输入有效的项目ID', '验证失败：');
+    showError(t('enterValidProjectId'), t('validationFailed'));
     return;
   }
 
   if (!startDate || !endDate) {
-    showError('请选择日期范围', '验证失败：');
+    showError(t('selectDateRange'), t('validationFailed'));
     return;
   }
 
   // 验证日期范围
   if (new Date(startDate) > new Date(endDate)) {
-    showError('开始日期不能晚于结束日期', '验证失败：');
+    showError(t('startDateAfterEndDate'), t('validationFailed'));
     return;
   }
 
@@ -419,7 +419,7 @@ async function generateOrganizationReport() {
         return;
       }
     } catch (error) {
-      showError(error.message || '无法验证项目权限', '项目验证失败：');
+      showError(error.message || t('cannotVerifyProject'), t('projectValidationFailed'));
       return;
     }
   }
@@ -566,7 +566,7 @@ function renderMultipleDaysReport(result) {
 
   // 构建表头（使用合并报表的keys）
   const tableHeader = document.getElementById('org-table-header');
-  tableHeader.innerHTML = '<th class="session-info-header">会话索引</th><th class="session-info-header">启动时间</th><th class="session-info-header">会话UUID</th>';
+  tableHeader.innerHTML = `<th class="session-info-header">${t('sessionIndex')}</th><th class="session-info-header">${t('startTime')}</th><th class="session-info-header">${t('sessionUuid')}</th>`;
   combinedReport.keys.forEach(key => {
     const th = document.createElement('th');
     th.textContent = key;
@@ -662,7 +662,7 @@ function renderMultipleDaysDownloadOptions(dailyReports, combinedReport) {
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 p-3 rounded-3" 
          style="background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);">
       <div class="d-flex align-items-center gap-3 flex-wrap">
-        <span class="text-white-50 small"><i class="bi bi-download me-1"></i>导出:</span>
+        <span class="text-white-50 small"><i class="bi bi-download me-1"></i>${t('export')}:</span>
         ${dailyReports.map(report => `
           <button class="btn btn-sm px-3 py-1" 
             style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 6px; font-size: 0.85rem;"
@@ -677,7 +677,7 @@ function renderMultipleDaysDownloadOptions(dailyReports, combinedReport) {
         <button class="btn btn-sm px-3 py-1" 
           style="background: #28a745; border: none; color: #fff; border-radius: 6px; font-weight: 500;"
           onclick="exportCombinedReport()">
-          <i class="bi bi-file-earmark-spreadsheet me-1"></i>合并
+          <i class="bi bi-file-earmark-spreadsheet me-1"></i>${t('combined')}
         </button>
         <button class="btn btn-sm px-3 py-1" 
           style="background: #6f42c1; border: none; color: #fff; border-radius: 6px; font-weight: 500;"
@@ -692,13 +692,13 @@ function renderMultipleDaysDownloadOptions(dailyReports, combinedReport) {
 // 导出单日报表
 function exportDailyReport(date) {
   if (!state.dailyReports) {
-    alert('没有可导出的数据');
+    alert(t('noExportData'));
     return;
   }
 
   const dailyReport = state.dailyReports.find(report => report.date === date);
   if (!dailyReport) {
-    alert('找不到指定日期的报表');
+    alert(t('dateNotFound'));
     return;
   }
 
@@ -708,7 +708,7 @@ function exportDailyReport(date) {
 // 导出合并报表
 function exportCombinedReport() {
   if (!state.combinedReport) {
-    alert('没有可导出的数据');
+    alert(t('noExportData'));
     return;
   }
 
@@ -720,7 +720,7 @@ function exportCombinedReport() {
 // 导出所有报表（ZIP格式）
 async function exportAllReports() {
   if (!state.dailyReports || !state.combinedReport) {
-    alert('没有可导出的数据');
+    alert(t('noExportData'));
     return;
   }
 
@@ -765,10 +765,10 @@ async function exportAllReports() {
     link.download = filename;
     link.click();
 
-    console.log('ZIP文件已导出:', filename);
+    console.log(t('zipExported') + ':', filename);
   } catch (error) {
-    console.error('导出ZIP文件失败:', error);
-    alert('导出ZIP文件失败: ' + error.message);
+    console.error(t('exportFailed') + ':', error);
+    alert(t('exportFailed') + ': ' + error.message);
   }
 }
 
@@ -794,7 +794,7 @@ function createWorkbookFromReport(report) {
 
   // 创建矩阵数据
   const matrixData = [
-    ['会话索引', '启动时间', '会话UUID', ...keys] // 表头
+    [t('sessionIndex'), t('startTime'), t('sessionUuid'), ...keys] // 表头
   ];
 
   // 添加数据行
@@ -856,6 +856,10 @@ function createWorkbookFromReport(report) {
 
 // 事件绑定
 document.addEventListener('DOMContentLoaded', async () => {
+  // 初始化语言设置
+  initLanguage();
+  updatePageTranslations();
+  
   // 初始化
   await initOrganizationReport();
 
