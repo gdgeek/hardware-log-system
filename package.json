@@ -24,7 +24,7 @@
     "migrate:down": "ts-node src/models/migrations/migrate.ts down",
     "generate-test-data": "ts-node scripts/generate-test-data.ts",
     "generate-test-data:clear": "ts-node scripts/generate-test-data.ts --clear",
-    "generate-test-data:api": "ts-node scripts/generate-test-data-api.ts"
+    "generate-test-data:api": "node scripts/generate-test-data-api.js"
   },
   "keywords": [
     "hardware",

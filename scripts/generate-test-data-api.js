@@ -3,14 +3,14 @@
  * 使用 HTTP API 而不是直接操作数据库
  */
 
-import fetch from 'node-fetch';
-import { v4 as uuidv4 } from 'uuid';
+const fetch = require('node-fetch');
+const { v4: uuidv4 } = require('uuid');
 
 const API_BASE = 'http://localhost:3000/api/v1';
 const AUTH_KEY = process.env.AUTH_KEY || 'your-secret-auth-key-here';
 
 // 生成随机日期（最近N天内）
-function getRandomDate(daysAgo: number): Date {
+function getRandomDate(daysAgo) {
   const now = new Date();
   const randomDays = Math.floor(Math.random() * daysAgo);
   const randomHours = Math.floor(Math.random() * 24);
@@ -24,7 +24,7 @@ function getRandomDate(daysAgo: number): Date {
 }
 
 // 创建项目
-async function createProject(name: string, description: string, password: string | null, columnMapping: Record<string, string>) {
+async function createProject(name, description, password, columnMapping) {
   const response = await fetch(`${API_BASE}/admin/projects`, {
     method: 'POST',
     headers: {
@@ -48,7 +48,7 @@ async function createProject(name: string, description: string, password: string
 }
 
 // 创建日志
-async function createLog(projectId: number, deviceUuid: string, sessionUuid: string, dataType: string, key: string, value: string, timestamp: number) {
+async function createLog(projectId, deviceUuid, sessionUuid, dataType, key, value, timestamp) {
   const response = await fetch(`${API_BASE}/logs`, {
     method: 'POST',
     headers: {
@@ -130,7 +130,7 @@ async function main() {
         );
         createdProjects.push(result.data);
         console.log(`✓ 创建项目: ${projectData.name} (ID: ${result.data.id})`);
-      } catch (error: any) {
+      } catch (error) {
         console.log(`  跳过项目 "${projectData.name}": ${error.message}`);
       }
     }
@@ -157,9 +157,9 @@ async function main() {
           const logDate = new Date(sessionDate.getTime() + i * 1000 * 60); // 每条日志间隔1分钟
           
           // 根据项目类型生成不同的日志
-          let logKey: string;
-          let logValue: string;
-          let dataType: 'record' | 'warning' | 'error';
+          let logKey;
+          let logValue;
+          let dataType;
           
           // 90% 是 record，8% 是 warning，2% 是 error
           const rand = Math.random();
@@ -249,7 +249,7 @@ async function main() {
               logDate.getTime()
             );
             totalLogs++;
-          } catch (error: any) {
+          } catch (error) {
             console.error(`  创建日志失败: ${error.message}`);
           }
         }
