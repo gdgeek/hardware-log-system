@@ -19,6 +19,7 @@ describe("Validation Schemas", () => {
           deviceUuid: "device-001",
           sessionUuid: "session-001",
           projectId: 1001,
+          userName: "alice",
           timestamp: 1704110400000,
           dataType: "record",
           key: "temperature",
@@ -38,6 +39,7 @@ describe("Validation Schemas", () => {
             deviceUuid: "device-001",
             sessionUuid: "session-001",
             projectId: 1001,
+            userName: "alice",
             timestamp: 1704110400000,
             dataType,
             key: "test",
@@ -54,6 +56,7 @@ describe("Validation Schemas", () => {
           deviceUuid: "device-001",
           sessionUuid: "session-001",
           projectId: 1001,
+          userName: "alice",
           timestamp: 1704110400000,
           dataType: "record",
           key: "a".repeat(255),
@@ -69,6 +72,7 @@ describe("Validation Schemas", () => {
           deviceUuid: "device-001",
           sessionUuid: "session-001",
           projectId: 1001,
+          userName: "alice",
           timestamp: 1704110400000,
           dataType: "record",
           key: "sensor_data",
@@ -84,6 +88,7 @@ describe("Validation Schemas", () => {
           deviceUuid: "device-001",
           sessionUuid: "session-001",
           projectId: 1001,
+          userName: "alice",
           timestamp: 1704110400000,
           dataType: "record",
           key: "test",
@@ -118,6 +123,7 @@ describe("Validation Schemas", () => {
           deviceUuid: "any-string-is-valid",
           sessionUuid: "session-001",
           projectId: 1001,
+          userName: "alice",
           timestamp: 1704110400000,
           dataType: "record",
           key: "test",
@@ -150,6 +156,7 @@ describe("Validation Schemas", () => {
           deviceUuid: "device-001",
           sessionUuid: "session-001",
           projectId: 1001,
+          userName: "alice",
           timestamp: 1704110400000,
           dataType: "invalid",
           key: "test",
@@ -183,6 +190,7 @@ describe("Validation Schemas", () => {
           deviceUuid: "device-001",
           sessionUuid: "session-001",
           projectId: 1001,
+          userName: "alice",
           timestamp: 1704110400000,
           dataType: "record",
           key: "a".repeat(256),
@@ -216,6 +224,7 @@ describe("Validation Schemas", () => {
           deviceUuid: "device-001",
           sessionUuid: "session-001",
           projectId: 1001,
+          userName: "alice",
           timestamp: 1704110400000,
           dataType: "record",
           key: "test",
@@ -241,6 +250,40 @@ describe("Validation Schemas", () => {
         const { error } = logInputSchema.validate(input);
         expect(error).toBeDefined();
         expect(error?.details[0].path).toContain("projectId");
+      });
+    });
+
+    describe("userName", () => {
+      it("should accept missing userName", () => {
+        const input = {
+          deviceUuid: "device-001",
+          sessionUuid: "session-001",
+          projectId: 1001,
+          timestamp: 1704110400000,
+          dataType: "record",
+          key: "test",
+          value: "test data",
+        };
+
+        const { error } = logInputSchema.validate(input);
+        expect(error).toBeUndefined();
+      });
+
+      it("should reject userName exceeding 100 characters", () => {
+        const input = {
+          deviceUuid: "device-001",
+          sessionUuid: "session-001",
+          projectId: 1001,
+          userName: "a".repeat(101),
+          timestamp: 1704110400000,
+          dataType: "record",
+          key: "test",
+          value: "test data",
+        };
+
+        const { error } = logInputSchema.validate(input);
+        expect(error).toBeDefined();
+        expect(error?.details[0].path).toContain("userName");
       });
     });
   });

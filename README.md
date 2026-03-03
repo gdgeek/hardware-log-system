@@ -207,11 +207,13 @@ pnpm run lint
 ```json
 {
   "deviceUuid": "device-001",
+  "sessionUuid": "session-001",
+  "projectId": 1,
+  "userName": "alice",
+  "timestamp": 1740969600000,
   "dataType": "record",
   "key": "temperature",
-  "value": "25.5",
-  "projectName": "smart-home",
-  "version": "1.0.0"
+  "value": "25.5"
 }
 ```
 
@@ -220,11 +222,13 @@ pnpm run lint
 | 字段        | 类型   | 必填 | 说明                                          |
 | ----------- | ------ | ---- | --------------------------------------------- |
 | deviceUuid  | string | 是   | 设备唯一标识（任意字符串）                    |
+| sessionUuid | string | 是   | 会话 ID                                       |
+| projectId   | number | 是   | 项目 ID                                       |
+| userName    | string | 否   | 用户名（最大 100 字符）                       |
+| timestamp   | number | 是   | 客户端 Unix 毫秒时间戳                        |
 | dataType    | string | 是   | 日志类型：record、warning、error              |
 | key         | string | 是   | 日志键名（最大 255 字符）                     |
 | value       | string | 是   | 日志数据（字符串）                            |
-| projectName | string | 否   | 项目名称（最大 100 字符）                     |
-| version     | string | 否   | 版本号（语义化版本格式，如 1.0.0）            |
 | clientIp    | string | 否   | 客户端 IP（自动从请求中获取，支持 IPv4/IPv6） |
 
 ## 环境变量

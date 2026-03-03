@@ -35,6 +35,11 @@ export const logInputSchema = Joi.object({
     "any.required": "projectId is required",
   }),
 
+  userName: Joi.string().max(100).optional().messages({
+    "string.base": "userName must be a string",
+    "string.max": "userName must not exceed 100 characters",
+  }),
+
   timestamp: Joi.number().integer().required().messages({
     "number.base": "timestamp must be a number",
     "any.required": "timestamp is required",

@@ -19,6 +19,7 @@ describe("Log Model", () => {
       expect(attributes.logKey.field).toBe("log_key");
       expect(attributes.logValue.field).toBe("log_value");
       expect(attributes.sessionUuid.field).toBe("session_uuid");
+      expect(attributes.userName.field).toBe("user_name");
       expect(attributes.clientTimestamp.field).toBe("client_timestamp");
       expect(attributes.clientIp.field).toBe("client_ip");
       expect(attributes.createdAt.field).toBe("created_at");
@@ -33,6 +34,7 @@ describe("Log Model", () => {
       expect(attributes.logKey.type.constructor.name).toBe("STRING");
       expect(attributes.logValue.type.constructor.name).toBe("TEXT");
       expect(attributes.sessionUuid.type.constructor.name).toBe("STRING");
+      expect(attributes.userName.type.constructor.name).toBe("STRING");
       expect(attributes.clientTimestamp.type.constructor.name).toBe("BIGINT");
       expect(attributes.createdAt.type.constructor.name).toBe("DATE");
     });
@@ -72,6 +74,7 @@ describe("Log Model", () => {
       expect(attributeNames).toContain("logKey");
       expect(attributeNames).toContain("logValue");
       expect(attributeNames).toContain("sessionUuid");
+      expect(attributeNames).toContain("userName");
       expect(attributeNames).toContain("clientTimestamp");
       expect(attributeNames).toContain("clientIp");
       expect(attributeNames).toContain("createdAt");

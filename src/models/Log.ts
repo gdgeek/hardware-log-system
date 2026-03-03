@@ -10,6 +10,7 @@ export interface LogAttributes {
   deviceUuid: string;
   sessionUuid: string;
   projectId: number;
+  userName: string | null;
   clientIp: string | null;
   dataType: DataType;
   logKey: string;
@@ -23,7 +24,7 @@ export interface LogAttributes {
  */
 export interface LogCreationAttributes extends Optional<
   LogAttributes,
-  "id" | "createdAt" | "clientIp" | "clientTimestamp"
+  "id" | "createdAt" | "userName" | "clientIp" | "clientTimestamp"
 > {}
 
 /**
@@ -37,6 +38,7 @@ export class Log
   declare deviceUuid: string;
   declare sessionUuid: string;
   declare projectId: number;
+  declare userName: string | null;
   declare clientIp: string | null;
   declare dataType: DataType;
   declare logKey: string;
@@ -53,6 +55,7 @@ export class Log
       deviceUuid: this.deviceUuid,
       sessionUuid: this.sessionUuid,
       projectId: this.projectId,
+      userName: this.userName,
       clientIp: this.clientIp,
       dataType: this.dataType,
       logKey: this.logKey,
@@ -88,6 +91,11 @@ Log.init(
       allowNull: false,
       defaultValue: 0,
       field: "project_id",
+    },
+    userName: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      field: "user_name",
     },
     clientIp: {
       type: DataTypes.STRING(45),

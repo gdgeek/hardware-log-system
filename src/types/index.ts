@@ -10,6 +10,7 @@ export interface LogInput {
   deviceUuid: string;
   sessionUuid: string;
   projectId: number;
+  userName?: string;
   timestamp: number;
   dataType: DataType;
   key: string;
@@ -25,6 +26,7 @@ export interface LogOutput {
   deviceUuid: string;
   sessionUuid: string;
   projectId: number;
+  userName: string | null;
   clientIp: string | null;
   dataType: DataType;
   key: string;

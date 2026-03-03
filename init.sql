@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS logs (
   device_uuid VARCHAR(36) NOT NULL COMMENT 'Device UUID',
   session_uuid VARCHAR(36) NOT NULL COMMENT 'Session UUID for tracking app runs',
   project_id INT NOT NULL DEFAULT 0 COMMENT 'Project ID',
+  user_name VARCHAR(100) NULL COMMENT 'User name associated with this log',
   client_ip VARCHAR(45) NULL COMMENT 'Client IP address (IPv4/IPv6)',
   data_type ENUM('record', 'warning', 'error') NOT NULL COMMENT 'Log type',
   log_key VARCHAR(255) NOT NULL COMMENT 'Log key identifier',
