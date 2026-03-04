@@ -298,6 +298,13 @@
       min-width: 200px;
     }
 
+    .table th.session-info-header:nth-child(4) {
+      position: sticky;
+      left: 440px;
+      z-index: 11;
+      min-width: 120px;
+    }
+
     .table td {
       padding: 0.75rem;
       border: 1px solid #e9ecef;
@@ -344,6 +351,15 @@
       z-index: 9;
       min-width: 200px;
       font-size: 0.85rem;
+    }
+
+    .table td.session-info-cell:nth-child(4) {
+      position: sticky;
+      left: 440px;
+      z-index: 9;
+      min-width: 120px;
+      font-size: 0.9rem;
+      text-align: center;
     }
 
     .table td.has-value {
@@ -600,6 +616,7 @@
                     <th class="session-info-header" data-i18n="sessionIndex">会话索引</th>
                     <th class="session-info-header" data-i18n="startTime">启动时间</th>
                     <th class="session-info-header" data-i18n="sessionUuid">会话UUID</th>
+                    <th class="session-info-header" data-i18n="userName">用户名</th>
                   </tr>
                 </thead>
                 <tbody id="org-table-body">
