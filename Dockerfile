@@ -40,8 +40,8 @@ RUN pnpm install --prod
 # 从构建阶段复制编译后的代码
 COPY --from=builder /app/dist ./dist
 
-# 复制迁移脚本
-COPY src/models/migrations ./dist/models/migrations
+# 复制迁移 SQL 文件（不覆盖编译后的 migrate.js）
+COPY src/models/migrations/*.sql ./dist/models/migrations/
 
 # 复制静态资源（UI 管理界面）
 COPY public ./public
