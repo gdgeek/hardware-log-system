@@ -83,6 +83,12 @@ const translations = {
     logValue: '日志值',
     clientTimestamp: '客户端时间戳',
     
+    // 用户过滤
+    filteringByUser: '正在过滤用户',
+    onlyShowingUserData: '仅显示该用户的会话和数据',
+    clearFilter: '清除过滤',
+    clickToFilter: '点击过滤此用户',
+    
     // 其他
     close: '关闭'
   },
@@ -166,6 +172,12 @@ const translations = {
     logValue: '日誌值',
     clientTimestamp: '客戶端時間戳',
     
+    // 用戶過濾
+    filteringByUser: '正在過濾用戶',
+    onlyShowingUserData: '僅顯示該用戶的會話和數據',
+    clearFilter: '清除過濾',
+    clickToFilter: '點擊過濾此用戶',
+    
     // 其他
     close: '關閉'
   },
@@ -248,6 +260,12 @@ const translations = {
     logKey: 'Log Key',
     logValue: 'Log Value',
     clientTimestamp: 'Client Timestamp',
+    
+    // User filtering
+    filteringByUser: 'Filtering by User',
+    onlyShowingUserData: 'Only showing sessions and data for this user',
+    clearFilter: 'Clear Filter',
+    clickToFilter: 'Click to filter this user',
     
     // Other
     close: 'Close'

@@ -10,6 +10,19 @@ function getUrlParameter(name) {
   return urlParams.get(name);
 }
 
+// 工具函数 - 更新URL参数
+function updateUrlParameters(params) {
+  const url = new URL(window.location.href);
+  Object.keys(params).forEach(key => {
+    if (params[key] !== null && params[key] !== undefined) {
+      url.searchParams.set(key, params[key]);
+    } else {
+      url.searchParams.delete(key);
+    }
+  });
+  window.history.replaceState({}, '', url.toString());
+}
+
 // 工具函数
 function formatDate(dateStr) {
   if (!dateStr) return '-';
@@ -145,6 +158,9 @@ const state = {
 async function initOrganizationReport() {
   // 检查URL参数中是否有projectId
   const urlProjectId = getUrlParameter('projectId');
+  const urlStartDate = getUrlParameter('startDate');
+  const urlEndDate = getUrlParameter('endDate');
+  const urlUserName = getUrlParameter('userName');
   const projectIdInput = document.getElementById('org-project-id');
 
   if (urlProjectId && !isNaN(parseInt(urlProjectId, 10))) {
@@ -204,10 +220,26 @@ async function initOrganizationReport() {
     await updateProjectInfo(parseInt(projectIdInput.value, 10));
   }
 
-  // 设置默认日期为今天
+  // 设置日期：优先使用URL参数，否则使用今天
   const today = new Date().toISOString().split('T')[0];
-  document.getElementById('org-start-date').value = today;
-  document.getElementById('org-end-date').value = today;
+  document.getElementById('org-start-date').value = urlStartDate || today;
+  document.getElementById('org-end-date').value = urlEndDate || today;
+  
+  // 如果URL中有用户名参数且不为空，显示过滤提示
+  if (urlUserName && urlUserName.trim() !== '') {
+    showUserNameFilter(decodeURIComponent(urlUserName));
+  } else {
+    // 如果没有用户名参数，确保隐藏过滤横幅
+    hideUserNameFilter();
+  }
+  
+  // 如果URL中有日期参数，自动生成报表
+  if (urlStartDate && urlEndDate) {
+    // 延迟一点执行，确保页面完全加载
+    setTimeout(() => {
+      generateOrganizationReport();
+    }, 100);
+  }
 
   // 绑定日期范围快捷按钮事件
   document.querySelectorAll('[data-range]').forEach(btn => {
@@ -386,6 +418,77 @@ function hideError() {
     container.classList.add('d-none');
   }
 }
+
+// 显示用户名过滤提示
+function showUserNameFilter(userName) {
+  // 在报表设置卡片后面添加过滤提示
+  let filterBanner = document.getElementById('username-filter-banner');
+  
+  if (!filterBanner) {
+    filterBanner = document.createElement('div');
+    filterBanner.id = 'username-filter-banner';
+    filterBanner.className = 'alert alert-info d-none align-items-center justify-content-between mb-3';
+    filterBanner.style.cssText = 'background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); color: white; border: none; box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3);';
+    
+    const formCard = document.querySelector('.form-card');
+    if (formCard) {
+      formCard.parentNode.insertBefore(filterBanner, formCard.nextSibling);
+    }
+  }
+  
+  filterBanner.innerHTML = `
+    <div class="d-flex align-items-center">
+      <i class="bi bi-funnel-fill me-2" style="font-size: 1.2rem;"></i>
+      <div>
+        <strong>${t('filteringByUser')}:</strong> ${escapeHtml(userName)}
+        <br>
+        <small>${t('onlyShowingUserData')}</small>
+      </div>
+    </div>
+    <button type="button" class="btn btn-light btn-sm" onclick="clearUserNameFilter()">
+      <i class="bi bi-x-circle me-1"></i>${t('clearFilter')}
+    </button>
+  `;
+  
+  // 使用 Bootstrap 的 d-flex/d-none 类来控制显示，避免 !important 冲突
+  filterBanner.classList.remove('d-none');
+  filterBanner.classList.add('d-flex');
+}
+
+// 隐藏用户名过滤提示
+function hideUserNameFilter() {
+  const filterBanner = document.getElementById('username-filter-banner');
+  if (filterBanner) {
+    filterBanner.classList.remove('d-flex');
+    filterBanner.classList.add('d-none');
+  }
+}
+
+// 清除用户名过滤
+function clearUserNameFilter() {
+  // 删除URL中的userName参数
+  updateUrlParameters({
+    userName: null
+  });
+  
+  // 重新生成报表（renderMultipleDaysReport 会自动隐藏过滤横幅）
+  generateOrganizationReport();
+}
+
+// 点击用户名进行过滤
+function filterByUserName(userName) {
+  if (!userName || userName === '-') {
+    return; // 如果没有用户名，不执行过滤
+  }
+  
+  // 更新URL参数
+  updateUrlParameters({
+    userName: encodeURIComponent(userName)
+  });
+  
+  // 重新生成报表（renderMultipleDaysReport 会自动显示过滤横幅）
+  generateOrganizationReport();
+}
 async function generateOrganizationReport() {
   // 优先从URL参数获取projectId，如果没有则从输入框获取
   const urlProjectId = getUrlParameter('projectId');
@@ -454,12 +557,29 @@ async function generateOrganizationReport() {
     // 如果没有数据，显示空消息
     if (result.dailyReports.length === 0) {
       emptyEl.style.display = 'block';
+      // 仍然更新URL参数，即使没有数据
+      updateUrlParameters({
+        projectId: projectId,
+        startDate: startDate,
+        endDate: endDate
+      });
       return;
     }
 
     // 显示报表结果（统一使用多天报表渲染）
     renderMultipleDaysReport(result);
     resultEl.style.display = 'block';
+    
+    // 获取当前的用户名过滤参数
+    const urlUserName = getUrlParameter('userName');
+    
+    // 更新URL参数，保存当前的查询条件
+    updateUrlParameters({
+      projectId: projectId,
+      startDate: startDate,
+      endDate: endDate,
+      userName: urlUserName // 保留用户名过滤参数
+    });
 
   } catch (error) {
     loadingEl.style.display = 'none';
@@ -557,8 +677,8 @@ function exportToExcel() {
     return;
   }
 
-  const report = state.organizationReport;
-  const { projectId, startDate, endDate } = report;
+  const report = applyCurrentFilter(state.organizationReport);
+  const { projectId, startDate, endDate } = state.organizationReport;
 
   // 如果没有数据，提示用户
   if (report.devices.length === 0 || report.keys.length === 0) {
@@ -568,37 +688,56 @@ function exportToExcel() {
 
   // 使用通用导出函数
   const dateRange = startDate === endDate ? startDate : `${startDate}_至_${endDate}`;
-  exportReportToExcel(report, `项目整理报表_项目${projectId}_${dateRange}`);
+  const filterUserName = getCurrentFilterUserName();
+  const suffix = filterUserName ? `_${filterUserName}` : '';
+  exportReportToExcel(report, `项目整理报表_项目${projectId}_${dateRange}${suffix}`);
 }
 
 // 渲染多天报表
 function renderMultipleDaysReport(result) {
   const { dailyReports, combinedReport } = result;
+  
+  // 获取用户名过滤参数
+  const urlUserName = getUrlParameter('userName');
+  const filterUserName = urlUserName && urlUserName.trim() !== '' ? decodeURIComponent(urlUserName) : null;
+  
+  // 根据是否有过滤参数，显示或隐藏过滤横幅
+  if (filterUserName) {
+    showUserNameFilter(filterUserName);
+  } else {
+    hideUserNameFilter();
+  }
+  
+  // 如果有用户名过滤，过滤数据
+  let filteredReport = combinedReport;
+  if (filterUserName) {
+    filteredReport = filterReportByUserName(combinedReport, filterUserName);
+  }
 
-  // 更新汇总信息（使用合并报表的数据）
-  document.getElementById('org-total-devices').textContent = combinedReport.totalDevices;
-  document.getElementById('org-total-keys').textContent = combinedReport.totalKeys;
-  document.getElementById('org-total-entries').textContent = combinedReport.totalEntries;
+  // 更新汇总信息（使用过滤后的报表数据）
+  document.getElementById('org-total-devices').textContent = filteredReport.totalDevices;
+  document.getElementById('org-total-keys').textContent = filteredReport.totalKeys;
+  document.getElementById('org-total-entries').textContent = filteredReport.totalEntries;
 
-  // 构建表头（使用合并报表的keys）
+  // 构建表头（使用过滤后的报表的keys）
   const tableHeader = document.getElementById('org-table-header');
   tableHeader.innerHTML = `<th class="session-info-header">${t('sessionIndex')}</th><th class="session-info-header">${t('startTime')}</th><th class="session-info-header">${t('sessionUuid')}</th><th class="session-info-header">${t('userName')}</th>`;
-  combinedReport.keys.forEach(key => {
+  filteredReport.keys.forEach(key => {
     const th = document.createElement('th');
     th.textContent = key;
     tableHeader.appendChild(th);
   });
 
-  // 构建表格内容（显示合并报表）
+  // 构建表格内容（显示过滤后的报表）
   const tableBody = document.getElementById('org-table-body');
   tableBody.innerHTML = '';
 
-  combinedReport.devices.forEach(session => {
+  filteredReport.devices.forEach(session => {
     const row = document.createElement('tr');
 
     // 会话索引列（只显示数字）
     const sessionIndexCell = document.createElement('td');
-    const sessionData = combinedReport.sessionInfo[session];
+    const sessionData = filteredReport.sessionInfo[session];
     sessionIndexCell.textContent = sessionData.index;
     sessionIndexCell.className = 'session-info-cell';
     row.appendChild(sessionIndexCell);
@@ -624,16 +763,35 @@ function renderMultipleDaysReport(result) {
     sessionUuidCell.className = 'session-info-cell';
     row.appendChild(sessionUuidCell);
 
-    // 用户名列
+    // 用户名列（添加点击事件）
     const userNameCell = document.createElement('td');
-    userNameCell.textContent = sessionData.userName || '-';
+    const displayUserName = sessionData.userName || '-';
+    userNameCell.textContent = displayUserName;
     userNameCell.className = 'session-info-cell';
+    
+    // 如果有用户名且不是当前过滤的用户名，添加点击样式和事件
+    if (sessionData.userName && sessionData.userName !== '-') {
+      userNameCell.style.cursor = 'pointer';
+      userNameCell.style.textDecoration = 'underline';
+      userNameCell.title = t('clickToFilter') + ': ' + sessionData.userName;
+      
+      // 如果是当前过滤的用户名，高亮显示
+      if (filterUserName && sessionData.userName === filterUserName) {
+        userNameCell.style.background = 'rgba(23, 162, 184, 0.2)';
+        userNameCell.style.fontWeight = 'bold';
+      }
+      
+      userNameCell.onclick = () => {
+        filterByUserName(sessionData.userName);
+      };
+    }
+    
     row.appendChild(userNameCell);
 
     // 数据列
-    combinedReport.keys.forEach(key => {
+    filteredReport.keys.forEach(key => {
       const cell = document.createElement('td');
-      const value = combinedReport.matrix[session][key];
+      const value = filteredReport.matrix[session][key];
 
       if (value !== null && value !== undefined) {
         cell.textContent = truncateText(value, 15);
@@ -652,7 +810,74 @@ function renderMultipleDaysReport(result) {
   });
 
   // 显示多天报表的下载选项
-  renderMultipleDaysDownloadOptions(dailyReports, combinedReport);
+  renderMultipleDaysDownloadOptions(dailyReports, filteredReport);
+}
+
+// 根据用户名过滤报表数据
+function filterReportByUserName(report, userName) {
+  // 过滤出匹配用户名的会话
+  const filteredDevices = report.devices.filter(session => {
+    const sessionData = report.sessionInfo[session];
+    return sessionData.userName === userName;
+  });
+  
+  // 如果没有匹配的会话，返回空报表
+  if (filteredDevices.length === 0) {
+    return {
+      ...report,
+      devices: [],
+      totalDevices: 0,
+      totalKeys: 0,
+      totalEntries: 0,
+      keys: [],
+      matrix: {},
+      sessionInfo: {}
+    };
+  }
+  
+  // 构建过滤后的 sessionInfo
+  const filteredSessionInfo = {};
+  filteredDevices.forEach(session => {
+    filteredSessionInfo[session] = report.sessionInfo[session];
+  });
+  
+  // 构建过滤后的 matrix
+  const filteredMatrix = {};
+  filteredDevices.forEach(session => {
+    filteredMatrix[session] = report.matrix[session];
+  });
+  
+  // 重新计算 keys（只包含过滤后会话中实际存在的 key）
+  const keysSet = new Set();
+  filteredDevices.forEach(session => {
+    Object.keys(report.matrix[session]).forEach(key => {
+      if (report.matrix[session][key] !== null && report.matrix[session][key] !== undefined) {
+        keysSet.add(key);
+      }
+    });
+  });
+  const filteredKeys = Array.from(keysSet);
+  
+  // 计算总记录数
+  let totalEntries = 0;
+  filteredDevices.forEach(session => {
+    filteredKeys.forEach(key => {
+      if (filteredMatrix[session][key] !== null && filteredMatrix[session][key] !== undefined) {
+        totalEntries++;
+      }
+    });
+  });
+  
+  return {
+    ...report,
+    devices: filteredDevices,
+    sessionInfo: filteredSessionInfo,
+    matrix: filteredMatrix,
+    keys: filteredKeys,
+    totalDevices: filteredDevices.length,
+    totalKeys: filteredKeys.length,
+    totalEntries: totalEntries
+  };
 }
 
 // 渲染多天报表的下载选项
@@ -716,6 +941,18 @@ function renderMultipleDaysDownloadOptions(dailyReports, combinedReport) {
   `;
 }
 
+// 获取当前的用户名过滤条件
+function getCurrentFilterUserName() {
+  const urlUserName = getUrlParameter('userName');
+  return urlUserName && urlUserName.trim() !== '' ? decodeURIComponent(urlUserName) : null;
+}
+
+// 对报表应用当前的用户名过滤
+function applyCurrentFilter(report) {
+  const filterUserName = getCurrentFilterUserName();
+  return filterUserName ? filterReportByUserName(report, filterUserName) : report;
+}
+
 // 导出单日报表
 function exportDailyReport(date) {
   if (!state.dailyReports) {
@@ -729,7 +966,10 @@ function exportDailyReport(date) {
     return;
   }
 
-  exportReportToExcel(dailyReport, `项目整理报表_项目${dailyReport.projectId}_${date}`);
+  const filtered = applyCurrentFilter(dailyReport);
+  const filterUserName = getCurrentFilterUserName();
+  const suffix = filterUserName ? `_${filterUserName}` : '';
+  exportReportToExcel(filtered, `项目整理报表_项目${dailyReport.projectId}_${date}${suffix}`);
 }
 
 // 导出合并报表
@@ -739,9 +979,12 @@ function exportCombinedReport() {
     return;
   }
 
+  const filtered = applyCurrentFilter(state.combinedReport);
   const { projectId, startDate, endDate } = state.combinedReport;
   const dateRange = startDate === endDate ? startDate : `${startDate}_至_${endDate}`;
-  exportReportToExcel(state.combinedReport, `项目整理报表_项目${projectId}_${dateRange}_合并`);
+  const filterUserName = getCurrentFilterUserName();
+  const suffix = filterUserName ? `_${filterUserName}` : '';
+  exportReportToExcel(filtered, `项目整理报表_项目${projectId}_${dateRange}_合并${suffix}`);
 }
 
 // 导出所有报表（ZIP格式）
@@ -765,27 +1008,31 @@ async function exportAllReports() {
     }
 
     const zip = new JSZip();
+    const filterUserName = getCurrentFilterUserName();
+    const suffix = filterUserName ? `_${filterUserName}` : '';
 
     // 添加每日报表
     for (const dailyReport of state.dailyReports) {
-      const wb = createWorkbookFromReport(dailyReport);
+      const filtered = applyCurrentFilter(dailyReport);
+      const wb = createWorkbookFromReport(filtered);
       const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-      zip.file(`${dailyReport.date}.xlsx`, excelBuffer);
+      zip.file(`${dailyReport.date}${suffix}.xlsx`, excelBuffer);
     }
 
     // 添加合并报表
-    const combinedWb = createWorkbookFromReport(state.combinedReport);
+    const filteredCombined = applyCurrentFilter(state.combinedReport);
+    const combinedWb = createWorkbookFromReport(filteredCombined);
     const combinedBuffer = XLSX.write(combinedWb, { bookType: 'xlsx', type: 'array' });
     const { projectId, startDate, endDate } = state.combinedReport;
     const dateRange = startDate === endDate ? startDate : `${startDate}_至_${endDate}`;
-    zip.file(`合并报表_${dateRange}.xlsx`, combinedBuffer);
+    zip.file(`合并报表_${dateRange}${suffix}.xlsx`, combinedBuffer);
 
     // 生成ZIP文件
     const zipBlob = await zip.generateAsync({ type: 'blob' });
 
     // 下载ZIP文件
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-    const filename = `项目整理报表_项目${projectId}_${dateRange}_全部_${timestamp}.zip`;
+    const filename = `项目整理报表_项目${projectId}_${dateRange}_全部${suffix}_${timestamp}.zip`;
 
     const link = document.createElement('a');
     link.href = URL.createObjectURL(zipBlob);
