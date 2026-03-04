@@ -117,32 +117,42 @@ async function authenticateProject(projectId, password) {
 // 更新页面标题显示项目信息
 async function updateProjectInfo(projectId) {
   const projectInfoEl = document.getElementById('project-info');
+  state.cachedProjectId = projectId;
   
   try {
     const project = await getProjectInfo(projectId);
-    if (project) {
-      projectInfoEl.innerHTML = `
-        <strong>${t('project')}：${project.name}</strong> (ID: ${project.id})
-        <br>
-        <small>${t('viewReportDesc')}</small>
-      `;
-      return true; // 项目存在
-    } else {
-      projectInfoEl.innerHTML = `
-        <strong>${t('projectId')}: ${projectId}</strong>
-        <br>
-        <small>${t('viewReportDesc')}</small>
-      `;
-      return false; // 项目不存在
-    }
+    state.cachedProjectInfo = project;
+    renderProjectInfo();
+    return !!project;
   } catch (error) {
     console.warn('获取项目信息失败:', error);
+    state.cachedProjectInfo = null;
+    renderProjectInfo();
+    return false;
+  }
+}
+
+// 根据缓存的项目信息渲染（语言切换时也调用）
+function renderProjectInfo() {
+  const projectInfoEl = document.getElementById('project-info');
+  if (!projectInfoEl) return;
+  const projectId = state.cachedProjectId;
+  const project = state.cachedProjectInfo;
+  
+  if (project) {
+    projectInfoEl.innerHTML = `
+      <strong>${t('project')}：${project.name}</strong> (ID: ${project.id})
+      <br>
+      <small>${t('viewReportDesc')}</small>
+    `;
+  } else if (projectId) {
     projectInfoEl.innerHTML = `
       <strong>${t('projectId')}: ${projectId}</strong>
       <br>
       <small>${t('viewReportDesc')}</small>
     `;
-    return false; // 获取失败，视为不存在
+  } else {
+    projectInfoEl.textContent = t('viewReportDesc');
   }
 }
 // 状态管理
@@ -152,7 +162,9 @@ const state = {
   combinedReport: null,
   currentProject: null,
   isAuthenticated: false,
-  sessionInfoExpanded: false
+  sessionInfoExpanded: false,
+  cachedProjectInfo: null,  // 缓存项目信息用于语言切换时重新渲染
+  cachedProjectId: null
 };
 
 // 初始化项目整理报表
@@ -1290,6 +1302,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 初始化语言设置
   initLanguage();
   updatePageTranslations();
+  
+  // 注册语言切换回调，重新渲染项目信息
+  onLanguageChange(() => {
+    renderProjectInfo();
+  });
   
   // 初始化
   await initOrganizationReport();

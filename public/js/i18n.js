@@ -373,6 +373,17 @@ function updateLanguageSelectorButtons() {
   });
 }
 
+// 语言切换后的回调函数列表
+const onLanguageChangeCallbacks = [];
+
+/**
+ * 注册语言切换回调
+ * @param {Function} callback - 语言切换后执行的回调函数
+ */
+function onLanguageChange(callback) {
+  onLanguageChangeCallbacks.push(callback);
+}
+
 /**
  * 切换语言
  * @param {string} lang - 目标语言代码
@@ -393,6 +404,9 @@ function switchLanguage(lang) {
   
   // 更新页面翻译
   updatePageTranslations();
+  
+  // 执行语言切换回调
+  onLanguageChangeCallbacks.forEach(cb => cb(lang));
 }
 
 /**
