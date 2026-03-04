@@ -46,6 +46,9 @@ COPY src/models/migrations ./dist/models/migrations
 # 复制静态资源（UI 管理界面）
 COPY public ./public
 
+# 复制 entrypoint 脚本
+COPY docker-entrypoint.sh ./docker-entrypoint.sh
+
 # 创建日志目录
 RUN mkdir -p logs
 
@@ -66,5 +69,5 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-# 启动应用
-CMD ["node", "dist/index.js"]
+# 启动应用（先迁移再启动）
+ENTRYPOINT ["sh", "docker-entrypoint.sh"]

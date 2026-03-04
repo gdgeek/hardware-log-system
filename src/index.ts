@@ -12,7 +12,6 @@ import { sequelize } from "./config/database";
 import { config } from "./config/env";
 import { logger } from "./config/logger";
 import { initRedis } from "./config/redis";
-import { migrateUp } from "./models/migrations/migrate";
 
 // 加载环境变量
 dotenv.config();
@@ -56,10 +55,6 @@ async function startServer(): Promise<void> {
 
     // 数据库连接（带重试）
     await connectWithRetry();
-
-    // 自动运行数据库迁移
-    logger.info("开始执行数据库迁移...");
-    await migrateUp();
 
     // 初始化 Redis
     await initRedis();
