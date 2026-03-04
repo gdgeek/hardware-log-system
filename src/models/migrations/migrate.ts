@@ -79,14 +79,25 @@ async function applyMigration(filename: string): Promise<void> {
   logger.info(`Applying migration: ${filename}`);
   
   try {
-    // Split by semicolon and execute each statement
-    const statements = sql
-      .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0 && !s.startsWith('--'));
+    // Execute the entire SQL file as one batch with multipleStatements enabled
+    // This supports PREPARE/EXECUTE and other multi-statement SQL patterns
+    const dbConfig = (sequelize as any).config;
+    const mysql2 = require('mysql2/promise');
     
-    for (const statement of statements) {
-      await sequelize.query(statement);
+    const connection = await mysql2.createConnection({
+      host: dbConfig.host,
+      port: dbConfig.port,
+      user: dbConfig.username,
+      password: dbConfig.password,
+      database: dbConfig.database,
+      multipleStatements: true,
+      charset: 'utf8mb4',
+    });
+    
+    try {
+      await connection.query(sql);
+    } finally {
+      await connection.end();
     }
     
     await recordMigration(filename);
