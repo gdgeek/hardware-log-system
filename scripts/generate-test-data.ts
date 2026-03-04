@@ -87,6 +87,13 @@ async function createTestLogs() {
   let totalLogs = 0;
 
   // 为每个项目生成日志
+  // 定义每个项目的用户名列表
+  const projectUserNames: { [key: string]: string[] } = {
+    '智能家居系统': ['张三', '李四', '王五', '赵六'],
+    '工业传感器网络': ['操作员A', '操作员B', '操作员C'],
+    '车联网平台': ['司机甲', '司机乙', '司机丙']
+  };
+
   for (const project of projects) {
     console.log(`\n为项目 "${project.name}" (ID: ${project.id}) 生成日志...`);
     
@@ -97,6 +104,10 @@ async function createTestLogs() {
       const sessionUuid = uuidv4();
       const deviceUuid = uuidv4();
       const sessionDate = getRandomDate(7); // 最近7天内
+      
+      // 为每个会话随机选择一个用户名
+      const userNames = projectUserNames[project.name] || ['用户A', '用户B', '用户C'];
+      const userName = userNames[Math.floor(Math.random() * userNames.length)];
       
       // 每个会话生成 10-30 条日志
       const logCount = 10 + Math.floor(Math.random() * 21);
@@ -122,7 +133,7 @@ async function createTestLogs() {
         }
 
         // 根据项目生成不同的日志键值
-        if (project.id === 1) {
+        if (project.name === '智能家居系统') {
           // 智能家居系统
           const keys = ['device_type', 'firmware_version', 'temperature', 'humidity', 'status'];
           const values = [
@@ -145,7 +156,7 @@ async function createTestLogs() {
           } else {
             logValue = values[keyIndex][Math.floor(Math.random() * values[keyIndex].length)];
           }
-        } else if (project.id === 2) {
+        } else if (project.name === '工业传感器网络') {
           // 工业传感器网络
           const keys = ['sensor_id', 'pressure', 'flow_rate', 'alarm_level'];
           const values = [
@@ -195,6 +206,7 @@ async function createTestLogs() {
           deviceUuid,
           sessionUuid,
           projectId: project.id,
+          userName,
           clientIp: `192.168.1.${Math.floor(Math.random() * 255)}`,
           dataType,
           logKey,
@@ -208,7 +220,7 @@ async function createTestLogs() {
       await Log.bulkCreate(logs);
       totalLogs += logs.length;
       
-      console.log(`  ✓ 会话 ${s + 1}/${sessionCount}: ${logs.length} 条日志`);
+      console.log(`  ✓ 会话 ${s + 1}/${sessionCount}: ${logs.length} 条日志 (用户: ${userName})`);
     }
   }
 
