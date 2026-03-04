@@ -414,13 +414,14 @@ export class LogRepository {
             [Op.lte]: endDateTime,
           },
         },
-        attributes: ['sessionUuid', 'logKey', 'logValue', 'createdAt'],
+        attributes: ['sessionUuid', 'logKey', 'logValue', 'userName', 'createdAt'],
         order: [['created_at', 'ASC'], ['session_uuid', 'ASC'], ['log_key', 'ASC']],
         raw: true,
       }) as unknown as Array<{
         sessionUuid: string;
         logKey: string;
         logValue: string;
+        userName: string | null;
         createdAt: string;
       }>;
 
@@ -509,16 +510,18 @@ export class LogRepository {
       sessionUuid: string;
       logKey: string;
       logValue: string;
+      userName?: string | null;
       createdAt: string;
     }>
   ): Promise<ProjectOrganizationReport> {
-    // Extract unique sessions and keys, track session start times
+    // Extract unique sessions and keys, track session start times and user names
     const sessionSet = new Set<string>();
     const keySet = new Set<string>();
     const matrix: Record<string, Record<string, string | null>> = {};
     const sessionStartTimes: Record<string, string> = {};
+    const sessionUserNames: Record<string, string | null> = {};
 
-    // Process logs to build matrix and track session start times
+    // Process logs to build matrix and track session start times and user names
     for (const log of logs) {
       sessionSet.add(log.sessionUuid);
       keySet.add(log.logKey);
@@ -526,6 +529,11 @@ export class LogRepository {
       // Track the earliest time for each session
       if (!sessionStartTimes[log.sessionUuid] || log.createdAt < sessionStartTimes[log.sessionUuid]) {
         sessionStartTimes[log.sessionUuid] = log.createdAt;
+      }
+
+      // Track user name for each session (use the first non-null userName found)
+      if (!sessionUserNames[log.sessionUuid] && log.userName) {
+        sessionUserNames[log.sessionUuid] = log.userName;
       }
 
       // Initialize session row if not exists
@@ -546,13 +554,14 @@ export class LogRepository {
 
     const keys = Array.from(keySet).sort();
 
-    // Create session info with index and timing
-    const sessionInfo: Record<string, { index: number; startTime: string; uuid: string }> = {};
+    // Create session info with index, timing, and user name
+    const sessionInfo: Record<string, { index: number; startTime: string; uuid: string; userName: string | null }> = {};
     sessions.forEach((sessionUuid, index) => {
       sessionInfo[sessionUuid] = {
         index: index + 1, // 1-based index
         startTime: sessionStartTimes[sessionUuid],
         uuid: sessionUuid,
+        userName: sessionUserNames[sessionUuid] || null,
       };
     });
 
