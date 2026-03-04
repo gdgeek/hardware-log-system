@@ -582,7 +582,7 @@ function renderMultipleDaysReport(result) {
 
   // 构建表头（使用合并报表的keys）
   const tableHeader = document.getElementById('org-table-header');
-  tableHeader.innerHTML = `<th class="session-info-header">${t('sessionIndex')}</th><th class="session-info-header">${t('startTime')}</th><th class="session-info-header">${t('sessionUuid')}</th>`;
+  tableHeader.innerHTML = `<th class="session-info-header">${t('sessionIndex')}</th><th class="session-info-header">${t('startTime')}</th><th class="session-info-header">${t('sessionUuid')}</th><th class="session-info-header">${t('userName')}</th>`;
   combinedReport.keys.forEach(key => {
     const th = document.createElement('th');
     th.textContent = key;
