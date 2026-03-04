@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>测试会话报表页面</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .success { color: green; }
+        .error { color: red; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>会话报表页面测试</h1>
+    
+    <div class="test-section">
+        <h2>1. 检查HTML表头</h2>
+        <p>访问: <a href="http://localhost:3000/session.html" target="_blank">http://localhost:3000/session.html</a></p>
+        <p>应该看到4个蓝色表头列：会话索引、启动时间、会话UUID、用户名</p>
+    </div>
+
+    <div class="test-section">
+        <h2>2. 检查API数据</h2>
+        <button onclick="testAPI()">测试API</button>
+        <div id="api-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. 清除缓存步骤</h2>
+        <ol>
+            <li>按 <kbd>Ctrl + Shift + R</kbd> (Windows/Linux) 或 <kbd>Cmd + Shift + R</kbd> (Mac) 强制刷新</li>
+            <li>或者打开开发者工具 (F12)，右键点击刷新按钮，选择"清空缓存并硬性重新加载"</li>
+            <li>或者在浏览器设置中清除缓存</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>4. 预期结果</h2>
+        <ul>
+            <li>✅ 表头有4列，都是蓝色背景</li>
+            <li>✅ 第4列显示"用户名"</li>
+            <li>✅ 数据行显示实际的用户名（张三、李四、王五、赵六）</li>
+            <li>✅ 横向滚动时，前4列保持固定</li>
+        </ul>
+    </div>
+
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.innerHTML = '<p>正在测试...</p>';
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/v1/sessions/reports/project-organization?projectId=10&startDate=2026-03-04&endDate=2026-03-04');
+                const data = await response.json();
+                
+                const sessions = Object.keys(data.sessionInfo);
+                if (sessions.length > 0) {
+                    const firstSession = data.sessionInfo[sessions[0]];
+                    const hasUserName = 'userName' in firstSession;
+                    
+                    resultDiv.innerHTML = `
+                        <p class="${hasUserName ? 'success' : 'error'}">
+                            ${hasUserName ? '✅' : '❌'} API返回包含userName字段
+                        </p>
+                        <p>第一个会话的数据:</p>
+                        <pre>${JSON.stringify(firstSession, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = '<p class="error">❌ 没有会话数据</p>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ 错误: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

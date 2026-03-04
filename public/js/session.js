@@ -479,7 +479,7 @@ function renderOrganizationReport(report) {
 
   // 构建表头
   const tableHeader = document.getElementById('org-table-header');
-  tableHeader.innerHTML = '<th class="session-info-header">会话索引</th><th class="session-info-header">启动时间</th><th class="session-info-header">会话UUID</th><th class="session-info-header">用户名</th>';
+  tableHeader.innerHTML = `<th class="session-info-header">${t('sessionIndex')}</th><th class="session-info-header">${t('startTime')}</th><th class="session-info-header">${t('sessionUuid')}</th><th class="session-info-header">${t('userName')}</th>`;
   keys.forEach(key => {
     const th = document.createElement('th');
     th.textContent = key;
