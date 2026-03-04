@@ -35,6 +35,8 @@ const translations = {
     
     // 表格
     sessionIndex: '会话索引',
+    collapseSessionInfo: '收起会话信息',
+    expandSessionInfo: '展开会话信息',
     startTime: '启动时间',
     sessionUuid: '会话UUID',
     userName: '用户名',
@@ -124,6 +126,8 @@ const translations = {
     
     // 表格
     sessionIndex: '會話索引',
+    collapseSessionInfo: '收起會話信息',
+    expandSessionInfo: '展開會話信息',
     startTime: '啟動時間',
     sessionUuid: '會話UUID',
     userName: '用戶名',
@@ -213,6 +217,8 @@ const translations = {
     
     // Table
     sessionIndex: 'Session Index',
+    collapseSessionInfo: 'Collapse Session Info',
+    expandSessionInfo: 'Expand Session Info',
     startTime: 'Start Time',
     sessionUuid: 'Session UUID',
     userName: 'User Name',

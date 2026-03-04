@@ -151,7 +151,8 @@ const state = {
   dailyReports: null,
   combinedReport: null,
   currentProject: null,
-  isAuthenticated: false
+  isAuthenticated: false,
+  sessionInfoExpanded: true
 };
 
 // 初始化项目整理报表
@@ -694,6 +695,13 @@ function exportToExcel() {
 }
 
 // 渲染多天报表
+function toggleSessionInfoColumns() {
+  state.sessionInfoExpanded = !state.sessionInfoExpanded;
+  if (state.dailyReports && state.combinedReport) {
+    renderMultipleDaysReport({ dailyReports: state.dailyReports, combinedReport: state.combinedReport });
+  }
+}
+
 function renderMultipleDaysReport(result) {
   const { dailyReports, combinedReport } = result;
   
@@ -721,7 +729,20 @@ function renderMultipleDaysReport(result) {
 
   // 构建表头（使用过滤后的报表的keys）
   const tableHeader = document.getElementById('org-table-header');
-  tableHeader.innerHTML = `<th class="session-info-header">${t('sessionIndex')}</th><th class="session-info-header">${t('startTime')}</th><th class="session-info-header">${t('sessionUuid')}</th><th class="session-info-header">${t('userName')}</th>`;
+  const expanded = state.sessionInfoExpanded;
+  
+  let headerHtml = `<th class="session-info-header" style="cursor:pointer;" onclick="toggleSessionInfoColumns()" title="${expanded ? t('collapseSessionInfo') : t('expandSessionInfo')}">
+    <i class="bi bi-${expanded ? 'chevron-left' : 'chevron-right'} me-1"></i>${t('sessionIndex')}
+  </th>`;
+  
+  if (expanded) {
+    headerHtml += `<th class="session-info-header">${t('startTime')}</th>`;
+    headerHtml += `<th class="session-info-header">${t('deviceUuid')}</th>`;
+    headerHtml += `<th class="session-info-header">${t('sessionUuid')}</th>`;
+    headerHtml += `<th class="session-info-header">${t('userName')}</th>`;
+  }
+  
+  tableHeader.innerHTML = headerHtml;
   filteredReport.keys.forEach(key => {
     const th = document.createElement('th');
     th.textContent = key;
@@ -735,58 +756,65 @@ function renderMultipleDaysReport(result) {
   filteredReport.devices.forEach(session => {
     const row = document.createElement('tr');
 
-    // 会话索引列（只显示数字）
+    // 会话索引列
     const sessionIndexCell = document.createElement('td');
     const sessionData = filteredReport.sessionInfo[session];
     sessionIndexCell.textContent = sessionData.index;
     sessionIndexCell.className = 'session-info-cell';
     row.appendChild(sessionIndexCell);
 
-    // 启动时间列
-    const startTimeCell = document.createElement('td');
-    const startTime = new Date(sessionData.startTime).toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-    startTimeCell.textContent = startTime;
-    startTimeCell.className = 'session-info-cell';
-    row.appendChild(startTimeCell);
+    if (expanded) {
+      // 启动时间列
+      const startTimeCell = document.createElement('td');
+      const startTime = new Date(sessionData.startTime).toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      startTimeCell.textContent = startTime;
+      startTimeCell.className = 'session-info-cell';
+      row.appendChild(startTimeCell);
 
-    // 会话UUID列
-    const sessionUuidCell = document.createElement('td');
-    sessionUuidCell.textContent = truncateText(sessionData.uuid, 20);
-    sessionUuidCell.title = sessionData.uuid; // 完整UUID作为tooltip
-    sessionUuidCell.className = 'session-info-cell';
-    row.appendChild(sessionUuidCell);
+      // 硬件UUID列
+      const deviceUuidCell = document.createElement('td');
+      deviceUuidCell.textContent = truncateText(sessionData.deviceUuid || '-', 20);
+      deviceUuidCell.title = sessionData.deviceUuid || '-';
+      deviceUuidCell.className = 'session-info-cell';
+      row.appendChild(deviceUuidCell);
 
-    // 用户名列（添加点击事件）
-    const userNameCell = document.createElement('td');
-    const displayUserName = sessionData.userName || '-';
-    userNameCell.textContent = displayUserName;
-    userNameCell.className = 'session-info-cell';
-    
-    // 如果有用户名且不是当前过滤的用户名，添加点击样式和事件
-    if (sessionData.userName && sessionData.userName !== '-') {
-      userNameCell.style.cursor = 'pointer';
-      userNameCell.style.textDecoration = 'underline';
-      userNameCell.title = t('clickToFilter') + ': ' + sessionData.userName;
+      // 会话UUID列
+      const sessionUuidCell = document.createElement('td');
+      sessionUuidCell.textContent = truncateText(sessionData.uuid, 20);
+      sessionUuidCell.title = sessionData.uuid;
+      sessionUuidCell.className = 'session-info-cell';
+      row.appendChild(sessionUuidCell);
+
+      // 用户名列（添加点击事件）
+      const userNameCell = document.createElement('td');
+      const displayUserName = sessionData.userName || '-';
+      userNameCell.textContent = displayUserName;
+      userNameCell.className = 'session-info-cell';
       
-      // 如果是当前过滤的用户名，高亮显示
-      if (filterUserName && sessionData.userName === filterUserName) {
-        userNameCell.style.background = 'rgba(23, 162, 184, 0.2)';
-        userNameCell.style.fontWeight = 'bold';
+      if (sessionData.userName && sessionData.userName !== '-') {
+        userNameCell.style.cursor = 'pointer';
+        userNameCell.style.textDecoration = 'underline';
+        userNameCell.title = t('clickToFilter') + ': ' + sessionData.userName;
+        
+        if (filterUserName && sessionData.userName === filterUserName) {
+          userNameCell.style.background = 'rgba(23, 162, 184, 0.2)';
+          userNameCell.style.fontWeight = 'bold';
+        }
+        
+        userNameCell.onclick = () => {
+          filterByUserName(sessionData.userName);
+        };
       }
       
-      userNameCell.onclick = () => {
-        filterByUserName(sessionData.userName);
-      };
+      row.appendChild(userNameCell);
     }
-    
-    row.appendChild(userNameCell);
 
     // 数据列
     filteredReport.keys.forEach(key => {
@@ -1068,7 +1096,7 @@ function createWorkbookFromReport(report) {
 
   // 创建矩阵数据
   const matrixData = [
-    [t('sessionIndex'), t('startTime'), t('sessionUuid'), t('userName'), ...keys] // 表头
+    [t('sessionIndex'), t('startTime'), t('deviceUuid'), t('sessionUuid'), t('userName'), ...keys] // 表头
   ];
 
   // 添加数据行
@@ -1086,6 +1114,7 @@ function createWorkbookFromReport(report) {
     const row = [
       sessionData.index, // 会话索引（数字）
       startTime, // 启动时间
+      sessionData.deviceUuid || '-', // 硬件UUID
       sessionData.uuid, // 会话UUID
       sessionData.userName || '-' // 用户名
     ];
@@ -1103,6 +1132,7 @@ function createWorkbookFromReport(report) {
   const cols = [
     { wch: 10 }, // 会话索引列
     { wch: 20 }, // 启动时间列
+    { wch: 40 }, // 硬件UUID列
     { wch: 40 }, // 会话UUID列
     { wch: 15 }, // 用户名列
   ];

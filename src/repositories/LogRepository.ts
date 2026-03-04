@@ -414,11 +414,12 @@ export class LogRepository {
             [Op.lte]: endDateTime,
           },
         },
-        attributes: ['sessionUuid', 'logKey', 'logValue', 'userName', 'createdAt'],
+        attributes: ['sessionUuid', 'deviceUuid', 'logKey', 'logValue', 'userName', 'createdAt'],
         order: [['created_at', 'ASC'], ['session_uuid', 'ASC'], ['log_key', 'ASC']],
         raw: true,
       }) as unknown as Array<{
         sessionUuid: string;
+        deviceUuid: string;
         logKey: string;
         logValue: string;
         userName: string | null;
@@ -508,6 +509,7 @@ export class LogRepository {
     endDate: string, 
     logs: Array<{
       sessionUuid: string;
+      deviceUuid?: string;
       logKey: string;
       logValue: string;
       userName?: string | null;
@@ -520,6 +522,7 @@ export class LogRepository {
     const matrix: Record<string, Record<string, string | null>> = {};
     const sessionStartTimes: Record<string, string> = {};
     const sessionUserNames: Record<string, string | null> = {};
+    const sessionDeviceUuids: Record<string, string> = {};
 
     // Process logs to build matrix and track session start times and user names
     for (const log of logs) {
@@ -534,6 +537,11 @@ export class LogRepository {
       // Track user name for each session (use the first non-null userName found)
       if (!sessionUserNames[log.sessionUuid] && log.userName) {
         sessionUserNames[log.sessionUuid] = log.userName;
+      }
+
+      // Track device UUID for each session
+      if (!sessionDeviceUuids[log.sessionUuid] && log.deviceUuid) {
+        sessionDeviceUuids[log.sessionUuid] = log.deviceUuid;
       }
 
       // Initialize session row if not exists
@@ -555,12 +563,13 @@ export class LogRepository {
     const keys = Array.from(keySet).sort();
 
     // Create session info with index, timing, and user name
-    const sessionInfo: Record<string, { index: number; startTime: string; uuid: string; userName: string | null }> = {};
+    const sessionInfo: Record<string, { index: number; startTime: string; uuid: string; deviceUuid: string; userName: string | null }> = {};
     sessions.forEach((sessionUuid, index) => {
       sessionInfo[sessionUuid] = {
         index: index + 1, // 1-based index
         startTime: sessionStartTimes[sessionUuid],
         uuid: sessionUuid,
+        deviceUuid: sessionDeviceUuids[sessionUuid] || '',
         userName: sessionUserNames[sessionUuid] || null,
       };
     });
@@ -617,11 +626,12 @@ export class LogRepository {
             [Op.lte]: endDateTime,
           },
         },
-        attributes: ['sessionUuid', 'logKey', 'logValue', 'userName', 'createdAt'],
+        attributes: ['sessionUuid', 'deviceUuid', 'logKey', 'logValue', 'userName', 'createdAt'],
         order: [['session_uuid', 'ASC'], ['created_at', 'ASC'], ['log_key', 'ASC']],
         raw: true,
       }) as unknown as Array<{
         sessionUuid: string;
+        deviceUuid: string;
         logKey: string;
         logValue: string;
         userName: string | null;
@@ -650,6 +660,7 @@ export class LogRepository {
       const matrix: Record<string, Record<string, string | null>> = {};
       const sessionStartTimes: Record<string, string> = {};
       const sessionUserNames: Record<string, string | null> = {};
+      const sessionDeviceUuids: Record<string, string> = {};
 
       // Process logs to build matrix and track session start times and user names
       for (const log of logs) {
@@ -664,6 +675,11 @@ export class LogRepository {
         // Track user name for each session (use the first non-null userName found)
         if (!sessionUserNames[log.sessionUuid] && log.userName) {
           sessionUserNames[log.sessionUuid] = log.userName;
+        }
+
+        // Track device UUID for each session
+        if (!sessionDeviceUuids[log.sessionUuid] && log.deviceUuid) {
+          sessionDeviceUuids[log.sessionUuid] = log.deviceUuid;
         }
 
         // Initialize session row if not exists
@@ -685,12 +701,13 @@ export class LogRepository {
       const keys = Array.from(keySet).sort();
 
       // Create session info with index, timing, and user name
-      const sessionInfo: Record<string, { index: number; startTime: string; uuid: string; userName: string | null }> = {};
+      const sessionInfo: Record<string, { index: number; startTime: string; uuid: string; deviceUuid: string; userName: string | null }> = {};
       sessions.forEach((sessionUuid, index) => {
         sessionInfo[sessionUuid] = {
           index: index + 1, // 1-based index
           startTime: sessionStartTimes[sessionUuid],
           uuid: sessionUuid,
+          deviceUuid: sessionDeviceUuids[sessionUuid] || '',
           userName: sessionUserNames[sessionUuid] || null,
         };
       });
