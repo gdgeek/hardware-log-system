@@ -914,7 +914,10 @@ function updateProjectsTable() {
         </div>
       </td>
       <td>
-        <div style="display: flex; gap: 0.5rem;">
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <a href="/session.html?projectId=${project.id}" target="_blank" class="btn btn-sm" style="background: #0d6efd; color: white; padding: 0.25rem 0.5rem; font-size: 0.75rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.25rem;" title="查看日志">
+            📊 日志
+          </a>
           <button class="btn btn-sm" style="background: #ffc107; color: #000; padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="editProject(${project.id})" title="编辑">
             ✏️
           </button>
