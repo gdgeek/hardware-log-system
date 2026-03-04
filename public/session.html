@@ -337,6 +337,15 @@
       text-align: center;
     }
 
+    /* 收起状态下第一列更宽以容纳硬件UUID */
+    .table.collapsed-info td.session-info-cell:nth-child(1) {
+      min-width: 140px;
+    }
+
+    .table.collapsed-info th.session-info-header:nth-child(1) {
+      min-width: 140px;
+    }
+
     .table td.session-info-cell:nth-child(2) {
       position: sticky;
       left: 80px;
@@ -373,6 +382,12 @@
       color: var(--secondary-color);
       font-style: italic;
       text-align: center;
+    }
+
+    .table td.fallback-value {
+      background: rgba(108, 117, 125, 0.08);
+      color: #999;
+      font-style: italic;
     }
 
     .loading-spinner {

@@ -109,18 +109,45 @@ async function main() {
       }
     ];
 
+    // 为每个项目预定义一组可识别的硬件设备UUID
+    const projectDeviceUuids: Record<number, string[]> = {
+      1: [
+        'HW-HOME-001-A1B2C3D4',
+        'HW-HOME-002-E5F6A7B8',
+        'HW-HOME-003-C9D0E1F2',
+        'HW-HOME-004-A3B4C5D6',
+        'HW-HOME-005-E7F8A9B0',
+      ],
+      2: [
+        'HW-SENSOR-001-1A2B3C4D',
+        'HW-SENSOR-002-5E6F7A8B',
+        'HW-SENSOR-003-9C0D1E2F',
+        'HW-SENSOR-004-3A4B5C6D',
+        'HW-SENSOR-005-7E8F9A0B',
+      ],
+      3: [
+        'HW-VEHICLE-001-A1B2C3D4',
+        'HW-VEHICLE-002-E5F6A7B8',
+        'HW-VEHICLE-003-C9D0E1F2',
+        'HW-VEHICLE-004-A3B4C5D6',
+        'HW-VEHICLE-005-E7F8A9B0',
+      ],
+    };
+
     let totalLogs = 0;
 
     // 为每个项目生成日志
     for (const project of projects) {
       console.log(`为项目 "${project.name}" (ID: ${project.id}) 生成日志...`);
       
+      const deviceUuids = projectDeviceUuids[project.id] || [];
+      
       // 每个项目生成 3-5 个会话
       const sessionCount = 3 + Math.floor(Math.random() * 3);
       
       for (let s = 0; s < sessionCount; s++) {
         const sessionUuid = uuidv4();
-        const deviceUuid = uuidv4();
+        const deviceUuid = deviceUuids[s % deviceUuids.length] || uuidv4();
         const sessionDate = getRandomDate(7); // 最近7天内
         const userName = project.userNames[Math.floor(Math.random() * project.userNames.length)];
         

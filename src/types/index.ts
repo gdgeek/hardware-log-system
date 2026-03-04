@@ -120,7 +120,7 @@ export interface ProjectOrganizationReport {
   devices: string[]; // Array of session UUIDs (rows) - keeping 'devices' name for compatibility
   keys: string[]; // Array of keys (columns)
   matrix: Record<string, Record<string, string | null>>; // sessionUuid -> key -> value
-  sessionInfo: Record<string, { index: number; startTime: string; uuid: string; userName: string | null }>; // Session timing, index, and user info
+  sessionInfo: Record<string, { index: number; startTime: string; uuid: string; deviceUuid: string; userName: string | null }>; // Session timing, index, device UUID, and user info
   totalDevices: number; // Actually total sessions - keeping name for compatibility
   totalKeys: number;
   totalEntries: number;

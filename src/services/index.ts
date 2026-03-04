@@ -5,5 +5,6 @@
 export { LogService, logService } from './LogService';
 export { ReportService, reportService } from './ReportService';
 export { sessionService } from './SessionService';
+export { sessionReportService } from './SessionReportService';
 export { authService } from './AuthService';
 export { ProjectService, projectService } from './ProjectService';

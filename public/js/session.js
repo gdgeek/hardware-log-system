@@ -152,7 +152,7 @@ const state = {
   combinedReport: null,
   currentProject: null,
   isAuthenticated: false,
-  sessionInfoExpanded: true
+  sessionInfoExpanded: false
 };
 
 // 初始化项目整理报表
@@ -731,8 +731,8 @@ function renderMultipleDaysReport(result) {
   const tableHeader = document.getElementById('org-table-header');
   const expanded = state.sessionInfoExpanded;
   
-  let headerHtml = `<th class="session-info-header" style="cursor:pointer;" onclick="toggleSessionInfoColumns()" title="${expanded ? t('collapseSessionInfo') : t('expandSessionInfo')}">
-    <i class="bi bi-${expanded ? 'chevron-left' : 'chevron-right'} me-1"></i>${t('sessionIndex')}
+  let headerHtml = `<th class="session-info-header" style="cursor:pointer;min-width:${expanded ? '80px' : '140px'};" onclick="toggleSessionInfoColumns()" title="${expanded ? t('collapseSessionInfo') : t('expandSessionInfo')}">
+    <i class="bi bi-${expanded ? 'chevron-compact-left' : 'chevron-compact-right'} me-1"></i>${expanded ? t('sessionIndex') : t('sessionIndex') + ' / ' + t('userName')}
   </th>`;
   
   if (expanded) {
@@ -743,11 +743,52 @@ function renderMultipleDaysReport(result) {
   }
   
   tableHeader.innerHTML = headerHtml;
+  
+  // 切换表格的收起/展开样式类
+  const matrixTable = document.getElementById('organization-matrix-table');
+  if (matrixTable) {
+    matrixTable.classList.toggle('collapsed-info', !expanded);
+  }
+  
   filteredReport.keys.forEach(key => {
     const th = document.createElement('th');
     th.textContent = key;
     tableHeader.appendChild(th);
   });
+
+  // 构建按 deviceUuid 分组的会话列表（保持 devices 数组顺序），用于查找默认值
+  const deviceSessionsMap = {};
+  filteredReport.devices.forEach((session, idx) => {
+    const info = filteredReport.sessionInfo[session];
+    const deviceUuid = info.deviceUuid;
+    if (!deviceUuid) return;
+    if (!deviceSessionsMap[deviceUuid]) {
+      deviceSessionsMap[deviceUuid] = [];
+    }
+    deviceSessionsMap[deviceUuid].push({
+      sessionUuid: session,
+      order: idx  // 使用在 devices 数组中的位置作为顺序
+    });
+  });
+
+  // 为每个会话的每个 key 查找默认值（同 deviceUuid 中排在前面的最近会话的值）
+  function findFallbackValue(sessionUuid, key) {
+    const info = filteredReport.sessionInfo[sessionUuid];
+    if (!info || !info.deviceUuid) return null;
+    const siblings = deviceSessionsMap[info.deviceUuid];
+    if (!siblings || siblings.length <= 1) return null;
+    // 找到当前会话在同设备列表中的位置
+    const currentIdx = siblings.findIndex(s => s.sessionUuid === sessionUuid);
+    if (currentIdx <= 0) return null;
+    // 从当前位置往前找最近的有值的会话
+    for (let i = currentIdx - 1; i >= 0; i--) {
+      const val = filteredReport.matrix[siblings[i].sessionUuid][key];
+      if (val !== null && val !== undefined) {
+        return val;
+      }
+    }
+    return null;
+  }
 
   // 构建表格内容（显示过滤后的报表）
   const tableBody = document.getElementById('org-table-body');
@@ -759,7 +800,19 @@ function renderMultipleDaysReport(result) {
     // 会话索引列
     const sessionIndexCell = document.createElement('td');
     const sessionData = filteredReport.sessionInfo[session];
-    sessionIndexCell.textContent = sessionData.index;
+    if (expanded) {
+      sessionIndexCell.textContent = sessionData.index;
+    } else {
+      // 收起时，索引列同时显示序号、硬件UUID和用户名
+      const deviceUuidShort = truncateText(sessionData.deviceUuid || '-', 12);
+      const userName = sessionData.userName || '-';
+      const userNameStyle = sessionData.userName && sessionData.userName !== '-'
+        ? 'font-size:0.75rem;color:#0d6efd;font-weight:normal;cursor:pointer;text-decoration:underline;'
+        : 'font-size:0.75rem;color:#0d6efd;font-weight:normal;';
+      const highlighted = filterUserName && sessionData.userName === filterUserName
+        ? 'background:rgba(23,162,184,0.2);font-weight:bold;' : '';
+      sessionIndexCell.innerHTML = `<div>${sessionData.index}</div><div style="font-size:0.75rem;color:#6c757d;font-weight:normal;" title="${escapeHtml(sessionData.deviceUuid || '-')}">${escapeHtml(deviceUuidShort)}</div><div class="collapsed-username" style="${userNameStyle}${highlighted}" ${sessionData.userName && sessionData.userName !== '-' ? `title="${t('clickToFilter')}: ${escapeHtml(sessionData.userName)}" data-username="${escapeHtml(sessionData.userName)}"` : ''}>${escapeHtml(userName)}</div>`;
+    }
     sessionIndexCell.className = 'session-info-cell';
     row.appendChild(sessionIndexCell);
 
@@ -826,9 +879,17 @@ function renderMultipleDaysReport(result) {
         cell.className = 'has-value';
         cell.title = `${key}: ${value}`;
       } else {
-        cell.textContent = '-';
-        cell.className = 'no-value';
-        cell.title = `${key}: 无数据`;
+        // 尝试查找同 deviceUuid 上方最近会话的默认值
+        const fallback = findFallbackValue(session, key);
+        if (fallback !== null) {
+          cell.textContent = truncateText(fallback, 15);
+          cell.className = 'fallback-value';
+          cell.title = `${key}: ${fallback} (默认值，来自同设备历史会话)`;
+        } else {
+          cell.textContent = '-';
+          cell.className = 'no-value';
+          cell.title = `${key}: 无数据`;
+        }
       }
 
       row.appendChild(cell);
@@ -839,6 +900,16 @@ function renderMultipleDaysReport(result) {
 
   // 显示多天报表的下载选项
   renderMultipleDaysDownloadOptions(dailyReports, filteredReport);
+
+  // 为收起状态下的用户名添加点击过滤事件（事件委托）
+  if (!expanded) {
+    tableBody.addEventListener('click', function(e) {
+      const target = e.target.closest('.collapsed-username[data-username]');
+      if (target) {
+        filterByUserName(target.dataset.username);
+      }
+    });
+  }
 }
 
 // 根据用户名过滤报表数据
@@ -1091,8 +1162,41 @@ function exportReportToExcel(report, baseFilename) {
 function createWorkbookFromReport(report) {
   const { devices: sessions, keys, matrix, sessionInfo } = report;
 
+  // 构建按 deviceUuid 分组的会话列表，用于查找默认值
+  const deviceSessionsMap = {};
+  sessions.forEach((session, idx) => {
+    const info = sessionInfo[session];
+    const deviceUuid = info.deviceUuid;
+    if (!deviceUuid) return;
+    if (!deviceSessionsMap[deviceUuid]) {
+      deviceSessionsMap[deviceUuid] = [];
+    }
+    deviceSessionsMap[deviceUuid].push({
+      sessionUuid: session,
+      order: idx
+    });
+  });
+
+  function findFallbackForExport(sessionUuid, key) {
+    const info = sessionInfo[sessionUuid];
+    if (!info || !info.deviceUuid) return null;
+    const siblings = deviceSessionsMap[info.deviceUuid];
+    if (!siblings || siblings.length <= 1) return null;
+    const currentIdx = siblings.findIndex(s => s.sessionUuid === sessionUuid);
+    if (currentIdx <= 0) return null;
+    for (let i = currentIdx - 1; i >= 0; i--) {
+      const val = matrix[siblings[i].sessionUuid][key];
+      if (val !== null && val !== undefined) return val;
+    }
+    return null;
+  }
+
   // 创建工作簿
   const wb = XLSX.utils.book_new();
+
+  // 记录需要灰色样式的单元格位置
+  const fallbackCells = [];
+  const headerColCount = 5; // 会话索引、启动时间、硬件UUID、会话UUID、用户名
 
   // 创建矩阵数据
   const matrixData = [
@@ -1100,7 +1204,7 @@ function createWorkbookFromReport(report) {
   ];
 
   // 添加数据行
-  sessions.forEach(session => {
+  sessions.forEach((session, rowIdx) => {
     const sessionData = sessionInfo[session];
     const startTime = new Date(sessionData.startTime).toLocaleString('zh-CN', {
       year: 'numeric',
@@ -1119,9 +1223,20 @@ function createWorkbookFromReport(report) {
       sessionData.userName || '-' // 用户名
     ];
 
-    keys.forEach(key => {
+    keys.forEach((key, colIdx) => {
       const value = matrix[session][key];
-      row.push(value || ''); // 如果没有值就用空字符串
+      if (value !== null && value !== undefined) {
+        row.push(value);
+      } else {
+        const fallback = findFallbackForExport(session, key);
+        if (fallback !== null) {
+          row.push(fallback);
+          // rowIdx+1 因为第0行是表头
+          fallbackCells.push({ r: rowIdx + 1, c: headerColCount + colIdx });
+        } else {
+          row.push('');
+        }
+      }
     });
     matrixData.push(row);
   });
@@ -1155,6 +1270,16 @@ function createWorkbookFromReport(report) {
       }
     };
   }
+
+  // 设置默认值单元格的灰色样式
+  fallbackCells.forEach(pos => {
+    const cellAddress = XLSX.utils.encode_cell(pos);
+    if (!wsMatrix[cellAddress]) return;
+    wsMatrix[cellAddress].s = {
+      font: { color: { rgb: "999999" }, italic: true },
+      fill: { fgColor: { rgb: "F0F0F0" } }
+    };
+  });
 
   XLSX.utils.book_append_sheet(wb, wsMatrix, '项目整理报表');
   return wb;

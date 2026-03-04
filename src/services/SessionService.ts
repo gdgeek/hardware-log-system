@@ -1,10 +1,17 @@
 /**
- * SessionService - 会话相关业务逻辑
+ * SessionService - 会话浏览相关业务逻辑
+ *
+ * 负责：
+ * - 项目列表（按会话聚合）
+ * - 会话列表
+ * - 会话详情
+ *
+ * 报表相关逻辑已拆分到 SessionReportService
  */
 
 import { logRepository } from "../repositories/LogRepository";
-import { projectService } from "./ProjectService";
 import { Log } from "../models/Log";
+import { sessionReportService } from "./SessionReportService";
 import { ProjectOrganizationReport } from "../types/index";
 
 export interface SessionSummary {
@@ -46,13 +53,11 @@ class SessionService {
   async getAllProjects(): Promise<{
     projects: ProjectSummary[];
   }> {
-    // 获取所有日志（不分页，获取全部）
     const logs = await logRepository.findByFilters(
       {},
-      { page: 1, pageSize: 50000 }, // 使用大的 pageSize 获取所有日志
+      { page: 1, pageSize: 50000 },
     );
 
-    // 按 projectId 分组
     const projectMap = new Map<number, Log[]>();
     logs.forEach((log) => {
       const projectId = log.projectId;
@@ -62,34 +67,27 @@ class SessionService {
       projectMap.get(projectId)!.push(log);
     });
 
-    // 生成项目汇总
     const projects: ProjectSummary[] = [];
     projectMap.forEach((projectLogs, projectId) => {
-      // 统计会话数量
-      const sessionUuids = new Set(projectLogs.map(log => log.sessionUuid));
-      const sessionCount = sessionUuids.size;
-
-      // 获取最后活动时间
+      const sessionUuids = new Set(projectLogs.map((log) => log.sessionUuid));
       const times = projectLogs.map((log) => log.createdAt.getTime());
       const lastActivity = new Date(Math.max(...times));
 
       projects.push({
         projectId,
-        sessionCount,
+        sessionCount: sessionUuids.size,
         logCount: projectLogs.length,
         lastActivity,
       });
     });
 
-    // 按最后活动时间倒序排序
     projects.sort(
       (a, b) => b.lastActivity.getTime() - a.lastActivity.getTime(),
     );
 
-    return {
-      projects,
-    };
+    return { projects };
   }
+
   /**
    * 获取项目的所有会话列表
    */
@@ -98,13 +96,11 @@ class SessionService {
     sessionCount: number;
     sessions: SessionSummary[];
   }> {
-    // 获取该项目的所有日志（不分页，获取全部）
     const logs = await logRepository.findByFilters(
       { projectId },
-      { page: 1, pageSize: 10000 }, // 使用大的 pageSize 获取所有日志
+      { page: 1, pageSize: 10000 },
     );
 
-    // 按 sessionUuid 分组
     const sessionMap = new Map<string, Log[]>();
     logs.forEach((log) => {
       const sessionUuid = log.sessionUuid;
@@ -114,7 +110,6 @@ class SessionService {
       sessionMap.get(sessionUuid)!.push(log);
     });
 
-    // 生成会话汇总
     const sessions: SessionSummary[] = [];
     sessionMap.forEach((sessionLogs, sessionUuid) => {
       const recordCount = sessionLogs.filter(
@@ -131,7 +126,6 @@ class SessionService {
       const firstLogTime = new Date(Math.min(...times));
       const lastLogTime = new Date(Math.max(...times));
 
-      // 获取设备UUID（取第一个日志的设备UUID）
       const deviceUuid = sessionLogs[0]?.deviceUuid || null;
 
       sessions.push({
@@ -147,7 +141,6 @@ class SessionService {
       });
     });
 
-    // 按最后日志时间倒序排序
     sessions.sort(
       (a, b) => b.lastLogTime.getTime() - a.lastLogTime.getTime(),
     );
@@ -163,17 +156,15 @@ class SessionService {
    * 获取会话详情
    */
   async getSessionDetail(sessionUuid: string): Promise<SessionDetail | null> {
-    // 获取该会话的所有日志（不分页，获取全部）
     const logs = await logRepository.findByFilters(
       { sessionUuid },
-      { page: 1, pageSize: 10000 }, // 使用大的 pageSize 获取所有日志
+      { page: 1, pageSize: 10000 },
     );
 
     if (logs.length === 0) {
       return null;
     }
 
-    // 统计信息
     const recordCount = logs.filter((log) => log.dataType === "record").length;
     const warningCount = logs.filter(
       (log) => log.dataType === "warning",
@@ -184,11 +175,9 @@ class SessionService {
     const firstLogTime = new Date(Math.min(...times));
     const lastLogTime = new Date(Math.max(...times));
 
-    // 获取项目ID和设备UUID（取第一个日志的）
     const projectId = logs[0].projectId;
     const deviceUuid = logs[0].deviceUuid;
 
-    // 按时间排序（最新的在前）
     logs.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
     return {
@@ -205,145 +194,51 @@ class SessionService {
     };
   }
 
-  /**
-   * 获取项目整理报表（按天分组）
-   */
-  async getProjectOrganizationReportByDays(projectId: number, startDate: string, endDate?: string): Promise<{
-    dailyReports: Array<ProjectOrganizationReport & { date: string }>;
-    combinedReport: ProjectOrganizationReport;
-  }> {
-    // 如果没有提供结束日期，使用开始日期作为结束日期（兼容旧接口）
-    const finalEndDate = endDate || startDate;
-    
-    const result = await logRepository.aggregateProjectOrganizationByDays(projectId, startDate, finalEndDate);
-    
-    // 应用项目的列名映射
-    try {
-      const project = await projectService.getProjectById(projectId);
-      if (project && project.columnMapping) {
-        // 映射每日报表
-        const mappedDailyReports = result.dailyReports.map(report => {
-          const mappedKeys = report.keys.map(key => project.columnMapping[key] || key);
-          
-          const mappedMatrix: Record<string, Record<string, string | null>> = {};
-          for (const [sessionUuid, sessionData] of Object.entries(report.matrix)) {
-            mappedMatrix[sessionUuid] = {};
-            for (const [originalKey, value] of Object.entries(sessionData)) {
-              const mappedKey = project.columnMapping[originalKey] || originalKey;
-              mappedMatrix[sessionUuid][mappedKey] = value;
-            }
-          }
-          
-          return {
-            ...report,
-            keys: mappedKeys,
-            matrix: mappedMatrix,
-          };
-        });
-
-        // 映射合并报表
-        const mappedCombinedKeys = result.combinedReport.keys.map(key => project.columnMapping[key] || key);
-        const mappedCombinedMatrix: Record<string, Record<string, string | null>> = {};
-        for (const [sessionUuid, sessionData] of Object.entries(result.combinedReport.matrix)) {
-          mappedCombinedMatrix[sessionUuid] = {};
-          for (const [originalKey, value] of Object.entries(sessionData)) {
-            const mappedKey = project.columnMapping[originalKey] || originalKey;
-            mappedCombinedMatrix[sessionUuid][mappedKey] = value;
-          }
-        }
-        
-        return {
-          dailyReports: mappedDailyReports,
-          combinedReport: {
-            ...result.combinedReport,
-            keys: mappedCombinedKeys,
-            matrix: mappedCombinedMatrix,
-          },
-        };
-      }
-    } catch (error) {
-      // 如果映射失败，返回原始报表
-      // logger.warn('Failed to apply column mapping:', error);
-    }
-    
-    return result;
-  }
+  // ---- 向后兼容的委托方法 ----
 
   /**
-   * 获取项目整理报表
+   * @deprecated 请使用 sessionReportService.getProjectOrganizationReportByDays
    */
-  async getProjectOrganizationReport(projectId: number, startDate: string, endDate?: string): Promise<ProjectOrganizationReport> {
-    // 如果没有提供结束日期，使用开始日期作为结束日期（兼容旧接口）
-    const finalEndDate = endDate || startDate;
-    
-    const report = await logRepository.aggregateProjectOrganization(projectId, startDate, finalEndDate);
-    
-    // 应用项目的列名映射
-    try {
-      const project = await projectService.getProjectById(projectId);
-      if (project && project.columnMapping) {
-        // 映射 keys 数组
-        const mappedKeys = report.keys.map(key => project.columnMapping[key] || key);
-        
-        // 映射 matrix 中的键
-        const mappedMatrix: Record<string, Record<string, string | null>> = {};
-        for (const [sessionUuid, sessionData] of Object.entries(report.matrix)) {
-          mappedMatrix[sessionUuid] = {};
-          for (const [originalKey, value] of Object.entries(sessionData)) {
-            const mappedKey = project.columnMapping[originalKey] || originalKey;
-            mappedMatrix[sessionUuid][mappedKey] = value;
-          }
-        }
-        
-        return {
-          ...report,
-          keys: mappedKeys,
-          matrix: mappedMatrix,
-        };
-      }
-    } catch (error) {
-      // 如果映射失败，返回原始报表
-      // 使用logger而不是console
-      // logger.warn('Failed to apply column mapping:', error);
-    }
-    
-    return report;
-  }
-
-  /**
-   * 获取项目的原始日志数据（用于导出）
-   */
-  async getProjectRawLogs(projectId: number, startDate: string, endDate: string): Promise<{
-    projectId: number;
-    startDate: string;
-    endDate: string;
-    totalLogs: number;
-    logs: Log[];
-  }> {
-    // 将日期字符串转换为 Date 对象
-    const startDateTime = new Date(startDate + 'T00:00:00.000Z');
-    const endDateTime = new Date(endDate + 'T23:59:59.999Z');
-
-    // 获取指定日期范围内的所有日志
-    const logs = await logRepository.findByFilters(
-      { 
-        projectId,
-        startTime: startDateTime,
-        endTime: endDateTime
-      },
-      { page: 1, pageSize: 50000 } // 使用大的 pageSize 获取所有日志
-    );
-
-    // 按创建时间排序（最早的在前）
-    logs.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-
-    return {
+  async getProjectOrganizationReportByDays(
+    projectId: number,
+    startDate: string,
+    endDate?: string,
+  ) {
+    return sessionReportService.getProjectOrganizationReportByDays(
       projectId,
       startDate,
       endDate,
-      totalLogs: logs.length,
-      logs,
-    };
+    );
+  }
+
+  /**
+   * @deprecated 请使用 sessionReportService.getProjectOrganizationReport
+   */
+  async getProjectOrganizationReport(
+    projectId: number,
+    startDate: string,
+    endDate?: string,
+  ): Promise<ProjectOrganizationReport> {
+    return sessionReportService.getProjectOrganizationReport(
+      projectId,
+      startDate,
+      endDate,
+    );
+  }
+
+  /**
+   * @deprecated 请使用 sessionReportService.getProjectRawLogs
+   */
+  async getProjectRawLogs(
+    projectId: number,
+    startDate: string,
+    endDate: string,
+  ) {
+    return sessionReportService.getProjectRawLogs(
+      projectId,
+      startDate,
+      endDate,
+    );
   }
 }
 
