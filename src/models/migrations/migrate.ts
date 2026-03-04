@@ -81,7 +81,9 @@ async function applyMigration(filename: string): Promise<void> {
   try {
     // Execute the entire SQL file as one batch with multipleStatements enabled
     // This supports PREPARE/EXECUTE and other multi-statement SQL patterns
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const dbConfig = (sequelize as any).config;
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const mysql2 = require('mysql2/promise');
     
     const connection = await mysql2.createConnection({
