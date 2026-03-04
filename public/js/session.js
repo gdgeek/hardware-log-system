@@ -479,7 +479,7 @@ function renderOrganizationReport(report) {
 
   // 构建表头
   const tableHeader = document.getElementById('org-table-header');
-  tableHeader.innerHTML = '<th class="session-info-header">会话索引</th><th class="session-info-header">启动时间</th><th class="session-info-header">会话UUID</th>';
+  tableHeader.innerHTML = '<th class="session-info-header">会话索引</th><th class="session-info-header">启动时间</th><th class="session-info-header">会话UUID</th><th class="session-info-header">用户名</th>';
   keys.forEach(key => {
     const th = document.createElement('th');
     th.textContent = key;
@@ -520,6 +520,12 @@ function renderOrganizationReport(report) {
     sessionUuidCell.title = sessionData.uuid; // 完整UUID作为tooltip
     sessionUuidCell.className = 'session-info-cell';
     row.appendChild(sessionUuidCell);
+
+    // 用户名列
+    const userNameCell = document.createElement('td');
+    userNameCell.textContent = sessionData.userName || '-';
+    userNameCell.className = 'session-info-cell';
+    row.appendChild(userNameCell);
 
     // 数据列
     keys.forEach(key => {
@@ -617,6 +623,12 @@ function renderMultipleDaysReport(result) {
     sessionUuidCell.title = sessionData.uuid; // 完整UUID作为tooltip
     sessionUuidCell.className = 'session-info-cell';
     row.appendChild(sessionUuidCell);
+
+    // 用户名列
+    const userNameCell = document.createElement('td');
+    userNameCell.textContent = sessionData.userName || '-';
+    userNameCell.className = 'session-info-cell';
+    row.appendChild(userNameCell);
 
     // 数据列
     combinedReport.keys.forEach(key => {
@@ -809,7 +821,7 @@ function createWorkbookFromReport(report) {
 
   // 创建矩阵数据
   const matrixData = [
-    [t('sessionIndex'), t('startTime'), t('sessionUuid'), ...keys] // 表头
+    [t('sessionIndex'), t('startTime'), t('sessionUuid'), t('userName'), ...keys] // 表头
   ];
 
   // 添加数据行
@@ -827,7 +839,8 @@ function createWorkbookFromReport(report) {
     const row = [
       sessionData.index, // 会话索引（数字）
       startTime, // 启动时间
-      sessionData.uuid // 会话UUID
+      sessionData.uuid, // 会话UUID
+      sessionData.userName || '-' // 用户名
     ];
 
     keys.forEach(key => {
@@ -844,6 +857,7 @@ function createWorkbookFromReport(report) {
     { wch: 10 }, // 会话索引列
     { wch: 20 }, // 启动时间列
     { wch: 40 }, // 会话UUID列
+    { wch: 15 }, // 用户名列
   ];
   keys.forEach(() => cols.push({ wch: 20 })); // 数据列
   wsMatrix['!cols'] = cols;
